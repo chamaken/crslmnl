@@ -1,0 +1,12 @@
+[package]
+name = "crslmnl"
+version = "0.1.0"
+authors = ["Ken-ichirou MATSUZAWA <chamas@h4.dion.ne.jp>"]
+build = "build.rs"
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+libc = "0.2"
+time = "0.1"
