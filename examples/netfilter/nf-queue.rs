@@ -161,7 +161,7 @@ fn main() {
     }
     let portid = nl.portid();
 
-    let mut buf = Vec::<u8>::with_capacity(mnl::SOCKET_BUFFER_SIZE());
+    let mut buf = vec![0u8; mnl::SOCKET_BUFFER_SIZE()];
     {
         let nlh = nfq_build_cfg_pf_request(&mut buf, nfq::MsgConfigCmds::PF_UNBIND as u8);
         if let Err(errno) = nl.send_nlmsg(nlh) {

@@ -223,7 +223,7 @@ fn main() {
         exit(libc::EXIT_FAILURE);
     }
 
-    let mut buf = Vec::<u8>::with_capacity(mnl::SOCKET_BUFFER_SIZE());
+    let mut buf = vec![0u8; mnl::SOCKET_BUFFER_SIZE()];
     let mut nrecv: usize;
     loop {
         match nl.recvfrom(&mut buf) {

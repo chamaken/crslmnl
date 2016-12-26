@@ -252,7 +252,7 @@ fn data_cb(nlh: &mnl::Nlmsg, _: &mut u8) -> mnl::CbRet {
 }
 
 fn main() {
-    let mut buf = Vec::<u8>::with_capacity(mnl::SOCKET_BUFFER_SIZE());
+    let mut buf = vec![0u8; mnl::SOCKET_BUFFER_SIZE()];
 
     let nl: &mut mnl::Socket;
     match mnl::Socket::open(netlink::Family::NETFILTER) {
