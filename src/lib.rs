@@ -8,7 +8,7 @@ use std::ffi::{ CString, CStr };
 use std::fmt;
 
 extern crate libc;
-use libc::{ c_int, c_uint, c_char, c_void, size_t, ssize_t, socklen_t, pid_t, FILE };
+use libc::{ c_int, c_uint, c_char, c_void, size_t, ssize_t, socklen_t, pid_t, FILE, uintptr_t };
 
 pub mod linux;
 use linux::netlink;
@@ -348,15 +348,15 @@ impl <'a> Nlmsg { // impl <'a> Nlmsg <'a> {
         unsafe { mnl_nlmsg_portid_ok(self, portid as c_uint) }
     }
 
-    pub fn payload<T>(&mut self) -> &'a mut T {
+    pub fn payload<T>(&self) -> &'a mut T {
         unsafe { &mut(*(mnl_nlmsg_get_payload(self) as *mut T)) }
     }
 
-    pub fn payload_offset<T>(&mut self, offset: usize) -> &'a mut T {
+    pub fn payload_offset<T>(&self, offset: usize) -> &'a mut T {
         unsafe { &mut(*(mnl_nlmsg_get_payload_offset(self, offset as size_t) as *mut T)) }
     }
 
-    pub fn payload_tail<T>(&mut self) -> &'a mut T {
+    pub fn payload_tail<T>(&self) -> &'a mut T {
         unsafe { &mut(*(mnl_nlmsg_get_payload_tail(self) as *mut T)) }
     }
 
@@ -460,6 +460,37 @@ impl <'a> Nlmsg { // impl <'a> Nlmsg <'a> {
         let mut cbdata = AttrCbData {cb: cb, data: data};
         let pdata = &mut cbdata as *mut _ as *mut c_void;
         cvt_cbret!(mnl_attr_parse(self, offset as c_uint, attr_parse_cb::<T>, pdata))
+    }
+
+    pub fn attrs(&'a self, offset: usize) -> Box<Iterator<Item=&Attr> + 'a> {
+        Box::new(AttrIterator { attr: self.payload_offset::<Attr>(offset),
+                                tail: self.payload_tail::<Attr>() as *const _ as uintptr_t })
+    }
+}
+
+struct AttrIterator<'a> {
+    attr: &'a Attr,
+    tail: uintptr_t,
+}
+
+impl <'a> AttrIterator <'a> {
+    fn ok(&self) -> bool {
+        self.attr.ok(
+            self.tail - self.attr as *const _ as uintptr_t
+        )
+    }
+}
+
+impl <'a> Iterator for AttrIterator <'a> {
+    type Item = &'a Attr;
+
+    fn next(&mut self) -> Option<&'a Attr> {
+        if !self.ok() {
+            return None;
+        }
+        let curr = self.attr;
+        self.attr = curr.next();
+        Some(curr)
     }
 }
 
@@ -579,6 +610,13 @@ impl <'a> Attr {
         let pdata = &mut cbdata as *mut _ as *mut c_void;
         cvt_cbret!(mnl_attr_parse_nested(self, attr_parse_cb::<T>, pdata))
     }
+
+    pub fn nesteds(&'a self) -> Box<Iterator<Item=&Attr> + 'a> {
+        Box::new(AttrIterator { attr: self.payload::<Attr>(),
+                                tail: self.payload::<Attr>() as *const _ as uintptr_t
+                                      + self.payload_len() as uintptr_t })
+    }
+
 }
 
 extern fn attr_parse_cb<T: ?Sized>(attr: *const netlink::Nlattr, data: *mut c_void) -> c_int {
