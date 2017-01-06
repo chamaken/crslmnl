@@ -22,17 +22,17 @@ pub enum Groups {
     _MAX			= 10,
 }
 
-pub const GRP_NONE: u32 			= Groups::NONE as u32;
-pub const GRP_CONNTRACK_NEW: u32		= Groups::CONNTRACK_NEW as u32;
-pub const GRP_CONNTRACK_UPDATE: u32		= Groups::CONNTRACK_UPDATE as u32;
-pub const GRP_CONNTRACK_DESTROY: u32	= Groups::CONNTRACK_DESTROY as u32;
-pub const GRP_CONNTRACK_EXP_NEW: u32	= Groups::CONNTRACK_EXP_NEW as u32;
-pub const GRP_CONNTRACK_EXP_UPDATE: u32	= Groups::CONNTRACK_EXP_UPDATE as u32;
-pub const GRP_CONNTRACK_EXP_DESTROY: u32  	= Groups::CONNTRACK_EXP_DESTROY as u32;
-pub const GRP_NFTABLES: u32			= Groups::NFTABLES as u32;
-pub const GRP_ACCT_QUOTA: u32		= Groups::ACCT_QUOTA as u32;
-pub const GRP_NFTRACE: u32			= Groups::NFTRACE as u32;
-pub const GRP_MAX: u32			= Groups::_MAX as u32 - 1;
+pub const NFNLGRP_NONE: u32 			= Groups::NONE as u32;
+pub const NFNLGRP_CONNTRACK_NEW: u32		= Groups::CONNTRACK_NEW as u32;
+pub const NFNLGRP_CONNTRACK_UPDATE: u32		= Groups::CONNTRACK_UPDATE as u32;
+pub const NFNLGRP_CONNTRACK_DESTROY: u32	= Groups::CONNTRACK_DESTROY as u32;
+pub const NFNLGRP_CONNTRACK_EXP_NEW: u32	= Groups::CONNTRACK_EXP_NEW as u32;
+pub const NFNLGRP_CONNTRACK_EXP_UPDATE: u32	= Groups::CONNTRACK_EXP_UPDATE as u32;
+pub const NFNLGRP_CONNTRACK_EXP_DESTROY: u32  	= Groups::CONNTRACK_EXP_DESTROY as u32;
+pub const NFNLGRP_NFTABLES: u32			= Groups::NFTABLES as u32;
+pub const NFNLGRP_ACCT_QUOTA: u32		= Groups::ACCT_QUOTA as u32;
+pub const NFNLGRP_NFTRACE: u32			= Groups::NFTRACE as u32;
+pub const NFNLGRP_MAX: u32			= Groups::_MAX as u32 - 1;
 
 // General form of address family dependent message.
 #[repr(C)]
@@ -58,20 +58,20 @@ pub fn MSG_TYPE(x: u16) -> u8 {
 
 // No enum here, otherwise __stringify() trick of MODULE_ALIAS_NFNL_SUBSYS()
 // won't work anymore
-pub const SUBSYS_NONE: u16			= 0;
-pub const SUBSYS_CTNETLINK: u16		= 1;
-pub const SUBSYS_CTNETLINK_EXP: u16	= 2;
-pub const SUBSYS_QUEUE: u16		= 3;
-pub const SUBSYS_ULOG: u16			= 4;
-pub const SUBSYS_OSF: u16			= 5;
-pub const SUBSYS_IPSET: u16		= 6;
-pub const SUBSYS_ACCT: u16			= 7;
-pub const SUBSYS_CTNETLINK_TIMEOUT: u16	= 8;
-pub const SUBSYS_CTHELPER: u16		= 9;
-pub const SUBSYS_NFTABLES: u16		= 10;
-pub const SUBSYS_NFT_COMPAT: u16		= 11;
-pub const SUBSYS_COUNT: u16		= 12;
+pub const NFNL_SUBSYS_NONE: u16			= 0;
+pub const NFNL_SUBSYS_CTNETLINK: u16		= 1;
+pub const NFNL_SUBSYS_CTNETLINK_EXP: u16	= 2;
+pub const NFNL_SUBSYS_QUEUE: u16		= 3;
+pub const NFNL_SUBSYS_ULOG: u16			= 4;
+pub const NFNL_SUBSYS_OSF: u16			= 5;
+pub const NFNL_SUBSYS_IPSET: u16		= 6;
+pub const NFNL_SUBSYS_ACCT: u16			= 7;
+pub const NFNL_SUBSYS_CTNETLINK_TIMEOUT: u16	= 8;
+pub const NFNL_SUBSYS_CTHELPER: u16		= 9;
+pub const NFNL_SUBSYS_NFTABLES: u16		= 10;
+pub const NFNL_SUBSYS_NFT_COMPAT: u16		= 11;
+pub const NFNL_SUBSYS_COUNT: u16		= 12;
 
 // Reserved control nfnetlink messages
-pub const MSG_BATCH_BEGIN: u16		= netlink::NLMSG_MIN_TYPE;
-pub const MSG_BATCH_END: u16		= netlink::NLMSG_MIN_TYPE + 1;
+pub const NFNL_MSG_BATCH_BEGIN: u16	= netlink::NLMSG_MIN_TYPE;
+pub const NFNL_MSG_BATCH_END: u16	= netlink::NLMSG_MIN_TYPE + 1;

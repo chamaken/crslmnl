@@ -1,4 +1,4 @@
-use libc::{c_int, c_uint, c_void};
+use libc::{c_int, c_uint, c_void, sockaddr_nl, /* sa_family_t */};
 // use std::marker::PhantomData;
 use std::mem::size_of;
 
@@ -88,7 +88,8 @@ impl Family {
 
 // XXX: not ported yet
 // #[repr(C)]
-// pub struct SockaddrNl {
+pub struct SockaddrNl { inner: sockaddr_nl }
+
 
 #[repr(C)]
 pub struct Nlmsghdr { // pub struct Nlmsghdr <'a> {

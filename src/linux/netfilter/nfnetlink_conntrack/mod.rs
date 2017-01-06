@@ -2,7 +2,7 @@
 #[derive(Copy, Clone)]
 #[repr(u16)]
 #[derive(Debug)]
-pub enum MsgTypes {
+pub enum CtnlMsgTypes {
     NEW			= 0,
     GET			= 1,
     DELETE		= 2,
@@ -13,24 +13,38 @@ pub enum MsgTypes {
     GET_UNCONFIRMED	= 7,
     MAX			= 8,
 }
+pub const IPCTNL_MSG_CT_NEW: u16		= CtnlMsgTypes::NEW as u16;
+pub const IPCTNL_MSG_CT_GET: u16		= CtnlMsgTypes::GET as u16;
+pub const IPCTNL_MSG_CT_DELETE: u16		= CtnlMsgTypes::DELETE as u16;
+pub const IPCTNL_MSG_CT_GET_CTRZERO: u16	= CtnlMsgTypes::GET_CTRZERO as u16;
+pub const IPCTNL_MSG_CT_GET_STATS_CPU: u16	= CtnlMsgTypes::GET_STATS_CPU as u16;
+pub const IPCTNL_MSG_CT_GET_STATS: u16		= CtnlMsgTypes::GET_STATS as u16;
+pub const IPCTNL_MSG_CT_GET_DYING: u16		= CtnlMsgTypes::GET_DYING as u16;
+pub const IPCTNL_MSG_CT_GET_UNCONFIRMED: u16	= CtnlMsgTypes::GET_UNCONFIRMED as u16;
+pub const IPCTNL_MSG_MAX: u16			= CtnlMsgTypes::MAX as u16;
 
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone)]
 #[repr(u16)]
 #[derive(Debug)]
-pub enum CntlExpMsgTypes {
+pub enum CtnlExpMsgTypes {
     NEW			= 0,
     GET			= 1,
     DELETE		= 2,
     GET_STATS_CPU	= 3,
     MAX			= 4,
 }
+pub const IPCTNL_MSG_EXP_NEW: u16		= CtnlExpMsgTypes::NEW as u16;
+pub const IPCTNL_MSG_EXP_GET: u16		= CtnlExpMsgTypes::GET as u16;
+pub const IPCTNL_MSG_EXP_DELETE: u16		= CtnlExpMsgTypes::DELETE as u16;
+pub const IPCTNL_MSG_EXP_GET_STATS_CPU: u16	= CtnlExpMsgTypes::GET_STATS_CPU as u16;
+pub const IPCTNL_MSG_EXP_MAX: u16		= CtnlExpMsgTypes::MAX as u16;
 
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone)]
 #[repr(u16)]
 #[derive(Debug)]
-pub enum AttrType {
+pub enum CtattrType {
     UNSPEC		= 0,
     TUPLE_ORIG		= 1,
     TUPLE_REPLY		= 2,
@@ -57,34 +71,60 @@ pub enum AttrType {
     LABELS_MASK		= 23,
     _MAX		= 24,
 }
-// unimplemented constant expression: enum variants
-// pub const CTA_MAX: u16 = (AttrType::_MAX as u16) - 1;
-pub const CTA_MAX: u16 = 24 - 1;
-// XXX: look for avoiding: discriminant value '' already exists
-pub const CTA_NAT: AttrType 			= AttrType::NAT_SRC;
-pub const CTA_NAT_SEQ_ADJ_ORIG:AttrType		= AttrType::SEQ_ADJ_ORIG;
-pub const CTA_NAT_SEQ_ADJ_REPLY:AttrType	= AttrType::SEQ_ADJ_REPLY;
+pub const CTA_UNSPEC: u16		= CtattrType::UNSPEC as u16;
+pub const CTA_TUPLE_ORIG: u16		= CtattrType::TUPLE_ORIG as u16;
+pub const CTA_TUPLE_REPLY: u16		= CtattrType::TUPLE_REPLY as u16;
+pub const CTA_STATUS: u16		= CtattrType::STATUS as u16;
+pub const CTA_PROTOINFO: u16		= CtattrType::PROTOINFO as u16;
+pub const CTA_HELP: u16			= CtattrType::HELP as u16;
+pub const CTA_NAT_SRC: u16		= CtattrType::NAT_SRC as u16;
+pub const CTA_NAT: u16			= CTA_NAT_SRC;				// backwards compatibility
+pub const CTA_TIMEOUT: u16		= CtattrType::TIMEOUT as u16;
+pub const CTA_MARK: u16			= CtattrType::MARK as u16;
+pub const CTA_COUNTERS_ORIG: u16	= CtattrType::COUNTERS_ORIG as u16;
+pub const CTA_COUNTERS_REPLY: u16	= CtattrType::COUNTERS_REPLY as u16;
+pub const CTA_USE: u16			= CtattrType::USE as u16;
+pub const CTA_ID: u16			= CtattrType::ID as u16;
+pub const CTA_NAT_DST: u16		= CtattrType::NAT_DST as u16;
+pub const CTA_TUPLE_MASTER: u16		= CtattrType::TUPLE_MASTER as u16;
+pub const CTA_SEQ_ADJ_ORIG: u16		= CtattrType::SEQ_ADJ_ORIG as u16;
+pub const CTA_NAT_SEQ_ADJ_ORIG:u16	= CTA_SEQ_ADJ_ORIG;
+pub const CTA_SEQ_ADJ_REPLY: u16	= CtattrType::SEQ_ADJ_REPLY as u16;
+pub const CTA_NAT_SEQ_ADJ_REPLY: u16	= CTA_SEQ_ADJ_REPLY;
+pub const CTA_SECMARK: u16		= CtattrType::SECMARK as u16;
+pub const CTA_ZONE: u16			= CtattrType::ZONE as u16;
+pub const CTA_SECCTX: u16		= CtattrType::SECCTX as u16;
+pub const CTA_TIMESTAMP: u16		= CtattrType::TIMESTAMP as u16;
+pub const CTA_MARK_MASK: u16		= CtattrType::MARK_MASK as u16;
+pub const CTA_LABELS: u16		= CtattrType::LABELS as u16;
+pub const CTA_LABELS_MASK: u16		= CtattrType::LABELS_MASK as u16;
+pub const __CTA_MAX: u16 		= CtattrType::_MAX as u16;
+pub const CTA_MAX: u16 			= __CTA_MAX - 1;
+
 
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone)]
 #[repr(u16)]
 #[derive(Debug)]
-pub enum AttrTuple {
+pub enum CtattrTuple {
     UNSPEC	= 0,
     IP		= 1,
     PROTO	= 2,
     ZONE	= 3,
     _MAX = 4,
 }
-// unimplemented constant expression: enum variants
-// pub const CTA_TUPLE_MAX: u16 = (AttrTuple::_MAX as u16) - 1;
-pub const CTA_TUPLE_MAX: u16 = 4 - 1;
+pub const CTA_TUPLE_UNSPEC: u16	= CtattrTuple::UNSPEC as u16;
+pub const CTA_TUPLE_IP: u16	= CtattrTuple::IP as u16;
+pub const CTA_TUPLE_PROTO: u16	= CtattrTuple::PROTO as u16;
+pub const CTA_TUPLE_ZONE: u16	= CtattrTuple::ZONE as u16;
+pub const __CTA_TUPLE_MAX: u16	= CtattrTuple::_MAX as u16;
+pub const CTA_TUPLE_MAX: u16	 = __CTA_TUPLE_MAX - 1;
 
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone)]
 #[repr(u16)]
 #[derive(Debug)]
-pub enum AttrIp {
+pub enum CtattrIp {
     UNSPEC	= 0,
     V4_SRC	= 1,
     V4_DST	= 2,
@@ -92,15 +132,19 @@ pub enum AttrIp {
     V6_DST	= 4,
     _MAX	= 5,
 }
-// unimplemented constant expression: enum variants
-// pub const CTA_IP_MAX: u16 = (AttrIp::_MAX as u16) - 1;
-pub const CTA_IP_MAX: u16 = 5 - 1;
+pub const CTA_IP_UNSPEC: u16	= CtattrIp::UNSPEC as u16;
+pub const CTA_IP_V4_SRC: u16	= CtattrIp::V4_SRC as u16;
+pub const CTA_IP_V4_DST: u16	= CtattrIp::V4_DST as u16;
+pub const CTA_IP_V6_SRC: u16	= CtattrIp::V6_SRC as u16;
+pub const CTA_IP_V6_DST: u16	= CtattrIp::V6_DST as u16;
+pub const __CTA_IP_MAX: u16	= CtattrIp::_MAX as u16;
+pub const CTA_IP_MAX: u16	= __CTA_IP_MAX - 1;
 
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone)]
 #[repr(u16)]
 #[derive(Debug)]
-pub enum AttrL4proto {
+pub enum CtattrL4proto {
     UNSPEC	= 0,
     NUM		= 1,
     SRC_PORT	= 2,
@@ -113,28 +157,42 @@ pub enum AttrL4proto {
     ICMPV6_CODE	= 9,
     _MAX = 10,
 }
-// unimplemented constant expression: enum variants
-// pub const CTA_PROTO_MAX: u16 = (AttrL4proto::_MAX as u16) - 1;
-pub const CTA_PROTO_MAX: u16 = 10 - 1;
+pub const CTA_PROTO_UNSPEC: u16		= CtattrL4proto::UNSPEC as u16;
+pub const CTA_PROTO_NUM: u16		= CtattrL4proto::NUM as u16;
+pub const CTA_PROTO_SRC_PORT: u16	= CtattrL4proto::SRC_PORT as u16;
+pub const CTA_PROTO_DST_PORT: u16	= CtattrL4proto::DST_PORT as u16;
+pub const CTA_PROTO_ICMP_ID: u16	= CtattrL4proto::ICMP_ID as u16;
+pub const CTA_PROTO_ICMP_TYPE: u16	= CtattrL4proto::ICMP_TYPE as u16;
+pub const CTA_PROTO_ICMP_CODE: u16	= CtattrL4proto::ICMP_CODE as u16;
+pub const CTA_PROTO_ICMPV6_ID: u16	= CtattrL4proto::ICMPV6_ID as u16;
+pub const CTA_PROTO_ICMPV6_TYPE: u16	= CtattrL4proto::ICMPV6_TYPE as u16;
+pub const CTA_PROTO_ICMPV6_CODE: u16	= CtattrL4proto::ICMPV6_CODE as u16;
+pub const __CTA_PROTO_MAX: u16		= CtattrL4proto::_MAX as u16;
+pub const CTA_PROTO_MAX: u16		= __CTA_PROTO_MAX - 1;
 
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone)]
 #[repr(u32)]
 #[derive(Debug)]
-pub enum AttrProtoinfo {
+pub enum CtattrProtoinfo {
     UNSPEC	= 0,
     TCP		= 1,
     DCCP	= 2,
     SCTP	= 3,
     _MAX	= 4,
 }
-pub const CTA_PROTOINFO_MAX: u16 = (AttrProtoinfo::_MAX as u16) - 1;
+pub const CTA_PROTOINFO_UNSPEC: u16	= CtattrProtoinfo::UNSPEC as u16;
+pub const CTA_PROTOINFO_TCP: u16	= CtattrProtoinfo::TCP as u16;
+pub const CTA_PROTOINFO_DCCP: u16	= CtattrProtoinfo::DCCP as u16;
+pub const CTA_PROTOINFO_SCTP: u16	= CtattrProtoinfo::SCTP as u16;
+pub const __CTA_PROTOINFO_MAX: u16	= CtattrProtoinfo::_MAX as u16;
+pub const CTA_PROTOINFO_MAX: u16	= __CTA_PROTOINFO_MAX - 1;
 
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone)]
-#[repr(u32)]
+#[repr(u16)]
 #[derive(Debug)]
-pub enum AttrProtoinfoTcp {
+pub enum CtattrProtoinfoTcp {
     UNSPEC		= 0,
     STATE		= 1,
     WSCALE_ORIGINAL	= 2,
@@ -143,13 +201,20 @@ pub enum AttrProtoinfoTcp {
     FLAGS_REPLY		= 5,
     _MAX		= 6,
 }
-pub const CTA_PROTOINFO_TCP_MAX: u16 = (AttrProtoinfoTcp::_MAX as u16) - 1;
+pub const CTA_PROTOINFO_TCP_UNSPEC: u16			= CtattrProtoinfoTcp::UNSPEC as u16;
+pub const CTA_PROTOINFO_TCP_STATE: u16			= CtattrProtoinfoTcp::STATE as u16;
+pub const CTA_PROTOINFO_TCP_WSCALE_ORIGINAL: u16	= CtattrProtoinfoTcp::WSCALE_ORIGINAL as u16;
+pub const CTA_PROTOINFO_TCP_WSCALE_REPLY: u16		= CtattrProtoinfoTcp::WSCALE_REPLY as u16;
+pub const CTA_PROTOINFO_TCP_FLAGS_ORIGINAL: u16		= CtattrProtoinfoTcp::FLAGS_ORIGINAL as u16;
+pub const CTA_PROTOINFO_TCP_FLAGS_REPLY: u16		= CtattrProtoinfoTcp::FLAGS_REPLY as u16;
+pub const __CTA_PROTOINFO_TCP_MAX: u16			= CtattrProtoinfoTcp::_MAX as u16;
+pub const CTA_PROTOINFO_TCP_MAX: u16			= __CTA_PROTOINFO_TCP_MAX - 1;
 
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone)]
 #[repr(u16)]
 #[derive(Debug)]
-pub enum AttrProtoinfoDccp {
+pub enum CtattrProtoinfoDccp {
     UNSPEC		= 0,
     STATE		= 1,
     ROLE		= 2,
@@ -157,7 +222,12 @@ pub enum AttrProtoinfoDccp {
     PAD			= 4,
     _MAX		= 5,
 }
-pub const CTA_PROTOINFO_DCCP_MAX: u16 = (AttrProtoinfoDccp::_MAX as u16) - 1;
+pub const CTA_PROTOINFO_DCCP_MAX: u16 = (CtattrProtoinfoDccp::_MAX as u16) - 1;
+pub const CTA_PROTOINFO_DCCP_UNSPEC: u16	= CtattrProtoinfoDccp::UNSPEC as u16;
+pub const CTA_PROTOINFO_DCCP_STATE: u16		= CtattrProtoinfoDccp::STATE as u16;
+pub const CTA_PROTOINFO_DCCP_ROLE: u16		= CtattrProtoinfoDccp::ROLE as u16;
+pub const CTA_PROTOINFO_DCCP_HANDSHAKE_SEQ: u16	= CtattrProtoinfoDccp::HANDSHAKE_SEQ as u16;
+pub const CTA_PROTOINFO_DCCP_PAD: u16		= CtattrProtoinfoDccp::PAD as u16;
 
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone)]

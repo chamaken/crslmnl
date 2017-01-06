@@ -99,7 +99,7 @@ fn log_cb<T>(nlh: &mnl::Nlmsg, _: &mut T) -> mnl::CbRet {
 fn nflog_build_cfg_pf_request<'a>(buf: &'a mut [u8], command: u8) -> &mut mnl::Nlmsg {
 // fn nflog_build_cfg_pf_request(buf: &mut [u8], command: u8) -> &mut mnl::Nlmsg {
     let mut nlh = mnl::Nlmsg::put_header(buf);
-    nlh.nlmsg_type = (nfnl::SUBSYS_ULOG << 8) | nful::MsgTypes::CONFIG as u16;
+    nlh.nlmsg_type = (nfnl::NFNL_SUBSYS_ULOG << 8) | nful::MsgTypes::CONFIG as u16;
     nlh.nlmsg_flags = netlink::NLM_F_REQUEST;
 
     let nfg = nlh.put_sized_header::<nfnl::Nfgenmsg>();
@@ -113,7 +113,7 @@ fn nflog_build_cfg_pf_request<'a>(buf: &'a mut [u8], command: u8) -> &mut mnl::N
 
 fn nflog_build_cfg_request<'a>(buf: &'a mut [u8], command: u8, qnum: u16) -> &mut mnl::Nlmsg {
     let mut nlh = mnl::Nlmsg::put_header(buf);
-    nlh.nlmsg_type = (nfnl::SUBSYS_ULOG << 8) | nful::MsgTypes::CONFIG as u16;
+    nlh.nlmsg_type = (nfnl::NFNL_SUBSYS_ULOG << 8) | nful::MsgTypes::CONFIG as u16;
     nlh.nlmsg_flags = netlink::NLM_F_REQUEST;
 
     let nfg = nlh.put_sized_header::<nfnl::Nfgenmsg>();
@@ -128,7 +128,7 @@ fn nflog_build_cfg_request<'a>(buf: &'a mut [u8], command: u8, qnum: u16) -> &mu
 
 fn nflog_build_cfg_params<'a>(buf: &'a mut [u8], mode: u8, range: u32, qnum: u16) -> &mut mnl::Nlmsg {
     let mut nlh = mnl::Nlmsg::put_header(buf);
-    nlh.nlmsg_type = (nfnl::SUBSYS_ULOG << 8) | nful::MsgTypes::CONFIG as u16;
+    nlh.nlmsg_type = (nfnl::NFNL_SUBSYS_ULOG << 8) | nful::MsgTypes::CONFIG as u16;
     nlh.nlmsg_flags = netlink::NLM_F_REQUEST;
 
     let nfg = nlh.put_sized_header::<nfnl::Nfgenmsg>();

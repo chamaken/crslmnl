@@ -4,13 +4,22 @@ pub mod nfnetlink_conntrack;
 pub mod nfnetlink_queue;
 
 // Responses from hook functions.
-pub const NF_DROP: u32		= 0;
-pub const NF_ACCEPT: u32	= 1;
-pub const NF_STOLEN: u32	= 2;
-pub const NF_QUEUE: u32		= 3;
-pub const NF_REPEAT: u32	= 4;
-pub const NF_STOP: u32		= 5;	// Deprecated, for userspace nf_queue compatibility.
-pub const NF_MAX_VERDICT: u32	= NF_STOP;
+#[repr(u32)] // ???
+pub enum Verdict {
+    DROP	= 0,
+    ACCEPT	= 1,
+    STOLEN	= 2,
+    QUEUE	= 3,
+    REPEAT	= 4,
+    STOP	= 5,	// Deprecated, for userspace nf_queue compatibility.
+}
+pub const NF_DROP: u32		= Verdict::DROP as u32;
+pub const NF_ACCEPT: u32	= Verdict::ACCEPT as u32;
+pub const NF_STOLEN: u32	= Verdict::STOLEN as u32;
+pub const NF_QUEUE: u32		= Verdict::QUEUE as u32;
+pub const NF_REPEAT: u32	= Verdict::REPEAT as u32;
+pub const NF_STOP: u32		= Verdict::STOP as u32;
+pub const NF_MAX_VERDICT: u32	= Verdict::STOP as u32;
 
 // we overload the higher bits for encoding auxiliary data such as the queue
 // number or errno values. Not nice, but better than additional function
@@ -56,28 +65,48 @@ pub enum InetHooks {
     FORWARD		= 2,
     LOCAL_OUT		= 3,
     POST_ROUTING	= 4,
-    NUMHOOKS		= 5
+    NUMHOOKS		= 5,
 }
+pub const NF_INET_PRE_ROUTING: u8	= InetHooks::PRE_ROUTING as u8;
+pub const NF_INET_LOCAL_IN: u8		= InetHooks::LOCAL_IN as u8;
+pub const NF_INET_FORWARD: u8		= InetHooks::FORWARD as u8;
+pub const NF_INET_LOCAL_OUT: u8		= InetHooks::LOCAL_OUT as u8;
+pub const NF_INET_POST_ROUTING: u8	= InetHooks::POST_ROUTING as u8;
+pub const NF_INET_NUMHOOKS: u8		= InetHooks::NUMHOOKS as u8;
 
 #[derive(Copy, Clone)]
 #[repr(u32)]
 #[derive(Debug)]
-enum DevHooks {
-	INGRESS,
-	NUMHOOKS
+pub enum DevHooks {
+    INGRESS	= 0,
+    NUMHOOKS	= 1,
 }
+pub const NF_NETDEV_INGRESS: u32	= DevHooks::INGRESS as u32;
+pub const NF_NETDEV_NUMHOOKS: u32	= DevHooks::NUMHOOKS as u32;
 
-// enum {
-pub const NFPROTO_UNSPEC: u8 	=  0;
-pub const NFPROTO_INET: u8   	=  1;
-pub const NFPROTO_IPV4: u8   	=  2;
-pub const NFPROTO_ARP: u8    	=  3;
-pub const NFPROTO_NETDEV: u8 	=  5;
-pub const NFPROTO_BRIDGE: u8 	=  7;
-pub const NFPROTO_IPV6: u8 	= 10;
-pub const NFPROTO_DECNET: u8	= 12;
-pub const NFPROTO_NUMPROTO: u8	= 13;
+#[repr(u8)]
+pub enum Proto {
+    UNSPEC	=  0,
+    INET  	=  1,
+    IPV4   	=  2,
+    ARP    	=  3,
+    NETDEV 	=  5,
+    BRIDGE 	=  7,
+    IPV6   	= 10,
+    DECNET 	= 12,
+    NUMPROTO	= 13,
+}
+pub const NFPROTO_UNSPEC: u8 	= Proto::UNSPEC as u8;
+pub const NFPROTO_INET: u8   	= Proto::INET as u8;
+pub const NFPROTO_IPV4: u8   	= Proto::IPV4 as u8;
+pub const NFPROTO_ARP: u8    	= Proto::ARP as u8;
+pub const NFPROTO_NETDEV: u8 	= Proto::NETDEV as u8;
+pub const NFPROTO_BRIDGE: u8 	= Proto::BRIDGE as u8;
+pub const NFPROTO_IPV6: u8 	= Proto::IPV6 as u8;
+pub const NFPROTO_DECNET: u8	= Proto::DECNET as u8;
+pub const NFPROTO_NUMPROTO: u8	= Proto::NUMPROTO as u8;
 
+// XXX: not implemented yet
 // union nf_inet_addr {
 // 	__u32		all[4];
 // 	__be32		ip;
