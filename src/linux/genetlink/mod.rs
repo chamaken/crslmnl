@@ -80,7 +80,7 @@ pub const CTRL_ATTR_HDRSIZE: u16	= CtrlAttr::HDRSIZE as u16;
 pub const CTRL_ATTR_MAXATTR: u16	= CtrlAttr::MAXATTR as u16;
 pub const CTRL_ATTR_OPS: u16		= CtrlAttr::OPS as u16;
 pub const CTRL_ATTR_MCAST_GROUPS: u16	= CtrlAttr::MCAST_GROUPS as u16;
-pub const __CTRL_ATTR_MAX: u16		= CtrlAttr::_MAX as u16;
+pub const __CTRL_ATTR_MAX: u16		= 8u16; // CtrlAttr::_MAX as u16;
 pub const CTRL_ATTR_MAX: u16		= __CTRL_ATTR_MAX - 1;
 
 #[repr(u16)]
@@ -93,7 +93,7 @@ pub enum CtrlAttrOp {
 pub const CTRL_ATTR_OP_UNSPEC: u16	= CtrlAttrOp::UNSPEC as u16;
 pub const CTRL_ATTR_OP_ID: u16		= CtrlAttrOp::ID as u16;
 pub const CTRL_ATTR_OP_FLAGS: u16	= CtrlAttrOp::FLAGS as u16;
-pub const __CTRL_ATTR_OP_MAX: u16	= CtrlAttrOp::_MAX as u16;
+pub const __CTRL_ATTR_OP_MAX: u16	= 3u16; // CtrlAttrOp::_MAX as u16;
 pub const CTRL_ATTR_OP_MAX: u16		= __CTRL_ATTR_OP_MAX - 1;
 
 #[repr(u16)]
@@ -106,5 +106,5 @@ pub enum CtrlAttrMcastGrp {
 pub const CTRL_ATTR_MCAST_GRP_UNSPEC: u16	= CtrlAttrMcastGrp::UNSPEC as u16;
 pub const CTRL_ATTR_MCAST_GRP_NAME: u16		= CtrlAttrMcastGrp::NAME as u16;
 pub const CTRL_ATTR_MCAST_GRP_ID: u16		= CtrlAttrMcastGrp::ID as u16;
-pub const __CTRL_ATTR_MCAST_GRP_MAX: u16	= CtrlAttrMcastGrp::_MAX as u16;
+pub const __CTRL_ATTR_MCAST_GRP_MAX: u16	= 3u16; // CtrlAttrMcastGrp::_MAX as u16;
 pub const CTRL_ATTR_MCAST_GRP_MAX: u16		= __CTRL_ATTR_MCAST_GRP_MAX - 1;

@@ -98,7 +98,7 @@ pub const CTA_TIMESTAMP: u16		= CtattrType::TIMESTAMP as u16;
 pub const CTA_MARK_MASK: u16		= CtattrType::MARK_MASK as u16;
 pub const CTA_LABELS: u16		= CtattrType::LABELS as u16;
 pub const CTA_LABELS_MASK: u16		= CtattrType::LABELS_MASK as u16;
-pub const __CTA_MAX: u16 		= CtattrType::_MAX as u16;
+pub const __CTA_MAX: u16 		= 24u16; // CtattrType::_MAX as u16;
 pub const CTA_MAX: u16 			= __CTA_MAX - 1;
 
 
@@ -117,7 +117,7 @@ pub const CTA_TUPLE_UNSPEC: u16	= CtattrTuple::UNSPEC as u16;
 pub const CTA_TUPLE_IP: u16	= CtattrTuple::IP as u16;
 pub const CTA_TUPLE_PROTO: u16	= CtattrTuple::PROTO as u16;
 pub const CTA_TUPLE_ZONE: u16	= CtattrTuple::ZONE as u16;
-pub const __CTA_TUPLE_MAX: u16	= CtattrTuple::_MAX as u16;
+pub const __CTA_TUPLE_MAX: u16	= 4; // CtattrTuple::_MAX as u16;
 pub const CTA_TUPLE_MAX: u16	 = __CTA_TUPLE_MAX - 1;
 
 #[allow(non_camel_case_types)]
@@ -137,7 +137,7 @@ pub const CTA_IP_V4_SRC: u16	= CtattrIp::V4_SRC as u16;
 pub const CTA_IP_V4_DST: u16	= CtattrIp::V4_DST as u16;
 pub const CTA_IP_V6_SRC: u16	= CtattrIp::V6_SRC as u16;
 pub const CTA_IP_V6_DST: u16	= CtattrIp::V6_DST as u16;
-pub const __CTA_IP_MAX: u16	= CtattrIp::_MAX as u16;
+pub const __CTA_IP_MAX: u16	= 5u16; // CtattrIp::_MAX as u16;
 pub const CTA_IP_MAX: u16	= __CTA_IP_MAX - 1;
 
 #[allow(non_camel_case_types)]
@@ -167,7 +167,7 @@ pub const CTA_PROTO_ICMP_CODE: u16	= CtattrL4proto::ICMP_CODE as u16;
 pub const CTA_PROTO_ICMPV6_ID: u16	= CtattrL4proto::ICMPV6_ID as u16;
 pub const CTA_PROTO_ICMPV6_TYPE: u16	= CtattrL4proto::ICMPV6_TYPE as u16;
 pub const CTA_PROTO_ICMPV6_CODE: u16	= CtattrL4proto::ICMPV6_CODE as u16;
-pub const __CTA_PROTO_MAX: u16		= CtattrL4proto::_MAX as u16;
+pub const __CTA_PROTO_MAX: u16		= 10u16; // CtattrL4proto::_MAX as u16;
 pub const CTA_PROTO_MAX: u16		= __CTA_PROTO_MAX - 1;
 
 #[allow(non_camel_case_types)]
