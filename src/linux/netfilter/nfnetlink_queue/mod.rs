@@ -1,7 +1,5 @@
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone)]
 #[repr(u32)]
-#[derive(Debug)]
 pub enum MsgTypes {
     PACKET		= 0,	// packet from kernel to userspace
     VERDICT		= 1,	// verdict from userspace to kernel
@@ -11,8 +9,6 @@ pub enum MsgTypes {
 }
 
 #[repr(C, packed)]
-#[derive(Copy, Clone)]
-#[derive(Debug)]
 pub struct MsgPacketHdr {
     pub packet_id: u32,		// unique ID of packet in queue
     pub hw_protocol: u16,       // hw protocol (network order)
@@ -20,8 +16,6 @@ pub struct MsgPacketHdr {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
-#[derive(Debug)]
 pub struct MsgPacketHw {
     pub hw_addrlen: u16,
     pub _pad: u16,
@@ -29,16 +23,12 @@ pub struct MsgPacketHw {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
-#[derive(Debug)]
 pub struct MsgPacketTimestamp {
     pub sec: u64,
     pub usec: u64,
 }
 
-#[derive(Copy, Clone)]
 #[repr(u32)]
-#[derive(Debug)]
 pub enum VlanAttr {
     UNSPEC	= 0,
     PROTO	= 1,	// __be16 skb vlan_proto
@@ -48,9 +38,7 @@ pub enum VlanAttr {
 pub const NFQA_VLAN_MAX: u16 = 3 + 1; // ??? 3 - 1
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone)]
 #[repr(u16)]
-#[derive(Debug)]
 pub enum AttrType {
     UNSPEC		= 0,
     PACKET_HDR		= 1,
@@ -78,17 +66,13 @@ pub enum AttrType {
 pub const NFQA_MAX: u16 = 21 - 1;
 
 #[repr(C)]
-#[derive(Copy, Clone)]
-#[derive(Debug)]
 pub struct MsgVerdictHdr {
     pub verdict: u32,
     pub id: u32,
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone)]
 #[repr(u8)]
-#[derive(Debug)]
 pub enum MsgConfigCmds {
     NONE	= 0,
     BIND	= 1,
@@ -98,18 +82,17 @@ pub enum MsgConfigCmds {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
-#[derive(Debug)]
 pub struct MsgConfigCmd {
     pub command: u8,	// nfqnl_msg_config_cmds
     pub _pad: u8,
     pub pf: u16,	// AF_xxx for PF_[UN]BIND
 }
+impl ::std::default::Default for MsgConfigCmd {
+    fn default() -> Self { unsafe { ::std::mem::zeroed() } }
+}
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone)]
 #[repr(u8)]
-#[derive(Debug)]
 pub enum ConfigMode {
     COPY_NONE	= 0,
     COPY_META	= 1,
@@ -117,17 +100,13 @@ pub enum ConfigMode {
 }
 
 #[repr(C, packed)]
-#[derive(Copy, Clone)]
-#[derive(Debug)]
 pub struct MsgConfigParams {
     pub copy_range: u32,
     pub copy_mode: u8,		// enum nfqnl_config_mode
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone)]
 #[repr(u32)]
-#[derive(Debug)]
 pub enum AttrConfig {
     UNSPEC		= 0,
     CMD			= 1,	// nfqnl_msg_config_cmd

@@ -85,7 +85,7 @@ fn nfq_build_cfg_pf_request<'a>(buf: &'a mut[u8], command: u8) -> &mut mnl::Nlms
     nfg.nfgen_family = 0; // libc::AF_UNSPEC as u8;
     nfg.version = nfnl::NFNETLINK_V0;
 
-    let cmd = nfq::MsgConfigCmd { command: command, pf: libc::AF_INET.to_be() as u16, _pad: 0 };
+    let cmd = nfq::MsgConfigCmd { command: command, pf: libc::AF_INET.to_be() as u16, ..Default::default() };
     nlh.put(nfq::AttrConfig::CMD as u16, cmd);
 
     nlh
