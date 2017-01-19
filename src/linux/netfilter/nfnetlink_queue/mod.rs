@@ -81,14 +81,12 @@ pub enum MsgConfigCmds {
     PF_UNBIND	= 4,
 }
 
+#[derive(Default)]
 #[repr(C)]
 pub struct MsgConfigCmd {
     pub command: u8,	// nfqnl_msg_config_cmds
     pub _pad: u8,
     pub pf: u16,	// AF_xxx for PF_[UN]BIND
-}
-impl ::std::default::Default for MsgConfigCmd {
-    fn default() -> Self { unsafe { ::std::mem::zeroed() } }
 }
 
 #[allow(non_camel_case_types)]
