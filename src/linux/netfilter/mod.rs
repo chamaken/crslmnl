@@ -55,9 +55,7 @@ pub const NF_VERDICT_BITS: u8	=  16;
 // #endif
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone)]
 #[repr(u8)]
-#[derive(Debug)]
 pub enum InetHooks {
     // bitop? or u32
     PRE_ROUTING		= 0,
@@ -74,9 +72,7 @@ pub const NF_INET_LOCAL_OUT: u8		= InetHooks::LOCAL_OUT as u8;
 pub const NF_INET_POST_ROUTING: u8	= InetHooks::POST_ROUTING as u8;
 pub const NF_INET_NUMHOOKS: u8		= InetHooks::NUMHOOKS as u8;
 
-#[derive(Copy, Clone)]
 #[repr(u32)]
-#[derive(Debug)]
 pub enum DevHooks {
     INGRESS	= 0,
     NUMHOOKS	= 1,

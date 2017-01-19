@@ -1,7 +1,5 @@
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone)]
 #[repr(u16)]
-#[derive(Debug)]
 pub enum CtnlMsgTypes {
     NEW			= 0,
     GET			= 1,
@@ -24,9 +22,7 @@ pub const IPCTNL_MSG_CT_GET_UNCONFIRMED: u16	= CtnlMsgTypes::GET_UNCONFIRMED as 
 pub const IPCTNL_MSG_MAX: u16			= CtnlMsgTypes::MAX as u16;
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone)]
 #[repr(u16)]
-#[derive(Debug)]
 pub enum CtnlExpMsgTypes {
     NEW			= 0,
     GET			= 1,
@@ -41,9 +37,7 @@ pub const IPCTNL_MSG_EXP_GET_STATS_CPU: u16	= CtnlExpMsgTypes::GET_STATS_CPU as 
 pub const IPCTNL_MSG_EXP_MAX: u16		= CtnlExpMsgTypes::MAX as u16;
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone)]
 #[repr(u16)]
-#[derive(Debug)]
 pub enum CtattrType {
     UNSPEC		= 0,
     TUPLE_ORIG		= 1,
@@ -103,9 +97,7 @@ pub const CTA_MAX: u16 			= __CTA_MAX - 1;
 
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone)]
 #[repr(u16)]
-#[derive(Debug)]
 pub enum CtattrTuple {
     UNSPEC	= 0,
     IP		= 1,
@@ -121,9 +113,7 @@ pub const __CTA_TUPLE_MAX: u16	= 4; // CtattrTuple::_MAX as u16;
 pub const CTA_TUPLE_MAX: u16	 = __CTA_TUPLE_MAX - 1;
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone)]
 #[repr(u16)]
-#[derive(Debug)]
 pub enum CtattrIp {
     UNSPEC	= 0,
     V4_SRC	= 1,
@@ -141,9 +131,7 @@ pub const __CTA_IP_MAX: u16	= 5u16; // CtattrIp::_MAX as u16;
 pub const CTA_IP_MAX: u16	= __CTA_IP_MAX - 1;
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone)]
 #[repr(u16)]
-#[derive(Debug)]
 pub enum CtattrL4proto {
     UNSPEC	= 0,
     NUM		= 1,
@@ -171,9 +159,7 @@ pub const __CTA_PROTO_MAX: u16		= 10u16; // CtattrL4proto::_MAX as u16;
 pub const CTA_PROTO_MAX: u16		= __CTA_PROTO_MAX - 1;
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone)]
 #[repr(u32)]
-#[derive(Debug)]
 pub enum CtattrProtoinfo {
     UNSPEC	= 0,
     TCP		= 1,
@@ -189,9 +175,7 @@ pub const __CTA_PROTOINFO_MAX: u16	= CtattrProtoinfo::_MAX as u16;
 pub const CTA_PROTOINFO_MAX: u16	= __CTA_PROTOINFO_MAX - 1;
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone)]
 #[repr(u16)]
-#[derive(Debug)]
 pub enum CtattrProtoinfoTcp {
     UNSPEC		= 0,
     STATE		= 1,
@@ -211,9 +195,7 @@ pub const __CTA_PROTOINFO_TCP_MAX: u16			= CtattrProtoinfoTcp::_MAX as u16;
 pub const CTA_PROTOINFO_TCP_MAX: u16			= __CTA_PROTOINFO_TCP_MAX - 1;
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone)]
 #[repr(u16)]
-#[derive(Debug)]
 pub enum CtattrProtoinfoDccp {
     UNSPEC		= 0,
     STATE		= 1,
@@ -230,9 +212,7 @@ pub const CTA_PROTOINFO_DCCP_HANDSHAKE_SEQ: u16	= CtattrProtoinfoDccp::HANDSHAKE
 pub const CTA_PROTOINFO_DCCP_PAD: u16		= CtattrProtoinfoDccp::PAD as u16;
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone)]
 #[repr(u16)]
-#[derive(Debug)]
 pub enum AttrProtoinfoSctp {
     UNSPEC = 0,
     STATE = 1,
@@ -243,9 +223,7 @@ pub enum AttrProtoinfoSctp {
 pub const CTA_PROTOINFO_SCTP_MAX: u16 = (AttrProtoinfoSctp::_MAX as u16) - 1;
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone)]
 #[repr(u16)]
-#[derive(Debug)]
 pub enum AttrCounters {
     UNSPEC	= 0,
     PACKETS	= 1,	// 64bit counters
@@ -260,9 +238,7 @@ pub enum AttrCounters {
 pub const CTA_COUNTERS_MAX: u16 = 6 - 1;
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone)]
 #[repr(u16)]
-#[derive(Debug)]
 pub enum AttrTstamp {
     UNSPEC	= 0,
     START	= 1,
@@ -273,9 +249,7 @@ pub enum AttrTstamp {
 pub const CTA_TIMESTAMP_MAX: u16 = (AttrTstamp::_MAX as u16) - 1;
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone)]
 #[repr(u16)]
-#[derive(Debug)]
 pub enum AttrNat {
     UNSPEC	= 0,
     V4_MINIP	= 1,
@@ -291,9 +265,7 @@ pub const CTATTR_NAT_MINIP: AttrNat = AttrNat::V4_MINIP;
 pub const CTATTR_NAT_MAXIP: AttrNat = AttrNat::V4_MAXIP;
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone)]
 #[repr(u16)]
-#[derive(Debug)]
 pub enum AttrProtonat {
     UNSPEC	= 0,
     PORT_MIN	= 1,
@@ -303,9 +275,7 @@ pub enum AttrProtonat {
 pub const CTA_PROTONAT_MAX: u16 = (AttrProtonat::_MAX as u16) - 1;
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone)]
 #[repr(u16)]
-#[derive(Debug)]
 pub enum AttrSeqadj {
     UNSPEC		= 0,
     CORRECTION_POS	= 1,
@@ -316,9 +286,7 @@ pub enum AttrSeqadj {
 pub const CTA_SEQADJ_MAX: u16 = (AttrSeqadj::_MAX as u16) - 1;
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone)]
 #[repr(u16)]
-#[derive(Debug)]
 pub enum AttrNatseq {
     UNSPEC = 0,
     CORRECTION_POS = 1,
@@ -329,9 +297,7 @@ pub enum AttrNatseq {
 pub const CTA_NAT_SEQ_MAX: u16 = (AttrNatseq::_MAX as u16) - 1;
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone)]
 #[repr(u16)]
-#[derive(Debug)]
 pub enum AttrExpect {
     UNSPEC	= 0,
     MASTER	= 1,
@@ -350,9 +316,7 @@ pub enum AttrExpect {
 pub const CTA_EXPECT_MAX: u16 = (AttrExpect::_MAX as u16) - 1;
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone)]
 #[repr(u32)]
-#[derive(Debug)]
 pub enum AttrExpectNat {
     UNSPEC	= 0,
     DIR		= 1,
@@ -362,9 +326,7 @@ pub enum AttrExpectNat {
 pub const CTA_EXPECT_NAT_MAX: u16 = (AttrExpectNat::_MAX as u16) - 1;
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone)]
 #[repr(u16)]
-#[derive(Debug)]
 pub enum AttrHelp {
     UNSPEC	= 0,
     NAME	= 1,
@@ -374,9 +336,7 @@ pub enum AttrHelp {
 pub const CTA_HELP_MAX: u16 = (AttrHelp::_MAX as u16) - 1;
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone)]
 #[repr(u16)]
-#[derive(Debug)]
 pub enum AttrSecctx {
     UNSPEC	= 0,
     NAME	= 1,
@@ -385,9 +345,7 @@ pub enum AttrSecctx {
 pub const CTA_SECCTX_MAX: u16 = (AttrSecctx::_MAX as u16) - 1;
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone)]
 #[repr(u16)]
-#[derive(Debug)]
 pub enum AttrStatsCpu {
     UNSPEC		= 0,
     SEARCHED		= 1,	// no longer used
@@ -408,9 +366,7 @@ pub enum AttrStatsCpu {
 pub const CTA_STATS_MAX: u16 = (AttrStatsCpu::_MAX as u16) - 1;
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone)]
 #[repr(u16)]
-#[derive(Debug)]
 pub enum AttrStatsGlobal {
     UNSPEC	= 0,
     ENTRIES	= 1,
@@ -419,9 +375,7 @@ pub enum AttrStatsGlobal {
 pub const CTA_STATS_GLOBAL: u16 = (AttrStatsGlobal::_MAX as u16) - 1;
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone)]
 #[repr(u16)]
-#[derive(Debug)]
 pub enum AttrExpectStats {
     UNSPEC	= 0,
     NEW		= 1,

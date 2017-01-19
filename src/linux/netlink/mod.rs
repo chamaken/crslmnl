@@ -1,4 +1,4 @@
-use libc::{c_int, c_uint, c_void, sockaddr_nl, /* sa_family_t */};
+use libc::{ c_int, c_uint, sockaddr_nl };
 // use std::marker::PhantomData;
 use std::mem::size_of;
 
@@ -102,12 +102,12 @@ pub struct Nlmsghdr { // pub struct Nlmsghdr <'a> {
 }
 
 // Flags values
-pub const NLM_F_REQUEST: u16	= 1;		// It is request message.
-pub const NLM_F_MULTI: u16	= 2;		// Multipart message, terminated by NLMSG_DONE
-pub const NLM_F_ACK: u16	= 4;		// Reply with ack, with zero or error code
-pub const NLM_F_ECHO: u16	= 8;		// Echo this request
-pub const NLM_F_DUMP_INTR: u16	= 16;		// Dump was inconsistent due to sequence change
-pub const NLM_F_DUMP_FILTERED: u16 = 32;	// Dump was filtered as requested
+pub const NLM_F_REQUEST: u16		= 1;	// It is request message.
+pub const NLM_F_MULTI: u16		= 2;	// Multipart message, terminated by NLMSG_DONE
+pub const NLM_F_ACK: u16		= 4;	// Reply with ack, with zero or error code
+pub const NLM_F_ECHO: u16		= 8;	// Echo this request
+pub const NLM_F_DUMP_INTR: u16		= 16;	// Dump was inconsistent due to sequence change
+pub const NLM_F_DUMP_FILTERED: u16	= 32;	// Dump was filtered as requested
 
 // Modifiers to GET request
 pub const NLM_F_ROOT: u16	= 0x100;	// specify tree	root
@@ -154,16 +154,22 @@ pub fn NLMSG_SPACE(len: u32) -> u32 {
 }
 
 #[allow(non_snake_case)]
-pub fn NLMSG_DATA(nlh: &mut Nlmsghdr) -> *mut c_void {
-    unsafe { ((nlh as *mut _).offset(NLMSG_LENGTH(0) as isize)) as *mut c_void }
+pub fn NLMSG_DATA<T>(nlh: &mut Nlmsghdr) -> &mut T {
+    unsafe {
+        ((nlh as *mut _ as *mut u8)
+         .offset(NLMSG_LENGTH(0) as isize) as *mut T)
+            .as_mut()
+    }.unwrap()
 }
 
 #[allow(non_snake_case)]
-pub fn NLMSG_NEXT(nlh: &mut Nlmsghdr, len: &mut u32) -> *mut Nlmsghdr {
-    // pub fn NLMSG_NEXT<'a>(nlh: &'a mut Nlmsghdr<'a>, len: &mut u32) -> *mut Nlmsghdr<'a> {
+pub fn NLMSG_NEXT<'a>(nlh: &'a mut Nlmsghdr, len: &mut u32) -> &'a mut Nlmsghdr {
     *len -= NLMSG_ALIGN(nlh.nlmsg_len);
-    unsafe { ((nlh as *mut _).offset(NLMSG_ALIGN(nlh.nlmsg_len) as isize)) as *mut Nlmsghdr }
-    // unsafe { ((nlh as *mut _).offset(NLMSG_ALIGN(nlh.nlmsg_len) as isize)) as *mut Nlmsghdr<'a> }
+    unsafe {
+        ((nlh as *mut _ as *mut u8)
+         .offset(NLMSG_ALIGN(nlh.nlmsg_len) as isize) as *mut Nlmsghdr)
+            .as_mut()
+    }.unwrap()
 }
 
 #[allow(non_snake_case)]
