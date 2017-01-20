@@ -1,7 +1,6 @@
 use std::env;
 use std::io::Write;
 use std::mem::size_of;
-use std::process::exit;
 use std::vec::Vec;
 
 extern crate libc;
@@ -65,12 +64,13 @@ fn queue_cb(nlh: &mnl::Nlmsg, packet_id: &mut u32) -> mnl::CbRet {
     let mut id: u32 = 0;
 
     let _ = nlh.parse(size_of::<nfnl::Nfgenmsg>(), parse_attr_cb, &mut tb);
-    if let Some(attr) = tb[nfq::AttrType::PACKET_HDR as usize] {
-        let ph: &nfq::MsgPacketHdr = attr.payload::<nfq::MsgPacketHdr>();
-        id = u32::from_be(ph.packet_id);
-        println!("packet received (id={} hw=0x{:04x} hook={})",
-                 id, u16::from_be(ph.hw_protocol), ph.hook);
-    }
+    tb[nfq::AttrType::PACKET_HDR as usize]
+        .map(|attr| {
+            let ph: &nfq::MsgPacketHdr = attr.payload::<nfq::MsgPacketHdr>();
+            id = u32::from_be(ph.packet_id);
+            println!("packet received (id={} hw=0x{:04x} hook={})",
+                     id, u16::from_be(ph.hw_protocol), ph.hook);
+        });
 
     *packet_id = id;
     mnl::CbRet::OK
@@ -85,7 +85,11 @@ fn nfq_build_cfg_pf_request<'a>(buf: &'a mut[u8], command: u8) -> &mut mnl::Nlms
     nfg.nfgen_family = 0; // libc::AF_UNSPEC as u8;
     nfg.version = nfnl::NFNETLINK_V0;
 
-    let cmd = nfq::MsgConfigCmd { command: command, pf: libc::AF_INET.to_be() as u16, ..Default::default() };
+    let cmd = nfq::MsgConfigCmd {
+        command: command,
+        pf: libc::AF_INET.to_be() as u16,
+        ..Default::default()
+    };
     nlh.put(nfq::AttrConfig::CMD as u16, cmd);
 
     nlh
@@ -101,7 +105,11 @@ fn nfq_build_cfg_request<'a>(buf: &'a mut[u8], command: u8, queue_num: u16) -> &
     nfg.version = nfnl::NFNETLINK_V0;
     nfg.res_id = queue_num.to_be();
 
-    let cmd = nfq::MsgConfigCmd { command: command, pf: libc::AF_INET.to_be() as u16, _pad: 0 };
+    let cmd = nfq::MsgConfigCmd {
+        command: command,
+        pf: libc::AF_INET.to_be() as u16,
+        ..Default::default()
+    };
     nlh.put(nfq::AttrConfig::CMD as u16, cmd);
 
     nlh
@@ -141,80 +149,51 @@ fn nfq_build_verdict<'a>(buf: &'a mut [u8], id: u32, queue_num: u16, verd: u32) 
 fn main() {
     let args: Vec<_> = env::args().collect();
     if args.len() < 2 {
-        println!("Usage: {} [queue_num]", args[0]);
-        exit(libc::EXIT_FAILURE);
+        panic!("Usage: {} [queue_num]", args[0]);
     }
     let queue_num: u16 = args[1].trim().parse().expect("queue number required");
 
-    let nl: &mut mnl::Socket;
-    match mnl::Socket::open(netlink::Family::NETFILTER) {
-        Ok(sock) => nl = sock,
-        Err(errno) => {
-            println_stderr!("mnl_socket_open: {}", errno);
-            exit(libc::EXIT_FAILURE);
-        },
-    }
-
-    if let Err(errno) = nl.bind(0, mnl::SOCKET_AUTOPID) {
-        println_stderr!("mnl_socket_bind: {}", errno);
-        exit(libc::EXIT_FAILURE);
-    }
+    let nl = mnl::Socket::open(netlink::Family::NETFILTER)
+        .unwrap_or_else(|errno| panic!("mnl_socket_open: {}", errno));
+    nl.bind(0, mnl::SOCKET_AUTOPID)
+        .unwrap_or_else(|errno| panic!("mnl_socket_bind: {}", errno));
     let portid = nl.portid();
 
     let mut buf = vec![0u8; mnl::SOCKET_BUFFER_SIZE()];
     {
         let nlh = nfq_build_cfg_pf_request(&mut buf, nfq::MsgConfigCmds::PF_UNBIND as u8);
-        if let Err(errno) = nl.send_nlmsg(nlh) {
-            println_stderr!("mnl_socket_sendto: {}", errno);
-            exit(libc::EXIT_FAILURE);
-        }
+        nl.send_nlmsg(nlh)
+            .unwrap_or_else(|errno| panic!("mnl_socket_sendto: {}", errno));
     }
 
     {
         let nlh = nfq_build_cfg_pf_request(&mut buf, nfq::MsgConfigCmds::PF_BIND as u8);
-        if let Err(errno) = nl.send_nlmsg(nlh) {
-            println_stderr!("mnl_socket_sendto: {}", errno);
-            exit(libc::EXIT_FAILURE);
-        }
+        nl.send_nlmsg(nlh)
+            .unwrap_or_else(|errno| panic!("mnl_socket_sendto: {}", errno));
     }
 
     {
         let nlh = nfq_build_cfg_request(&mut buf, nfq::MsgConfigCmds::BIND as u8, queue_num);
-        if let Err(errno) = nl.send_nlmsg(nlh) {
-            println_stderr!("mnl_socket_sendto: {}", errno);
-            exit(libc::EXIT_FAILURE);
-        }
+        nl.send_nlmsg(nlh)
+            .unwrap_or_else(|errno| panic!("mnl_socket_sendto: {}", errno));
     }
 
     {
         let nlh = nfq_build_cfg_params(&mut buf, nfq::ConfigMode::COPY_PACKET as u8, 0xFFFF, queue_num);
-        if let Err(errno) = nl.send_nlmsg(nlh) {
-            println_stderr!("mnl_socket_sendto: {}", errno);
-            exit(libc::EXIT_FAILURE);
-        }
+        nl.send_nlmsg(nlh)
+            .unwrap_or_else(|errno| panic!("mnl_socket_sendto: {}", errno));
     }
 
-    let mut nrecv: usize;
     let mut id: u32 = 0;
     loop {
-        match nl.recvfrom(&mut buf) {
-            Err(errno) => {
-                println_stderr!("mnl_socket_recvfrom: {}", errno);
-                exit(libc::EXIT_FAILURE);
-            },
-            Ok(n) => nrecv = n,
-        }
-
-        if let Err(errno) = mnl::cb_run(&buf[0..nrecv], 0, portid, queue_cb, &mut id) {
-            println_stderr!("mnl_cb_run: {}", errno);
-            exit(libc::EXIT_FAILURE);
-        }
+        let nrecv = nl.recvfrom(&mut buf)
+            .unwrap_or_else(|errno| panic!("mnl_socket_recvfrom: {}", errno));
+        mnl::cb_run(&buf[0..nrecv], 0, portid, queue_cb, &mut id)
+            .unwrap_or_else(|errno| panic!("mnl_cb_run: {}", errno));
 
         let nlh = nfq_build_verdict(&mut buf, id, queue_num, nf::NF_ACCEPT);
-        if let Err(errno) = nl.send_nlmsg(nlh) {
-            println_stderr!("mnl_socket_sendto: {}", errno);
-            exit(libc::EXIT_FAILURE);
-        }
+        nl.send_nlmsg(nlh)
+            .unwrap_or_else(|errno| panic!("mnl_socket_sendto: {}", errno));
     }
 
     // let _ = nl.close();

@@ -1,7 +1,6 @@
 use std::env;
 use std::io::Write;
 use std::mem::size_of;
-use std::process::exit;
 
 extern crate libc;
 extern crate time;
@@ -34,7 +33,7 @@ fn parse_mc_grps_cb<'a>(attr: &'a mnl::Attr, tb: &mut [Option<&'a mnl::Attr>]) -
         },
         n if n == genl::CtrlAttrMcastGrp::NAME as u16 => {
             if let Err(errno) = attr.validate(mnl::AttrDataType::STRING) {
-                println_stderr!("mnl_attr_validate- {}: {}", atype, errno);
+                println_stderr!("mnl_attr_validate - {}: {}", atype, errno);
                 return mnl::CbRet::ERROR;
             }
         },
@@ -50,12 +49,11 @@ fn parse_genl_mc_grps(nested: &mnl::Attr) {
             = [None; genl::CTRL_ATTR_MCAST_GRP_MAX as usize + 1];
 
         let _ = pos.parse_nested(parse_mc_grps_cb, &mut tb);
-        if let Some(attr) = tb[genl::CtrlAttrMcastGrp::ID as usize] {
-            print!("id-0x{:x} ", attr.u32());
-        }
-        if let Some(attr) = tb[genl::CtrlAttrMcastGrp::NAME as usize] {
-            print!("name: {} ", attr.str());
-        }
+
+        tb[genl::CtrlAttrMcastGrp::ID as usize]
+            .map(|attr| print!("id-0x{:x} ", attr.u32()));
+        tb[genl::CtrlAttrMcastGrp::NAME as usize]
+            .map(|attr| print!("name: {} ", attr.str()));
         println!("");
     }
 }
@@ -90,12 +88,10 @@ fn parse_genl_family_ops(nested: &mnl::Attr) {
             = [None; genl::CTRL_ATTR_OP_MAX as usize + 1];
 
         let _ = pos.parse_nested(parse_family_ops_cb, &mut tb);
-        if let Some(attr) = tb[genl::CtrlAttrOp::ID as usize] {
-            print!("id-0x{:x} ", attr.u32());
-        }
-        if let Some(attr) = tb[genl::CtrlAttrOp::FLAGS as usize] {
-            print!("flags 0x{:08x}", attr.u32());
-        }
+        tb[genl::CtrlAttrOp::ID as usize]
+            .map(|attr| print!("id-0x{:x} ", attr.u32()));
+        tb[genl::CtrlAttrOp::FLAGS as usize]
+            .map(|attr| print!("flags 0x{:08x}", attr.u32()));
         println!("");
     }
 }
@@ -146,54 +142,44 @@ fn data_cb(nlh: &mnl::Nlmsg, _: &mut u8) -> mnl::CbRet {
         = [None; genl::CTRL_ATTR_MAX as usize + 1];
 
     let _ = nlh.parse(size_of::<genl::Genlmsghdr>(), data_attr_cb, &mut tb);
-    if let Some(attr) = tb[genl::CtrlAttr::FAMILY_NAME as usize] {
-        print!("name={}\t", attr.str());
-    }
-    if let Some(attr) = tb[genl::CtrlAttr::FAMILY_ID as usize] {
-        print!("id={}\t", attr.u16());
-    }
-    if let Some(attr) = tb[genl::CtrlAttr::VERSION as usize] {
-        print!("version={}\t", attr.u32());
-    }
-    if let Some(attr) = tb[genl::CtrlAttr::HDRSIZE as usize] {
-        print!("hdrsize={}\t", attr.u32());
-    }
-    if let Some(attr) = tb[genl::CtrlAttr::MAXATTR as usize] {
-        print!("maxattr={}\t", attr.u32());
-    }
+
+    tb[genl::CtrlAttr::FAMILY_NAME as usize]
+        .map(|attr| print!("name={}\t", attr.str()));
+    tb[genl::CtrlAttr::FAMILY_ID as usize]
+        .map(|attr| print!("id={}\t", attr.u16()));
+    tb[genl::CtrlAttr::VERSION as usize]
+        .map(|attr| print!("version={}\t", attr.u32()));
+    tb[genl::CtrlAttr::HDRSIZE as usize]
+        .map(|attr| print!("hdrsize={}\t", attr.u32()));
+    tb[genl::CtrlAttr::MAXATTR as usize]
+        .map(|attr| print!("maxattr={}\t", attr.u32()));
     println!("");
-    if let Some(attr) = tb[genl::CtrlAttr::OPS as usize] {
-        println!("ops:");
-        parse_genl_family_ops(attr);
-    }
-    if let Some(attr) = tb[genl::CtrlAttr::MCAST_GROUPS as usize] {
-        println!("grps:");
-        parse_genl_mc_grps(attr);
-    }
+
+    tb[genl::CtrlAttr::OPS as usize]
+        .map(|attr| {
+            println!("ops:");
+            parse_genl_family_ops(attr);
+        });
+    tb[genl::CtrlAttr::MCAST_GROUPS as usize]
+        .map(|attr| {
+            println!("grps:");
+            parse_genl_mc_grps(attr);
+        });
     println!("");
+
     return mnl::CbRet::OK;
 }
 
 fn main() {
     let args: Vec<_> = env::args().collect();
     if args.len() > 2 {
-        println!("{} [family name]", args[0]);
-        exit(libc::EXIT_FAILURE);
+        panic!("{} [family name]", args[0]);
     }
 
-    let nl: &mut mnl::Socket;
-    match mnl::Socket::open(netlink::Family::GENERIC) {
-        Ok(sock) => { nl = sock },
-        Err(errno) => {
-            println_stderr!("mnl_socket_open: {}", errno);
-            exit(libc::EXIT_FAILURE);
-        },
-    }
-
-    if let Err(errno) = nl.bind(0, mnl::SOCKET_AUTOPID) {
-        println_stderr!("mnl_socket_bind: {}", errno);
-        exit(libc::EXIT_FAILURE);
-    }
+    let nl = mnl::Socket::open(netlink::Family::GENERIC)
+        .unwrap_or_else(|errno| panic!("mnl_socket_open: {}", errno));
+    nl.bind(0, mnl::SOCKET_AUTOPID)
+        .unwrap_or_else(|errno| panic!("mnl_socket_bind: {}", errno));
     let portid = nl.portid();
 
     let mut buf = vec![0u8; mnl::SOCKET_BUFFER_SIZE()];
@@ -215,32 +201,18 @@ fn main() {
             nlh.nlmsg_flags |= netlink::NLM_F_DUMP;
         }
 
-        if let Err(errno) = nl.send_nlmsg(nlh) {
-            println_stderr!("mnl_socket_sendto: {}", errno);
-            exit(libc::EXIT_FAILURE);
-        }
+        nl.send_nlmsg(nlh)
+            .unwrap_or_else(|errno| panic!("mnl_socket_sendto: {}", errno));
     }
 
-    let mut nrecv: usize;
     loop {
-        match nl.recvfrom(&mut buf) {
-            Err(errno) => {
-                println_stderr!("mnl_socket_recvfrom: {}", errno);
-                exit(libc::EXIT_FAILURE);
-            },
-            Ok(n) => nrecv = n,
-        }
+        let nrecv = nl.recvfrom(&mut buf)
+            .unwrap_or_else(|errno| panic!("mnl_socket_recvfrom: {}", errno));
 
-        match mnl::cb_run(&buf[0..nrecv], seq, portid, data_cb, &mut 0) {
-            Err(errno) => {
-                println_stderr!("mnl_cb_run: {}", errno);
-                exit(libc::EXIT_FAILURE);
-            },
-            Ok(ret) => {
-                if ret == mnl::CbRet::STOP {
-                    break;
-                }
-            },
+        if mnl::cb_run(&buf[0..nrecv], seq, portid, data_cb, &mut 0)
+            .unwrap_or_else(|errno| panic!("mnl_cb_run: {}", errno))
+            == mnl::CbRet::STOP {
+            break;
         }
     }
     let _ = nl.close();
