@@ -360,9 +360,9 @@ impl <'a> Nlmsg { // impl <'a> Nlmsg <'a> {
     }
 
     pub fn fprintf<T>(fd: &AsRawFd, data: *const T, datalen: usize, extra_header_size: usize) {
+        let mode = CString::new("a").unwrap();
         unsafe {
-            let mode = CString::new("a").unwrap().as_ptr();
-            let f = libc::fdopen(fd.as_raw_fd(), mode);
+            let f = libc::fdopen(fd.as_raw_fd(), mode.as_ptr());
             mnl_nlmsg_fprintf(f, data as *const c_void,
                               datalen as size_t, extra_header_size as size_t)
         }
@@ -391,16 +391,16 @@ impl <'a> Nlmsg { // impl <'a> Nlmsg <'a> {
     }
 
     pub fn put_str(&mut self, atype: u16, data: &str) {
+        let cs = CString::new(data).unwrap();
         unsafe {
-            let cs = CString::new(data).unwrap().as_ptr();
-            mnl_attr_put_str(self, atype, cs as *const c_char)
+            mnl_attr_put_str(self, atype, cs.as_ptr())
         }
     }
 
     pub fn put_strz(&mut self, atype: u16, data: &str) {
+        let cs = CString::new(data).unwrap();
         unsafe {
-            let cs = CString::new(data).unwrap().as_ptr();
-            mnl_attr_put_strz(self, atype, cs as *const c_char)
+            mnl_attr_put_strz(self, atype, cs.as_ptr())
         }
     }
 
@@ -426,16 +426,16 @@ impl <'a> Nlmsg { // impl <'a> Nlmsg <'a> {
     }
 
     pub fn put_str_check(&mut self, buflen: usize, atype: u16, data: &str) -> bool {
+        let cs = CString::new(data).unwrap();
         unsafe {
-            let cs = CString::new(data).unwrap().as_ptr();
-            mnl_attr_put_str_check(self, buflen as size_t, atype, cs)
+            mnl_attr_put_str_check(self, buflen as size_t, atype, cs.as_ptr())
         }
     }
 
     pub fn put_strz_check(&mut self, buflen: usize, atype: u16, data: &str) -> bool {
+        let cs = CString::new(data).unwrap();
         unsafe {
-            let cs = CString::new(data).unwrap().as_ptr();
-            mnl_attr_put_strz_check(self, buflen as size_t, atype, cs)
+            mnl_attr_put_strz_check(self, buflen as size_t, atype, cs.as_ptr())
         }
     }
 
