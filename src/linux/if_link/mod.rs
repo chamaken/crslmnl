@@ -189,7 +189,7 @@ pub const IFLA_GSO_MAX_SEGS: u16	= AttrType::GSO_MAX_SEGS as u16;
 pub const IFLA_GSO_MAX_SIZE: u16	= AttrType::GSO_MAX_SIZE as u16;
 pub const IFLA_PAD: u16			= AttrType::PAD as u16;
 pub const IFLA_XDP: u16			= AttrType::XDP as u16;
-pub const IFLA_MAX: u16			= AttrType::_MAX as u16 - 1;
+pub const IFLA_MAX: u16			= 44 - 1; // AttrType::_MAX as u16 - 1;
 
 #[repr(u16)]
 #[allow(non_camel_case_types)]

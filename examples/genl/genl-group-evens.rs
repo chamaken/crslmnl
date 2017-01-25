@@ -30,7 +30,7 @@ fn main() {
     loop {
         let nrecv = nl.recvfrom(&mut buf)
             .unwrap_or_else(|errno| panic!("mnl_socket_recvfrom: {}", errno));
-        if mnl::cb_run(&buf[0..nrecv], 0, 0, data_cb, &mut group)
+        if mnl::cb_run(&buf[0..nrecv], 0, 0, Some(data_cb), &mut group)
             .unwrap_or_else(|errno| panic!("mnl_cb_run: {}", errno))
             == mnl::CbRet::STOP {
             break;

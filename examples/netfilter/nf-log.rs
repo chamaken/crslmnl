@@ -63,7 +63,7 @@ fn parse_attr_cb<'a>(attr: &'a mnl::Attr, tb: &mut [Option<&'a mnl::Attr>]) -> m
     mnl::CbRet::OK
 }
 
-fn log_cb<T>(nlh: &mnl::Nlmsg, _: &mut T) -> mnl::CbRet {
+fn log_cb(nlh: &mnl::Nlmsg, _: &mut Option<u8>) -> mnl::CbRet {
     let mut ph: &nful::MsgPacketHdr = &nful::MsgPacketHdr { hw_protocol: 0, hook: 0, _pad: 0 };
     let mut prefix = "";
     let mut mark: u32 = 0;
@@ -176,7 +176,7 @@ fn main() {
     loop {
         let nrecv = nl.recvfrom(&mut buf)
             .unwrap_or_else(|errno| panic!("mnl_socket_recvfrom: {}", errno));
-        if mnl::cb_run(&buf[0..nrecv], 0, portid, log_cb, &mut 0)
+        if mnl::cb_run(&buf[0..nrecv], 0, portid, Some(log_cb), &mut None)
             .unwrap_or_else(|errno| panic!("mnl_cb_run: {}", errno))
             == mnl::CbRet::STOP {
                 break;

@@ -137,7 +137,7 @@ fn data_attr_cb<'a>(attr: &'a mnl::Attr, tb: &mut [Option<&'a mnl::Attr>]) -> mn
     return mnl::CbRet::OK;
 }
 
-fn data_cb(nlh: &mnl::Nlmsg, _: &mut u8) -> mnl::CbRet {
+fn data_cb(nlh: &mnl::Nlmsg, _: &mut Option<u8>) -> mnl::CbRet {
     let mut tb: [Option<&mnl::Attr>; genl::CTRL_ATTR_MAX as usize + 1]
         = [None; genl::CTRL_ATTR_MAX as usize + 1];
 
@@ -209,7 +209,7 @@ fn main() {
         let nrecv = nl.recvfrom(&mut buf)
             .unwrap_or_else(|errno| panic!("mnl_socket_recvfrom: {}", errno));
 
-        if mnl::cb_run(&buf[0..nrecv], seq, portid, data_cb, &mut 0)
+        if mnl::cb_run(&buf[0..nrecv], seq, portid, Some(data_cb), &mut None)
             .unwrap_or_else(|errno| panic!("mnl_cb_run: {}", errno))
             == mnl::CbRet::STOP {
             break;

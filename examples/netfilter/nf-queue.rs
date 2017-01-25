@@ -188,7 +188,7 @@ fn main() {
     loop {
         let nrecv = nl.recvfrom(&mut buf)
             .unwrap_or_else(|errno| panic!("mnl_socket_recvfrom: {}", errno));
-        mnl::cb_run(&buf[0..nrecv], 0, portid, queue_cb, &mut id)
+        mnl::cb_run(&buf[0..nrecv], 0, portid, Some(queue_cb), &mut id)
             .unwrap_or_else(|errno| panic!("mnl_cb_run: {}", errno));
 
         let nlh = nfq_build_verdict(&mut buf, id, queue_num, nf::NF_ACCEPT);

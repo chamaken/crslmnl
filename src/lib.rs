@@ -212,7 +212,7 @@ pub enum CbRet {
 type CbT = extern "C" fn(nlh: *const Nlmsg, data: *mut c_void) -> c_int;
 pub type Cb<'a, T: ?Sized> = fn(nlh: &'a Nlmsg, data: &'a mut T) -> CbRet;
 struct CbData <'a, 'b, T: 'a + 'b + ?Sized> {
-    cb: Cb<'a, T>,
+    cb: Option<Cb<'a, T>>,
     data: &'b mut T,
 }
 
@@ -359,12 +359,12 @@ impl <'a> Nlmsg { // impl <'a> Nlmsg <'a> {
         unsafe { &mut(*(mnl_nlmsg_get_payload_tail(self) as *mut T)) }
     }
 
-    pub fn fprintf<T>(fd: &AsRawFd, data: *const T, datalen: usize, extra_header_size: usize) {
+    pub fn fprintf(&self, fd: &AsRawFd, extra_header_size: usize) {
         let mode = CString::new("a").unwrap();
         unsafe {
             let f = libc::fdopen(fd.as_raw_fd(), mode.as_ptr());
-            mnl_nlmsg_fprintf(f, data as *const c_void,
-                              datalen as size_t, extra_header_size as size_t)
+            mnl_nlmsg_fprintf(f, self as *const _ as *const c_void,
+                              self.nlmsg_len as size_t, extra_header_size as size_t)
         }
     }
 
@@ -635,11 +635,14 @@ pub fn parse_payload<'a, 'b, T: 'a + 'b + ?Sized>(payload: &[u8], payload_len: u
 extern fn nlmsg_parse_cb<T: ?Sized>(nlh: *const Nlmsg, data: *mut c_void) -> c_int {
     unsafe {
         let arg = &mut *(data as *mut CbData<T>);
-        (arg.cb)(&*nlh, arg.data) as c_int
+        if let Some(cb) = arg.cb {
+            return cb(&*nlh, arg.data) as c_int;
+        }
+        CbRet::OK as c_int // MNL_CB_OK
     }
 }
 
-pub fn cb_run<'a, 'b, T: 'a + 'b + ?Sized>(buf: &[u8], seq: u32, portid: u32, cb_data: Cb<'a, T>, data: &'b mut T)
+pub fn cb_run<'a, 'b, T: 'a + 'b + ?Sized>(buf: &[u8], seq: u32, portid: u32, cb_data: Option<Cb<'a, T>>, data: &'b mut T)
                              -> io::Result<(CbRet)> {
     let mut arg = CbData{ cb: cb_data, data: data };
     let argp = &mut arg as *mut _ as *mut c_void;

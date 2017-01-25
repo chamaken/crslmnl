@@ -15,9 +15,11 @@ pub const RTNL_FAMILY_IP6MR: u8	= 129;
 pub const RTNL_FAMILY_MAX: u8	= 129;
 
 // Routing/neighbour discovery messages.
-#[repr(C)]
+// XXX: #[repr(C)]?
+#[repr(u16)]
 pub enum RTM {
-    BASE		= 16,
+    // BASE		= 16,
+    NEWLINK		= 16,
     DELLINK		= 17,
     GETLINK		= 18,
     SETLINK		= 19,
@@ -69,62 +71,63 @@ pub enum RTM {
     GETSTATS		= 94,
     _MAX		= 95,
 }
-pub const RTM_BASE: c_int		= RTM::BASE as c_int;
-pub const RTM_DELLINK: c_int		= RTM::DELLINK as c_int;
-pub const RTM_GETLINK: c_int		= RTM::GETLINK as c_int;
-pub const RTM_SETLINK: c_int		= RTM::SETLINK as c_int;
-pub const RTM_NEWADDR: c_int		= RTM::NEWADDR as c_int;
-pub const RTM_DELADDR: c_int		= RTM::DELADDR as c_int;
-pub const RTM_GETADDR: c_int		= RTM::GETADDR as c_int;
-pub const RTM_NEWROUTE: c_int		= RTM::NEWROUTE as c_int;
-pub const RTM_DELROUTE: c_int		= RTM::DELROUTE as c_int;
-pub const RTM_GETROUTE: c_int		= RTM::GETROUTE as c_int;
-pub const RTM_NEWNEIGH: c_int		= RTM::NEWNEIGH as c_int;
-pub const RTM_DELNEIGH: c_int		= RTM::DELNEIGH as c_int;
-pub const RTM_GETNEIGH: c_int		= RTM::GETNEIGH as c_int;
-pub const RTM_NEWRULE: c_int		= RTM::NEWRULE as c_int;
-pub const RTM_DELRULE: c_int		= RTM::DELRULE as c_int;
-pub const RTM_GETRULE: c_int		= RTM::GETRULE as c_int;
-pub const RTM_NEWQDISC: c_int		= RTM::NEWQDISC as c_int;
-pub const RTM_DELQDISC: c_int		= RTM::DELQDISC as c_int;
-pub const RTM_GETQDISC: c_int		= RTM::GETQDISC as c_int;
-pub const RTM_NEWTCLASS: c_int		= RTM::NEWTCLASS as c_int;
-pub const RTM_DELTCLASS: c_int		= RTM::DELTCLASS as c_int;
-pub const RTM_GETTCLASS: c_int		= RTM::GETTCLASS as c_int;
-pub const RTM_NEWTFILTER: c_int		= RTM::NEWTFILTER as c_int;
-pub const RTM_DELTFILTER: c_int		= RTM::DELTFILTER as c_int;
-pub const RTM_GETTFILTER: c_int		= RTM::GETTFILTER as c_int;
-pub const RTM_NEWACTION: c_int		= RTM::NEWACTION as c_int;
-pub const RTM_DELACTION: c_int		= RTM::DELACTION as c_int;
-pub const RTM_GETACTION: c_int		= RTM::GETACTION as c_int;
-pub const RTM_NEWPREFIX: c_int		= RTM::NEWPREFIX as c_int;
-pub const RTM_GETMULTICAST: c_int	= RTM::GETMULTICAST as c_int;
-pub const RTM_GETANYCAST: c_int		= RTM::GETANYCAST as c_int;
-pub const RTM_NEWNEIGHTBL: c_int	= RTM::NEWNEIGHTBL as c_int;
-pub const RTM_GETNEIGHTBL: c_int	= RTM::GETNEIGHTBL as c_int;
-pub const RTM_SETNEIGHTBL: c_int	= RTM::SETNEIGHTBL as c_int;
-pub const RTM_NEWNDUSEROPT: c_int	= RTM::NEWNDUSEROPT as c_int;
-pub const RTM_NEWADDRLABEL: c_int	= RTM::NEWADDRLABEL as c_int;
-pub const RTM_DELADDRLABEL: c_int	= RTM::DELADDRLABEL as c_int;
-pub const RTM_GETADDRLABEL: c_int	= RTM::GETADDRLABEL as c_int;
-pub const RTM_GETDCB: c_int		= RTM::GETDCB as c_int;
-pub const RTM_SETDCB: c_int		= RTM::SETDCB as c_int;
-pub const RTM_NEWNETCONF: c_int		= RTM::NEWNETCONF as c_int;
-pub const RTM_GETNETCONF: c_int		= RTM::GETNETCONF as c_int;
-pub const RTM_NEWMDB: c_int		= RTM::NEWMDB as c_int;
-pub const RTM_DELMDB: c_int		= RTM::DELMDB as c_int;
-pub const RTM_GETMDB: c_int		= RTM::GETMDB as c_int;
-pub const RTM_NEWNSID: c_int		= RTM::NEWNSID as c_int;
-pub const RTM_DELNSID: c_int		= RTM::DELNSID as c_int;
-pub const RTM_GETNSID: c_int		= RTM::GETNSID as c_int;
-pub const RTM_NEWSTATS: c_int		= RTM::NEWSTATS as c_int;
-pub const RTM_GETSTATS: c_int		= RTM::GETSTATS as c_int;
-pub const RTM_MAX: c_int		= ((RTM::_MAX as c_int + 3) & !3) - 1;
+pub const RTM_BASE: u16			= RTM::NEWLINK as u16;	// XXX
+pub const RTM_NEWLINK: u16		= RTM::NEWLINK as u16;
+pub const RTM_DELLINK: u16		= RTM::DELLINK as u16;
+pub const RTM_GETLINK: u16		= RTM::GETLINK as u16;
+pub const RTM_SETLINK: u16		= RTM::SETLINK as u16;
+pub const RTM_NEWADDR: u16		= RTM::NEWADDR as u16;
+pub const RTM_DELADDR: u16		= RTM::DELADDR as u16;
+pub const RTM_GETADDR: u16		= RTM::GETADDR as u16;
+pub const RTM_NEWROUTE: u16		= RTM::NEWROUTE as u16;
+pub const RTM_DELROUTE: u16		= RTM::DELROUTE as u16;
+pub const RTM_GETROUTE: u16		= RTM::GETROUTE as u16;
+pub const RTM_NEWNEIGH: u16		= RTM::NEWNEIGH as u16;
+pub const RTM_DELNEIGH: u16		= RTM::DELNEIGH as u16;
+pub const RTM_GETNEIGH: u16		= RTM::GETNEIGH as u16;
+pub const RTM_NEWRULE: u16		= RTM::NEWRULE as u16;
+pub const RTM_DELRULE: u16		= RTM::DELRULE as u16;
+pub const RTM_GETRULE: u16		= RTM::GETRULE as u16;
+pub const RTM_NEWQDISC: u16		= RTM::NEWQDISC as u16;
+pub const RTM_DELQDISC: u16		= RTM::DELQDISC as u16;
+pub const RTM_GETQDISC: u16		= RTM::GETQDISC as u16;
+pub const RTM_NEWTCLASS: u16		= RTM::NEWTCLASS as u16;
+pub const RTM_DELTCLASS: u16		= RTM::DELTCLASS as u16;
+pub const RTM_GETTCLASS: u16		= RTM::GETTCLASS as u16;
+pub const RTM_NEWTFILTER: u16		= RTM::NEWTFILTER as u16;
+pub const RTM_DELTFILTER: u16		= RTM::DELTFILTER as u16;
+pub const RTM_GETTFILTER: u16		= RTM::GETTFILTER as u16;
+pub const RTM_NEWACTION: u16		= RTM::NEWACTION as u16;
+pub const RTM_DELACTION: u16		= RTM::DELACTION as u16;
+pub const RTM_GETACTION: u16		= RTM::GETACTION as u16;
+pub const RTM_NEWPREFIX: u16		= RTM::NEWPREFIX as u16;
+pub const RTM_GETMULTICAST: u16	= RTM::GETMULTICAST as u16;
+pub const RTM_GETANYCAST: u16		= RTM::GETANYCAST as u16;
+pub const RTM_NEWNEIGHTBL: u16	= RTM::NEWNEIGHTBL as u16;
+pub const RTM_GETNEIGHTBL: u16	= RTM::GETNEIGHTBL as u16;
+pub const RTM_SETNEIGHTBL: u16	= RTM::SETNEIGHTBL as u16;
+pub const RTM_NEWNDUSEROPT: u16	= RTM::NEWNDUSEROPT as u16;
+pub const RTM_NEWADDRLABEL: u16	= RTM::NEWADDRLABEL as u16;
+pub const RTM_DELADDRLABEL: u16	= RTM::DELADDRLABEL as u16;
+pub const RTM_GETADDRLABEL: u16	= RTM::GETADDRLABEL as u16;
+pub const RTM_GETDCB: u16		= RTM::GETDCB as u16;
+pub const RTM_SETDCB: u16		= RTM::SETDCB as u16;
+pub const RTM_NEWNETCONF: u16		= RTM::NEWNETCONF as u16;
+pub const RTM_GETNETCONF: u16		= RTM::GETNETCONF as u16;
+pub const RTM_NEWMDB: u16		= RTM::NEWMDB as u16;
+pub const RTM_DELMDB: u16		= RTM::DELMDB as u16;
+pub const RTM_GETMDB: u16		= RTM::GETMDB as u16;
+pub const RTM_NEWNSID: u16		= RTM::NEWNSID as u16;
+pub const RTM_DELNSID: u16		= RTM::DELNSID as u16;
+pub const RTM_GETNSID: u16		= RTM::GETNSID as u16;
+pub const RTM_NEWSTATS: u16		= RTM::NEWSTATS as u16;
+pub const RTM_GETSTATS: u16		= RTM::GETSTATS as u16;
+pub const RTM_MAX: u16			= ((RTM::_MAX as u16 + 3) & !3) - 1;
 
-pub const RTM_NR_MSGTYPES: c_int	= RTM_MAX + 1 - RTM_BASE;
-pub const RTM_NR_FAMILIES: c_int	= RTM_NR_MSGTYPES >> 2;
+pub const RTM_NR_MSGTYPES: u16		= RTM_MAX + 1 - RTM_BASE;
+pub const RTM_NR_FAMILIES: u16		= RTM_NR_MSGTYPES >> 2;
 #[allow(non_snake_case)]
-pub fn RTM_FAM(cmd: c_int) -> c_int {
+pub fn RTM_FAM(cmd: u16) -> u16 {
     (cmd - RTM_BASE) >> 2
 }
 
@@ -543,7 +546,7 @@ pub struct Rtgenmsg {
 // passes link level specific information, not dependent
 // on network protocol.
 #[repr(C)]
-pub struct ifinfomsg {
+pub struct Ifinfomsg {
     pub ifi_family: u8,		// ::std::os::raw::c_uchar,
     pub __ifi_pad: u8,		// ::std::os::raw::c_uchar,
     pub ifi_type: u16,		// ::std::os::raw::c_ushort,	ARPHRD_*
@@ -660,7 +663,23 @@ pub const NDUSEROPT_SRCADDR: u16	= NDUSEROPT::SRCADDR as u16;
 pub const NDUSEROPT_MAX: u16		= NDUSEROPT::_MAX as u16 - 1;
 
 // RTnetlink multicast groups - backwards compatibility for userspace
-// omit RTMGRP_*
+pub const RTMGRP_LINK: u32		= 1;
+pub const RTMGRP_NOTIFY: u32		= 2;
+pub const RTMGRP_NEIGH: u32		= 4;
+pub const RTMGRP_TC: u32		= 8;
+pub const RTMGRP_IPV4_IFADDR: u32	= 0x10;
+pub const RTMGRP_IPV4_MROUTE: u32	= 0x20;
+pub const RTMGRP_IPV4_ROUTE: u32	= 0x40;
+pub const RTMGRP_IPV4_RULE: u32		= 0x80;
+pub const RTMGRP_IPV6_IFADDR: u32	= 0x100;
+pub const RTMGRP_IPV6_MROUTE: u32	= 0x200;
+pub const RTMGRP_IPV6_ROUTE: u32	= 0x400;
+pub const RTMGRP_IPV6_IFINFO: u32	= 0x800;
+#[allow(non_upper_case_globals)]
+pub const RTMGRP_DECnet_IFADDR: u32	= 0x1000;
+#[allow(non_upper_case_globals)]
+pub const RTMGRP_DECnet_ROUTE: u32	= 0x4000;
+pub const RTMGRP_IPV6_PREFIX: u32	= 0x20000;
 
 // RTnetlink multicast groups
 #[allow(non_camel_case_types)]
