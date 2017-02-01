@@ -24,8 +24,8 @@ fn parse_counters_cb<'a>(attr: &'a mnl::Attr, tb: &mut [Option<&'a mnl::Attr>]) 
 
     let atype = attr.atype();
     match atype {
-        n if (n == nfct::AttrCounters::PACKETS as u16 ||
-              n == nfct::AttrCounters::BYTES as u16) => {
+        n if (n == nfct::CTA_COUNTERS_PACKETS as u16 ||
+              n == nfct::CTA_COUNTERS_BYTES as u16) => {
             if let Err(errno) = attr.validate(mnl::AttrDataType::U64) {
                 println_stderr!("mnl_attr_validate - {}: {}", atype, errno);
                 return mnl::CbRet::ERROR;
@@ -42,9 +42,9 @@ fn print_counters(nest: &mnl::Attr) {
         = [None; nfct::CTA_COUNTERS_MAX as usize + 1];
 
     let _ = nest.parse_nested(parse_counters_cb, &mut tb);
-    tb[nfct::AttrCounters::PACKETS as usize]
+    tb[nfct::CTA_COUNTERS_PACKETS as usize]
         .map(|attr| print!("packets={} ", attr.u64()));
-    tb[nfct::AttrCounters::BYTES as usize]
+    tb[nfct::CTA_COUNTERS_BYTES as usize]
         .map(|attr| print!("bytes={} ", attr.u64()));
 }
 
