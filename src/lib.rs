@@ -347,15 +347,27 @@ impl <'a> Nlmsg { // impl <'a> Nlmsg <'a> {
         unsafe { mnl_nlmsg_portid_ok(self, portid as c_uint) }
     }
 
-    pub fn payload<T>(&self) -> &'a mut T {
+    pub fn payload<T>(&self) -> &'a T {
+        unsafe { &(*(mnl_nlmsg_get_payload(self) as *const T)) }
+    }
+
+    pub fn payload_mut<T>(&mut self) -> &'a mut T {
         unsafe { &mut(*(mnl_nlmsg_get_payload(self) as *mut T)) }
     }
 
-    pub fn payload_offset<T>(&self, offset: usize) -> &'a mut T {
+    pub fn payload_offset<T>(&self, offset: usize) -> &'a T {
+        unsafe { &(*(mnl_nlmsg_get_payload_offset(self, offset as size_t) as *const T)) }
+    }
+
+    pub fn payload_offset_mut<T>(&mut self, offset: usize) -> &'a mut T {
         unsafe { &mut(*(mnl_nlmsg_get_payload_offset(self, offset as size_t) as *mut T)) }
     }
 
-    pub fn payload_tail<T>(&self) -> &'a mut T {
+    pub fn payload_tail<T>(&self) -> &'a T {
+        unsafe { &(*(mnl_nlmsg_get_payload_tail(self) as *const T)) }
+    }
+
+    pub fn payload_tail_mut<T>(&mut self) -> &'a mut T {
         unsafe { &mut(*(mnl_nlmsg_get_payload_tail(self) as *mut T)) }
     }
 
@@ -548,7 +560,11 @@ impl <'a> Attr {
         unsafe { mnl_attr_get_payload_len(self) }
     }
 
-    pub fn payload<T>(&self) -> &'a mut T {
+    pub fn payload<T>(&self) -> &'a T {
+        unsafe { &(*(mnl_attr_get_payload(self) as *const T)) }
+    }
+
+    pub fn payload_mut<T>(&mut self) -> &'a mut T {
         unsafe { &mut(*(mnl_attr_get_payload(self) as *mut T)) }
     }
 
