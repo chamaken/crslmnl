@@ -185,7 +185,7 @@ fn main() {
     let mut buf = vec![0u8; mnl::SOCKET_BUFFER_SIZE()];
     let seq = time::now().to_timespec().sec as u32;
     {
-        let nlh = mnl::Nlmsg::put_header(&mut buf);
+        let nlh = mnl::Nlmsg::new(&mut buf);
         nlh.nlmsg_type = genl::GENL_ID_CTRL;
         nlh.nlmsg_flags = netlink::NLM_F_REQUEST | netlink::NLM_F_ACK;
         nlh.nlmsg_seq = seq;

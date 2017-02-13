@@ -43,9 +43,9 @@ fn print_counters(nest: &mnl::Attr) {
 
     let _ = nest.parse_nested(parse_counters_cb, &mut tb);
     tb[nfct::CTA_COUNTERS_PACKETS as usize]
-        .map(|attr| print!("packets={} ", attr.u64()));
+        .map(|attr| print!("packets={} ", u64::from_be(attr.u64())));
     tb[nfct::CTA_COUNTERS_BYTES as usize]
-        .map(|attr| print!("bytes={} ", attr.u64()));
+        .map(|attr| print!("bytes={} ", u64::from_be(attr.u64())));
 }
 
 fn parse_ip_cb<'a>(attr: &'a mnl::Attr, tb: &mut [Option<&'a mnl::Attr>]) -> mnl::CbRet {
@@ -252,7 +252,7 @@ fn main() {
 
     let seq = time::now().to_timespec().sec as u32;
     {
-        let mut nlh = mnl::Nlmsg::put_header(&mut buf);
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
         nlh.nlmsg_type = (nfnl::NFNL_SUBSYS_CTNETLINK << 8) | nfct::CtnlMsgTypes::GET as u16;
         nlh.nlmsg_flags = netlink::NLM_F_REQUEST | netlink::NLM_F_DUMP;
         nlh.nlmsg_seq = seq;

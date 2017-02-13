@@ -18,11 +18,13 @@ fn socket_open() {
     assert!(mnl::Socket::open(mnl::linux::netlink::Family::NETFILTER).is_ok());
 }
 
+#[cfg(feature = "mnl-gt-1_0_4")]
 #[test]
 fn socket_open2() {
     assert!(mnl::Socket::open2(mnl::linux::netlink::Family::NETFILTER, 0).is_ok());
 }
 
+#[cfg(feature = "mnl-gt-1_0_4")]
 #[test]
 fn socket_fdopen() {
     struct RawSocket {
@@ -76,14 +78,14 @@ fn nlmsg_size() {
 #[test]
 fn nlmsg_put_header() {
     let mut buf = vec![123 as u8; mnl::SOCKET_BUFFER_SIZE()];
-    let nlh = mnl::Nlmsg::put_header(&mut buf);
+    let nlh = mnl::Nlmsg::new(&mut buf);
     assert!(nlh.nlmsg_len == 16);
 }
 
 #[test]
 fn nlmsg_put_extra_header() {
     let mut buf = vec![123 as u8; mnl::SOCKET_BUFFER_SIZE()];
-    let nlh = mnl::Nlmsg::put_header(&mut buf);
+    let nlh = mnl::Nlmsg::new(&mut buf);
     {
         let exthdr: &mut linux::netfilter::nfnetlink::Nfgenmsg
             = nlh.put_extra_header(size_of::<linux::netfilter::nfnetlink::Nfgenmsg>());
@@ -97,7 +99,7 @@ fn nlmsg_put_extra_header() {
 #[test]
 fn nlmsg_ok() {
     let mut buf = vec![0; mnl::NLMSG_HDRLEN() as usize];
-    let nlh = mnl::Nlmsg::put_header(&mut buf);
+    let nlh = mnl::Nlmsg::new(&mut buf);
     assert!(!nlh.ok(15));
     assert!(nlh.ok(16));
     assert!(nlh.ok(17));
@@ -108,7 +110,7 @@ fn nlmsg_next_header() {
     let hdrlen = mnl::NLMSG_HDRLEN() as usize;
     let mut buf: Vec<u8> = repeat(0u8).take(512).collect();
     {
-    let nlh = mnl::Nlmsg::put_header(&mut buf);
+    let nlh = mnl::Nlmsg::new(&mut buf);
     let (next_nlh, rest) = nlh.next(512);
     assert!(rest == 512 - hdrlen as isize);
     assert!(next_nlh.nlmsg_len == 0);

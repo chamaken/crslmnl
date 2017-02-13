@@ -74,8 +74,12 @@ pub enum Socket{}
 #[link(name = "mnl")]
 extern {
     fn mnl_socket_open(bus: c_int) -> *mut Socket;
+
+    #[cfg(feature = "mnl-gt-1_0_4")]
     fn mnl_socket_open2(bus: c_int, flags: c_int) -> *mut Socket;
+    #[cfg(feature = "mnl-gt-1_0_4")]
     fn mnl_socket_fdopen(fd: c_int) -> *mut Socket;
+
     fn mnl_socket_bind(nl: *mut Socket, group: c_uint, pid: pid_t) -> c_int;
     fn mnl_socket_close(nl: *mut Socket) -> c_int;
     fn mnl_socket_get_fd(nl: *const Socket) -> c_int;
@@ -102,7 +106,7 @@ extern {
     fn mnl_nlmsg_fprintf(fd: *mut FILE, data: *const c_void, datalen: size_t, extra_header_size: size_t);
 }
 
-enum NlmsgBatch {}
+pub enum NlmsgBatch {}
 
 #[link(name = "mnl")]
 extern {
@@ -111,7 +115,7 @@ extern {
     fn mnl_nlmsg_batch_stop(b: *mut NlmsgBatch);
     // fn mnl_nlmsg_batch_size(b: *mut NlmsgBatch) -> size_t;
     fn mnl_nlmsg_batch_size(b: *const NlmsgBatch) -> size_t;
-    fn mnl_nlmsg_natch_reset(b: *mut NlmsgBatch);
+    fn mnl_nlmsg_batch_reset(b: *mut NlmsgBatch);
     fn mnl_nlmsg_batch_head(b: *mut NlmsgBatch) -> *mut c_void;
     fn mnl_nlmsg_batch_current(b: *mut NlmsgBatch) -> *mut c_void;
     // fn mnl_nlmsg_batch_is_empty(b: *mut NlmsgBatch) -> bool;
@@ -183,8 +187,6 @@ extern {
 }
 
 // XXX: not implemented yet.
-// #define mnl_attr_for_each(attr, nlh, offset)
-// #define mnl_attr_for_each_nested(attr, nest)
 // #define mnl_attr_for_each_payload(payload, payload_size)
 
 type AttrCbT = extern "C" fn(attr: *const Attr, data: *mut c_void) -> c_int;
@@ -213,8 +215,10 @@ type CbT = extern "C" fn(nlh: *const Nlmsg, data: *mut c_void) -> c_int;
 pub type Cb<'a, T: ?Sized> = fn(nlh: &'a Nlmsg, data: &'a mut T) -> CbRet;
 struct CbData <'a, 'b, T: 'a + 'b + ?Sized> {
     cb: Option<Cb<'a, T>>,
+    ctl_cb: Option<Cb<'a, T>>,
     data: &'b mut T,
 }
+
 
 #[link(name = "mnl")]
 extern {
@@ -225,21 +229,17 @@ extern {
                    cb_ctl_array: *const CbT, cb_ctl_array_len: c_uint) -> c_int;
 }
 
-impl Drop for Socket {
-    fn drop(&mut self) {
-        unsafe { mnl_socket_close(self) };
-    }
-}
-
 impl <'a> Socket {
     pub fn open(bus: netlink::Family) -> io::Result<&'a mut Socket> {
         cvt_null!(mnl_socket_open(bus.c_int()))
     }
 
+    #[cfg(feature = "mnl-gt-1_0_4")]
     pub fn open2(bus: netlink::Family, flags: c_int) -> io::Result<&'a mut Socket> {
         cvt_null!(mnl_socket_open2(bus.c_int(), flags))
     }
 
+    #[cfg(feature = "mnl-gt-1_0_4")]
     // would be better IntoRawFd instead of &AsRawFd, but Sized trait...
     pub fn fdopen(fd: &AsRawFd) -> io::Result<&'a mut Socket> {
         cvt_null!(mnl_socket_fdopen(fd.as_raw_fd()))
@@ -250,7 +250,7 @@ impl <'a> Socket {
         Ok(())
     }
 
-    // mnl_socket_close() is used as a Drop trait too, with no error...?
+    // no drop trait, need to call mnl_socket_close() explicitly
     pub fn close(&mut self) -> io::Result<()> {
         try!(cvt_isize!(mnl_socket_close(self)));
         Ok(())
@@ -271,6 +271,12 @@ impl <'a> Socket {
     pub fn send_nlmsg(&self, nlh: &netlink::Nlmsghdr) -> io::Result<usize> {
         let n = try!(cvt_isize!(
             mnl_socket_sendto(self, nlh as *const _ as *const c_void, nlh.nlmsg_len as size_t)));
+        Ok(n as usize)
+    }
+
+    pub fn send_batch(&self, b: &mut NlmsgBatch) -> io::Result<usize> {
+        let n = try!(cvt_isize!(
+            mnl_socket_sendto(self, b.head::<c_void>(), b.size() as size_t)));
         Ok(n as usize)
     }
 
@@ -316,9 +322,13 @@ impl <'a> Nlmsg { // impl <'a> Nlmsg <'a> {
         unsafe { mnl_nlmsg_get_payload_len(self) }
     }
 
-    pub fn put_header(buf: &mut [u8]) -> &mut Nlmsg {
+    pub fn new(buf: &mut [u8]) -> &mut Nlmsg {
         // XXX: check buf len > sizeof(Nlmsg)
         unsafe { &mut(*mnl_nlmsg_put_header(buf.as_ptr() as *mut c_void)) }
+    }
+
+    pub fn put_header(&mut self) {
+        unsafe { &mut(*mnl_nlmsg_put_header(self as *mut _ as *mut c_void)); }
     }
 
     pub fn put_extra_header<T>(&mut self, size: usize) -> &'a mut T {
@@ -451,11 +461,11 @@ impl <'a> Nlmsg { // impl <'a> Nlmsg <'a> {
         }
     }
 
-    pub fn nest_start(&mut self, atype: u16) -> &mut Attr {
+    pub fn nest_start(&mut self, atype: u16) -> &'a mut Attr {
         unsafe { &mut *mnl_attr_nest_start(self, atype) }
     }
 
-    pub fn nest_start_check(&mut self, buflen: usize, atype: u16) -> &mut Attr {
+    pub fn nest_start_check(&mut self, buflen: usize, atype: u16) -> &'a mut Attr {
         unsafe { &mut *mnl_attr_nest_start_check(self, buflen as size_t, atype) }
     }
 
@@ -512,8 +522,9 @@ impl Drop for NlmsgBatch {
 }
 
 impl NlmsgBatch {
-    pub fn start<'a>(buf: &'a [u8]) -> &'a mut NlmsgBatch {
-        unsafe { &mut(*mnl_nlmsg_batch_start(buf.as_ptr() as *mut c_void, buf.len() as size_t)) }
+    pub fn start<'a>(buf: &'a mut [u8], bufsiz: usize) -> io::Result<&'a mut NlmsgBatch> {
+        // cvt_null!(&mut(*mnl_nlmsg_batch_start(buf.as_ptr() as *mut c_void, buf.len() as size_t)))
+        cvt_null!(mnl_nlmsg_batch_start(buf.as_ptr() as *mut c_void, bufsiz as size_t))
     }
 
     pub fn next(&mut self) -> bool {
@@ -524,6 +535,10 @@ impl NlmsgBatch {
 
     pub fn size(&self) -> usize {
         unsafe { mnl_nlmsg_batch_size(self) as usize }
+    }
+
+    pub fn reset(&mut self) {
+        unsafe { mnl_nlmsg_batch_reset(self) }
     }
 
     pub fn head<'a, T>(&'a mut self) -> &'a mut T {
@@ -658,10 +673,42 @@ extern fn nlmsg_parse_cb<T: ?Sized>(nlh: *const Nlmsg, data: *mut c_void) -> c_i
     }
 }
 
-pub fn cb_run<'a, 'b, T: 'a + 'b + ?Sized>(buf: &[u8], seq: u32, portid: u32, cb_data: Option<Cb<'a, T>>, data: &'b mut T)
-                             -> io::Result<(CbRet)> {
-    let mut arg = CbData{ cb: cb_data, data: data };
+extern fn nlmsg_ctl_cb<T: ?Sized>(nlh: *const Nlmsg, data: *mut c_void) -> c_int {
+    unsafe {
+        let arg = &mut *(data as *mut CbData<T>);
+        if let Some(ctl_cb) = arg.ctl_cb {
+            return ctl_cb(&*nlh, arg.data) as c_int;
+        }
+        CbRet::OK as c_int // MNL_CB_OK
+    }
+}
+
+pub fn cb_run<'a, 'b, T: 'a + 'b + ?Sized>(buf: &[u8], seq: u32, portid: u32,
+                                           cb_data: Option<Cb<'a, T>>, data: &'b mut T)
+                                           -> io::Result<(CbRet)> {
+    let mut arg = CbData{ cb: cb_data, ctl_cb: None, data: data };
     let argp = &mut arg as *mut _ as *mut c_void;
     cvt_cbret!(mnl_cb_run(buf.as_ptr() as *const c_void, buf.len() as size_t,
                           seq, portid, nlmsg_parse_cb::<T>, argp))
+}
+
+pub fn cb_run2<'a, 'b, T: 'a + 'b + ?Sized>(buf: &[u8], seq: u32, portid: u32,
+                                            cb_data: Option<Cb<'a, T>>, data: &'b mut T,
+                                            cb_ctl: Cb<'a, T>, ctltypes: &[u16])
+                                            -> io::Result<(CbRet)> {
+
+    // XXX: can not assign NULL?
+    // let mut cb_ctl_array: [CbT; netlink::NLMSG_MIN_TYPE as usize]
+    //     = [std::ptr::null() as CbT; netlink::NLMSG_MIN_TYPE as usize];
+    let mut cb_ctl_array: [CbT; netlink::NLMSG_MIN_TYPE as usize - 1] = unsafe { zeroed() };
+
+    for i in ctltypes.into_iter() {
+        cb_ctl_array[*i as usize] = nlmsg_ctl_cb::<T>;
+    }
+    let mut arg = CbData{ cb: cb_data, ctl_cb: Some(cb_ctl), data: data };
+    let argp = &mut arg as *mut _ as *mut c_void;
+    cvt_cbret!(mnl_cb_run2(buf.as_ptr() as *const c_void, buf.len() as size_t,
+                           seq, portid, nlmsg_parse_cb::<T>, argp,
+                           cb_ctl_array.as_ptr() as *const CbT, netlink::NLMSG_MIN_TYPE as c_uint))
+
 }
