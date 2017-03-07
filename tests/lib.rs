@@ -79,13 +79,13 @@ fn nlmsg_size() {
 fn nlmsg_put_header() {
     let mut buf = vec![123 as u8; mnl::SOCKET_BUFFER_SIZE()];
     let nlh = mnl::Nlmsg::new(&mut buf);
-    assert!(nlh.nlmsg_len == 16);
+    assert!(*nlh.nlmsg_len == 16);
 }
 
 #[test]
 fn nlmsg_put_extra_header() {
     let mut buf = vec![123 as u8; mnl::SOCKET_BUFFER_SIZE()];
-    let nlh = mnl::Nlmsg::new(&mut buf);
+    let mut nlh = mnl::Nlmsg::new(&mut buf);
     {
         let exthdr: &mut linux::netfilter::nfnetlink::Nfgenmsg
             = nlh.put_extra_header(size_of::<linux::netfilter::nfnetlink::Nfgenmsg>());
@@ -93,7 +93,7 @@ fn nlmsg_put_extra_header() {
         assert!(exthdr.version == 0);
         assert!(exthdr.res_id == 0);
     }
-    assert!(nlh.nlmsg_len as usize == 16 + size_of::<linux::netfilter::nfnetlink::Nfgenmsg>());
+    assert!(*nlh.nlmsg_len as usize == 16 + size_of::<linux::netfilter::nfnetlink::Nfgenmsg>());
 }
 
 #[test]
@@ -110,11 +110,11 @@ fn nlmsg_next_header() {
     let hdrlen = mnl::NLMSG_HDRLEN() as usize;
     let mut buf: Vec<u8> = repeat(0u8).take(512).collect();
     {
-    let nlh = mnl::Nlmsg::new(&mut buf);
-    let (next_nlh, rest) = nlh.next(512);
-    assert!(rest == 512 - hdrlen as isize);
-    assert!(next_nlh.nlmsg_len == 0);
-    next_nlh.nlmsg_len = 0x11111111;
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        let (next_nlh, rest) = nlh.next(512);
+        assert!(rest == 512 - hdrlen as isize);
+        assert!(*next_nlh.nlmsg_len == 0);
+        *next_nlh.nlmsg_len = 0x11111111;
     }
     assert_eq!(buf[hdrlen..(hdrlen + 4)], [0x11, 0x11, 0x11, 0x11]);
 }

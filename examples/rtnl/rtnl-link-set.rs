@@ -47,10 +47,10 @@ fn main() {
     let seq = time::now().to_timespec().sec as u32;
     let mut buf = vec![0u8; mnl::SOCKET_BUFFER_SIZE()];
     {
-        let nlh = mnl::Nlmsg::new(&mut buf);
-        nlh.nlmsg_type = rtnetlink::RTM_NEWLINK;
-        nlh.nlmsg_flags = netlink::NLM_F_REQUEST | netlink::NLM_F_ACK;
-        nlh.nlmsg_seq = seq;
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        *nlh.nlmsg_type = rtnetlink::RTM_NEWLINK;
+        *nlh.nlmsg_flags = netlink::NLM_F_REQUEST | netlink::NLM_F_ACK;
+        *nlh.nlmsg_seq = seq;
         let ifm = nlh.put_sized_header::<rtnetlink::Ifinfomsg>();
         ifm.ifi_family = 0; // no libc::AF_UNSPEC;
         ifm.ifi_change = change;
@@ -61,7 +61,7 @@ fn main() {
         let my_stdout = StdoutRawFd::Dummy;
         nlh.fprintf(&my_stdout, size_of::<rtnetlink::Ifinfomsg>());
 
-        nl.send_nlmsg(nlh)
+        nl.send_nlmsg(&nlh)
             .unwrap_or_else(|errno| panic!("mnl_socket_sendto: {}", errno));
     }
 

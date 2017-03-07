@@ -137,7 +137,7 @@ fn data_attr_cb<'a>(attr: &'a mnl::Attr, tb: &mut [Option<&'a mnl::Attr>]) -> mn
     return mnl::CbRet::OK;
 }
 
-fn data_cb(nlh: &mnl::Nlmsg, _: &mut Option<u8>) -> mnl::CbRet {
+fn data_cb(nlh: mnl::Nlmsg, _: &mut Option<u8>) -> mnl::CbRet {
     let mut tb: [Option<&mnl::Attr>; genl::CTRL_ATTR_MAX as usize + 1]
         = [None; genl::CTRL_ATTR_MAX as usize + 1];
 
@@ -185,10 +185,10 @@ fn main() {
     let mut buf = vec![0u8; mnl::SOCKET_BUFFER_SIZE()];
     let seq = time::now().to_timespec().sec as u32;
     {
-        let nlh = mnl::Nlmsg::new(&mut buf);
-        nlh.nlmsg_type = genl::GENL_ID_CTRL;
-        nlh.nlmsg_flags = netlink::NLM_F_REQUEST | netlink::NLM_F_ACK;
-        nlh.nlmsg_seq = seq;
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        *nlh.nlmsg_type = genl::GENL_ID_CTRL;
+        *nlh.nlmsg_flags = netlink::NLM_F_REQUEST | netlink::NLM_F_ACK;
+        *nlh.nlmsg_seq = seq;
 
         let genl = nlh.put_sized_header::<genl::Genlmsghdr>();
         genl.cmd = genl::CtrlCmd::GETFAMILY as u8;
@@ -198,10 +198,10 @@ fn main() {
         if args.len() >= 2 {
             nlh.put_strz(genl::CtrlAttr::FAMILY_NAME as u16, &args[1]);
         } else {
-            nlh.nlmsg_flags |= netlink::NLM_F_DUMP;
+            *nlh.nlmsg_flags |= netlink::NLM_F_DUMP;
         }
 
-        nl.send_nlmsg(nlh)
+        nl.send_nlmsg(&nlh)
             .unwrap_or_else(|errno| panic!("mnl_socket_sendto: {}", errno));
     }
 

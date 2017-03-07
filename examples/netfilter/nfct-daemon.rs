@@ -154,7 +154,7 @@ fn data_attr_cb<'a>(attr: &'a mnl::Attr, tb: &mut[Option<&'a mnl::Attr>]) -> mnl
     mnl::CbRet::OK
 }
 
-fn data_cb(nlh: &mnl::Nlmsg, hmap: &mut HashMap<IpAddr, Box<Nstats>>) -> mnl::CbRet {
+fn data_cb(nlh: mnl::Nlmsg, hmap: &mut HashMap<IpAddr, Box<Nstats>>) -> mnl::CbRet {
     let mut tb: [Option<&mnl::Attr>; nfct::CTA_MAX as usize + 1]
         = [None; nfct::CTA_MAX as usize + 1];
     // let nfg = nlh.payload::<nfnl::Nfgenmsg>();
@@ -242,10 +242,10 @@ fn main() {
     let _ = nl.setsockopt::<i32>(netlink::NETLINK_NO_ENOBUFS, 1);
 
     let mut buf = vec![0u8; mnl::SOCKET_BUFFER_SIZE()];
-    let nlh = mnl::Nlmsg::new(&mut buf);
+    let mut nlh = mnl::Nlmsg::new(&mut buf);
     // Counters are atomically zeroed in each dump
-    nlh.nlmsg_type = (nfnl::NFNL_SUBSYS_CTNETLINK << 8) | nfct::IPCTNL_MSG_CT_GET_CTRZERO;
-    nlh.nlmsg_flags = netlink::NLM_F_REQUEST | netlink::NLM_F_DUMP;
+    *nlh.nlmsg_type = (nfnl::NFNL_SUBSYS_CTNETLINK << 8) | nfct::IPCTNL_MSG_CT_GET_CTRZERO;
+    *nlh.nlmsg_flags = netlink::NLM_F_REQUEST | netlink::NLM_F_DUMP;
 
     let nfh = nlh.put_sized_header::<nfnl::Nfgenmsg>();
     nfh.nfgen_family = libc::AF_INET as u8;
@@ -279,7 +279,7 @@ fn main() {
             match usize::from(event.token()) {
                 0 => { // timer
                     timer.set_timeout(std::time::Duration::new(secs as u64, 0), 0).unwrap();
-                    nl.send_nlmsg(nlh)
+                    nl.send_nlmsg(&nlh)
                         .unwrap_or_else(|errno| panic!("mnl_socket_sendto: {}", errno));
                     for (addr, nstats) in hmap.iter() {
                         print!("src={:?} ", addr);

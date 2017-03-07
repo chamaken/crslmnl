@@ -161,7 +161,7 @@ fn data_ipv6_attr_cb<'a>(attr: &'a mnl::Attr, tb: &mut [Option<&'a mnl::Attr>]) 
     mnl::CbRet::OK
 }
 
-fn data_cb(nlh: &mnl::Nlmsg, _: &mut Option<u8>) -> mnl::CbRet {
+fn data_cb(nlh: mnl::Nlmsg, _: &mut Option<u8>) -> mnl::CbRet {
     let rm = nlh.payload::<rtnetlink::Rtmsg>();
 
     // protocol family = AF_INET | AF_INET6 //
@@ -268,17 +268,17 @@ fn main() {
     let mut buf = vec![0u8; mnl::SOCKET_BUFFER_SIZE()];
     let seq = time::now().to_timespec().sec as u32;
     {
-        let nlh = mnl::Nlmsg::new(&mut buf);
-        nlh.nlmsg_type = rtnetlink::RTM_GETROUTE;
-        nlh.nlmsg_flags = netlink::NLM_F_REQUEST | netlink::NLM_F_DUMP;
-        nlh.nlmsg_seq = seq;
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        *nlh.nlmsg_type = rtnetlink::RTM_GETROUTE;
+        *nlh.nlmsg_flags = netlink::NLM_F_REQUEST | netlink::NLM_F_DUMP;
+        *nlh.nlmsg_seq = seq;
         let rtm = nlh.put_sized_header::<rtnetlink::Rtmsg>();
         if args[1] == "inet" {
             rtm.rtm_family = libc::AF_INET as u8;
         } else if args[1] == "inet6" {
             rtm.rtm_family = libc::AF_INET6 as u8;
         }
-        nl.send_nlmsg(nlh)
+        nl.send_nlmsg(&nlh)
             .unwrap_or_else(|errno| panic!("mnl_socket_sendto: {}", errno));
     }
 

@@ -160,10 +160,10 @@ fn data_ipv6_attr_cb<'a>(attr: &'a mnl::Attr, tb: &mut [Option<&'a mnl::Attr>]) 
     mnl::CbRet::OK
 }
 
-fn data_cb(nlh: &mnl::Nlmsg, _: &mut Option<u8>) -> mnl::CbRet {
+fn data_cb(nlh: mnl::Nlmsg, _: &mut Option<u8>) -> mnl::CbRet {
     let rm = nlh.payload::<rtnetlink::Rtmsg>();
 
-    match nlh.nlmsg_type {
+    match *nlh.nlmsg_type {
         n if n == rtnetlink::RTM_NEWROUTE => print!("[NEW] "),
         n if n == rtnetlink::RTM_DELROUTE => print!("[DEL] "),
         _ => {},

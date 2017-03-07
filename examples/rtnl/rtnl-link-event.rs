@@ -41,7 +41,7 @@ fn data_attr_cb<'a>(attr: &'a mnl::Attr, tb: &mut [Option<&'a mnl::Attr>]) -> mn
     mnl::CbRet::OK
 }
 
-fn data_cb(nlh: &mnl::Nlmsg, _: &mut Option<u8>) -> mnl::CbRet {
+fn data_cb(nlh: mnl::Nlmsg, _: &mut Option<u8>) -> mnl::CbRet {
     let mut tb: [Option<&mnl::Attr>; if_link::IFLA_MAX as usize + 1]
         = [None; if_link::IFLA_MAX as usize + 1];
     let ifm = nlh.payload::<rtnetlink::Ifinfomsg>();

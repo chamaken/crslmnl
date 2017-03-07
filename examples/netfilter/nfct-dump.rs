@@ -215,7 +215,7 @@ fn data_attr_cb<'a>(attr: &'a mnl::Attr, tb: &mut [Option<&'a mnl::Attr>]) -> mn
     mnl::CbRet::OK
 }
 
-fn data_cb(nlh: &mnl::Nlmsg, _: &mut Option<u8>) -> mnl::CbRet {
+fn data_cb(nlh: mnl::Nlmsg, _: &mut Option<u8>) -> mnl::CbRet {
     let mut tb: [Option<&mnl::Attr>; nfct::CTA_MAX as usize + 1]
         = [None; nfct::CTA_MAX as usize + 1];
     // let nfg = nlh.payload::<nfnl::Nfgenmsg>();
@@ -253,16 +253,16 @@ fn main() {
     let seq = time::now().to_timespec().sec as u32;
     {
         let mut nlh = mnl::Nlmsg::new(&mut buf);
-        nlh.nlmsg_type = (nfnl::NFNL_SUBSYS_CTNETLINK << 8) | nfct::CtnlMsgTypes::GET as u16;
-        nlh.nlmsg_flags = netlink::NLM_F_REQUEST | netlink::NLM_F_DUMP;
-        nlh.nlmsg_seq = seq;
+        *nlh.nlmsg_type = (nfnl::NFNL_SUBSYS_CTNETLINK << 8) | nfct::CtnlMsgTypes::GET as u16;
+        *nlh.nlmsg_flags = netlink::NLM_F_REQUEST | netlink::NLM_F_DUMP;
+        *nlh.nlmsg_seq = seq;
 
         let nfh = nlh.put_sized_header::<nfnl::Nfgenmsg>();
         nfh.nfgen_family = libc::AF_INET as u8;
         nfh.version = nfnl::NFNETLINK_V0;
         nfh.res_id = 0;
 
-        nl.send_nlmsg(nlh)
+        nl.send_nlmsg(&nlh)
             .unwrap_or_else(|errno| panic!("mnl_socket_sendto: {}", errno));
     }
     let portid = nl.portid();

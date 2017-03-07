@@ -98,10 +98,10 @@ Example: {} eth0 10.0.1.12 32 10.0.1.11
     let mut buf = vec![0u8; mnl::SOCKET_BUFFER_SIZE()];
     let seq = time::now().to_timespec().sec as u32;
     {
-        let nlh = mnl::Nlmsg::new(&mut buf);
-        nlh.nlmsg_type = rtnetlink::RTM_NEWROUTE;
-        nlh.nlmsg_flags = netlink::NLM_F_REQUEST | netlink::NLM_F_CREATE | netlink::NLM_F_ACK;
-        nlh.nlmsg_seq = seq;
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        *nlh.nlmsg_type = rtnetlink::RTM_NEWROUTE;
+        *nlh.nlmsg_flags = netlink::NLM_F_REQUEST | netlink::NLM_F_CREATE | netlink::NLM_F_ACK;
+        *nlh.nlmsg_seq = seq;
 
         let rtm = nlh.put_sized_header::<rtnetlink::Rtmsg>();
         rtm.rtm_family = family as u8;
@@ -138,7 +138,7 @@ Example: {} eth0 10.0.1.12 32 10.0.1.11
                             unsafe { transmute::<[u16; 8], in6_addr>(addr.segments()) }),
             }
         }
-        nl.send_nlmsg(nlh)
+        nl.send_nlmsg(&nlh)
             .unwrap_or_else(|errno| panic!("mnl_socket_sendto: {}", errno));
     }
     {

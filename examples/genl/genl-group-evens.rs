@@ -6,7 +6,7 @@ extern crate crslmnl as mnl;
 use mnl::linux::netlink as netlink;
 
 
-fn data_cb(nlh: &mnl::Nlmsg, group: &mut libc::c_int) -> mnl::CbRet {
+fn data_cb(nlh: mnl::Nlmsg, group: &mut libc::c_int) -> mnl::CbRet {
     println!("received event type={} from genetlink group {}",
              nlh.nlmsg_type, *group);
     return mnl::CbRet::OK;

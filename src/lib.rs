@@ -53,7 +53,7 @@ pub fn ALIGN(len: u32) -> u32 {
 }
 #[allow(non_snake_case)]
 pub fn NLMSG_HDRLEN() -> u32 {
-    ALIGN(size_of::<Nlmsg>() as u32)
+    ALIGN(size_of::<netlink::Nlmsghdr>() as u32)
 }
 
 // Netlink socket API
@@ -95,7 +95,7 @@ extern {
     fn mnl_nlmsg_size(len: size_t) -> size_t;
     fn mnl_nlmsg_get_payload_len(nlh: *const netlink::Nlmsghdr) -> size_t;
     fn mnl_nlmsg_put_header(buf: *mut c_void) -> *mut netlink::Nlmsghdr;
-    fn mnl_nlmsg_put_extra_header(nlh: *mut Nlmsg, size: size_t) -> *mut c_void;
+    fn mnl_nlmsg_put_extra_header(nlh: *mut netlink::Nlmsghdr, size: size_t) -> *mut c_void;
     fn mnl_nlmsg_ok(nlh: *const netlink::Nlmsghdr, len: c_int) -> bool;
     fn mnl_nlmsg_next(nlh: *const netlink::Nlmsghdr, len: *mut c_int)-> *mut netlink::Nlmsghdr;
     fn mnl_nlmsg_seq_ok(nlh: *const netlink::Nlmsghdr, seq: c_uint) -> bool;
@@ -211,8 +211,8 @@ pub enum CbRet {
     OK		= 1,
 }
 
-type CbT = extern "C" fn(nlh: *const Nlmsg, data: *mut c_void) -> c_int;
-pub type Cb<'a, T: ?Sized> = fn(nlh: &'a Nlmsg, data: &'a mut T) -> CbRet;
+type CbT = extern "C" fn(nlh: *const netlink::Nlmsghdr, data: *mut c_void) -> c_int;
+pub type Cb<'a, T: ?Sized> = fn(nlh: Nlmsg, data: &'a mut T) -> CbRet;
 struct CbData <'a, 'b, T: 'a + 'b + ?Sized> {
     cb: Option<Cb<'a, T>>,
     ctl_cb: Option<Cb<'a, T>>,
@@ -268,9 +268,10 @@ impl <'a> Socket {
         Ok(n as usize)
     }
 
-    pub fn send_nlmsg(&self, nlh: &netlink::Nlmsghdr) -> io::Result<usize> {
+    pub fn send_nlmsg(&self, nlh: &Nlmsg) -> io::Result<usize> {
         let n = try!(cvt_isize!(
-            mnl_socket_sendto(self, nlh as *const _ as *const c_void, nlh.nlmsg_len as size_t)));
+            mnl_socket_sendto(self, nlh.buf.as_ptr() as *const _ as *const c_void,
+                              *nlh.nlmsg_len as size_t)));
         Ok(n as usize)
     }
 
@@ -306,181 +307,227 @@ impl <'a> Socket {
     }
 }
 
+// TODO: impl FromRawFd, IntoRawFd
 impl AsRawFd for Socket {
     fn as_raw_fd(&self) -> RawFd {
         unsafe { mnl_socket_get_fd(self) }
     }
 }
 
-pub type Nlmsg = netlink::Nlmsghdr; // pub type Nlmsg<'a> = netlink::Nlmsghdr<'a>;
-impl <'a> Nlmsg { // impl <'a> Nlmsg <'a> {
+pub struct Nlmsg <'a> {
+    buf: &'a mut [u8],
+    pub nlmsg_len: &'a mut u32,
+    pub nlmsg_type: &'a mut u16,
+    pub nlmsg_flags: &'a mut u16,
+    pub nlmsg_seq: &'a mut u32,
+    pub nlmsg_pid: &'a mut u32,
+}
+
+impl <'a> Nlmsg <'a> { // impl <'a> Nlmsg <'a> {
+    pub fn buflen(&self) -> usize {
+        self.buf.len()
+    }
+
+    pub fn as_raw_ref(&self) -> &netlink::Nlmsghdr {
+        unsafe { (self.buf.as_ptr() as *const netlink::Nlmsghdr).as_ref().unwrap() }
+    }
+
+    pub fn as_raw_mut(&mut self) -> &mut netlink::Nlmsghdr {
+        unsafe { (self.buf.as_mut_ptr() as *mut netlink::Nlmsghdr).as_mut().unwrap() }
+    }
+
     pub fn size(len: usize) -> usize {
         unsafe { mnl_nlmsg_size(len as size_t) }
     }
 
     pub fn payload_len(&self) -> usize {
-        unsafe { mnl_nlmsg_get_payload_len(self) }
+        unsafe { mnl_nlmsg_get_payload_len(self.as_raw_ref()) }
     }
 
-    pub fn new(buf: &mut [u8]) -> &mut Nlmsg {
+    fn _new(buf: &mut [u8]) -> Nlmsg {
         // XXX: check buf len > sizeof(Nlmsg)
-        unsafe { &mut(*mnl_nlmsg_put_header(buf.as_ptr() as *mut c_void)) }
+        let p = buf.as_mut_ptr();
+        let nlh = Nlmsg {
+            buf:	 buf,
+            nlmsg_len:   unsafe { (p as *mut u32).offset(0).as_mut().unwrap() },
+            nlmsg_type:  unsafe { (p as *mut u16).offset(2).as_mut().unwrap() },
+            nlmsg_flags: unsafe { (p as *mut u16).offset(3).as_mut().unwrap() },
+            nlmsg_seq:   unsafe { (p as *mut u32).offset(2).as_mut().unwrap() },
+            nlmsg_pid:   unsafe { (p as *mut u32).offset(3).as_mut().unwrap() },
+        };
+        nlh
+    }
+
+    pub fn new(buf: &mut [u8]) -> Nlmsg {
+        let mut nlh = Self::_new(buf);
+        nlh.put_header();
+        nlh
+    }
+
+    pub fn from_raw(nlh: *const netlink::Nlmsghdr) -> Self {
+        let buf: &'a mut[u8] = unsafe {
+            std::slice::from_raw_parts_mut((nlh as *mut u8),
+                                           (*nlh).nlmsg_len as usize)
+        };
+        Self::_new(buf)
     }
 
     pub fn put_header(&mut self) {
-        unsafe { &mut(*mnl_nlmsg_put_header(self as *mut _ as *mut c_void)); }
+        unsafe { &mut(*mnl_nlmsg_put_header(self.as_raw_mut() as *mut _ as *mut c_void)); }
     }
 
     pub fn put_extra_header<T>(&mut self, size: usize) -> &'a mut T {
-        unsafe { &mut(*(mnl_nlmsg_put_extra_header(self, size as usize) as *mut T)) }
+        unsafe { &mut(*(mnl_nlmsg_put_extra_header(self.as_raw_mut(), size as usize) as *mut T)) }
     }
 
     pub fn put_sized_header<T: Sized>(&mut self) -> &'a mut T {
-        unsafe { &mut(*(mnl_nlmsg_put_extra_header(self, size_of::<T>()) as *mut T)) }
+        unsafe { &mut(*(mnl_nlmsg_put_extra_header(self.as_raw_mut(), size_of::<T>()) as *mut T)) }
     }
 
     pub fn ok(&self, len: usize) -> bool {
-        unsafe { mnl_nlmsg_ok(self, len as c_int) }
+        unsafe { mnl_nlmsg_ok(self.as_raw_ref(), len as c_int) }
     }
 
-    pub fn next(&mut self, len: isize) -> (&'a mut Nlmsg, isize) {
+    pub fn next(&mut self, len: isize) -> (Nlmsg, isize) {
         let mut rest = len as c_int;
-        let nlh = unsafe { &mut(*mnl_nlmsg_next(self, &mut rest)) };
-        (nlh, rest as isize)
+        // let nlh = unsafe { &mut(*mnl_nlmsg_next(self.as_raw_mut(), &mut rest)) };
+        let _ = unsafe { &mut(*mnl_nlmsg_next(self.as_raw_mut(), &mut rest)) };
+        let u = self.buf.len() - rest as usize;
+        (Self::_new(&mut self.buf[u..]), rest as isize)
     }
 
     pub fn seq_ok(&self, seq: usize) -> bool {
-        unsafe { mnl_nlmsg_seq_ok(self, seq as c_uint) }
+        unsafe { mnl_nlmsg_seq_ok(self.as_raw_ref(), seq as c_uint) }
     }
 
     pub fn portid_ok(&self, portid: u32) -> bool {
-        unsafe { mnl_nlmsg_portid_ok(self, portid as c_uint) }
+        unsafe { mnl_nlmsg_portid_ok(self.as_raw_ref(), portid as c_uint) }
     }
 
     pub fn payload<T>(&self) -> &'a T {
-        unsafe { &(*(mnl_nlmsg_get_payload(self) as *const T)) }
+        unsafe { &(*(mnl_nlmsg_get_payload(self.as_raw_ref()) as *const T)) }
     }
 
     pub fn payload_mut<T>(&mut self) -> &'a mut T {
-        unsafe { &mut(*(mnl_nlmsg_get_payload(self) as *mut T)) }
+        unsafe { &mut(*(mnl_nlmsg_get_payload(self.as_raw_mut()) as *mut T)) }
     }
 
     pub fn payload_offset<T>(&self, offset: usize) -> &'a T {
-        unsafe { &(*(mnl_nlmsg_get_payload_offset(self, offset as size_t) as *const T)) }
+        unsafe { &(*(mnl_nlmsg_get_payload_offset(self.as_raw_ref(), offset as size_t) as *const T)) }
     }
 
     pub fn payload_offset_mut<T>(&mut self, offset: usize) -> &'a mut T {
-        unsafe { &mut(*(mnl_nlmsg_get_payload_offset(self, offset as size_t) as *mut T)) }
+        unsafe { &mut(*(mnl_nlmsg_get_payload_offset(self.as_raw_mut(), offset as size_t) as *mut T)) }
     }
 
     pub fn payload_tail<T>(&self) -> &'a T {
-        unsafe { &(*(mnl_nlmsg_get_payload_tail(self) as *const T)) }
+        unsafe { &(*(mnl_nlmsg_get_payload_tail(self.as_raw_ref()) as *const T)) }
     }
 
     pub fn payload_tail_mut<T>(&mut self) -> &'a mut T {
-        unsafe { &mut(*(mnl_nlmsg_get_payload_tail(self) as *mut T)) }
+        unsafe { &mut(*(mnl_nlmsg_get_payload_tail(self.as_raw_mut()) as *mut T)) }
     }
 
     pub fn fprintf(&self, fd: &AsRawFd, extra_header_size: usize) {
         let mode = CString::new("a").unwrap();
         unsafe {
             let f = libc::fdopen(fd.as_raw_fd(), mode.as_ptr());
-            mnl_nlmsg_fprintf(f, self as *const _ as *const c_void,
-                              self.nlmsg_len as size_t, extra_header_size as size_t)
+            mnl_nlmsg_fprintf(f, self.as_raw_ref() as *const _ as *const c_void,
+                              *self.nlmsg_len as size_t, extra_header_size as size_t)
         }
     }
 
     // belows are mnl_attr_...
     pub fn put<T: Sized>(&mut self, atype: u16, data: T) {
         // ???: data must be a #[repr(C)]
-        unsafe { mnl_attr_put(self, atype, size_of::<T>(), &data as *const T as *const c_void) }
+        unsafe { mnl_attr_put(self.as_raw_mut(), atype, size_of::<T>(), &data as *const T as *const c_void) }
     }
 
     pub fn put_u8(&mut self, atype: u16, data: u8) {
-        unsafe { mnl_attr_put_u8(self, atype, data) }
+        unsafe { mnl_attr_put_u8(self.as_raw_mut(), atype, data) }
     }
 
     pub fn put_u16(&mut self, atype: u16, data: u16) {
-        unsafe { mnl_attr_put_u16(self, atype, data) }
+        unsafe { mnl_attr_put_u16(self.as_raw_mut(), atype, data) }
     }
 
     pub fn put_u32(&mut self, atype: u16, data: u32) {
-        unsafe { mnl_attr_put_u32(self, atype, data) }
+        unsafe { mnl_attr_put_u32(self.as_raw_mut(), atype, data) }
     }
 
     pub fn put_u64(&mut self, atype: u16, data: u64) {
-        unsafe { mnl_attr_put_u64(self, atype, data) }
+        unsafe { mnl_attr_put_u64(self.as_raw_mut(), atype, data) }
     }
 
     pub fn put_str(&mut self, atype: u16, data: &str) {
         let cs = CString::new(data).unwrap();
         unsafe {
-            mnl_attr_put_str(self, atype, cs.as_ptr())
+            mnl_attr_put_str(self.as_raw_mut(), atype, cs.as_ptr())
         }
     }
 
     pub fn put_strz(&mut self, atype: u16, data: &str) {
         let cs = CString::new(data).unwrap();
         unsafe {
-            mnl_attr_put_strz(self, atype, cs.as_ptr())
+            mnl_attr_put_strz(self.as_raw_mut(), atype, cs.as_ptr())
         }
     }
 
-    pub fn put_check<T>(&mut self, buflen: usize, atype: u16, data: T) -> bool {
-        unsafe { mnl_attr_put_check(self, buflen as size_t, atype,
+    pub fn put_check<T: Sized>(&mut self, atype: u16, data: T) -> bool {
+        unsafe { mnl_attr_put_check(self.as_raw_mut(), self.buf.len() as size_t, atype,
                                     size_of::<T>(), &data as *const T as *const c_void) }
     }
 
-    pub fn put_u8_check(&mut self, buflen: usize, atype: u16, data: u8) -> bool {
-        unsafe { mnl_attr_put_u8_check(self, buflen as size_t, atype, data) }
+    pub fn put_u8_check(&mut self, atype: u16, data: u8) -> bool {
+        unsafe { mnl_attr_put_u8_check(self.as_raw_mut(), self.buf.len() as size_t, atype, data) }
     }
 
-    pub fn put_u16_check(&mut self, buflen: usize, atype: u16, data: u16) -> bool {
-        unsafe { mnl_attr_put_u16_check(self, buflen as size_t, atype, data) }
+    pub fn put_u16_check(&mut self, atype: u16, data: u16) -> bool {
+        unsafe { mnl_attr_put_u16_check(self.as_raw_mut(), self.buf.len() as size_t, atype, data) }
     }
 
-    pub fn put_u32_check(&mut self, buflen: usize, atype: u16, data: u32) -> bool {
-        unsafe { mnl_attr_put_u32_check(self, buflen as size_t, atype, data) }
+    pub fn put_u32_check(&mut self, atype: u16, data: u32) -> bool {
+        unsafe { mnl_attr_put_u32_check(self.as_raw_mut(), self.buf.len() as size_t, atype, data) }
     }
 
-    pub fn put_u64_check(&mut self, buflen: usize, atype: u16, data: u64) -> bool {
-        unsafe { mnl_attr_put_u64_check(self, buflen as size_t, atype, data) }
+    pub fn put_u64_check(&mut self, atype: u16, data: u64) -> bool {
+        unsafe { mnl_attr_put_u64_check(self.as_raw_mut(), self.buf.len() as size_t, atype, data) }
     }
 
-    pub fn put_str_check(&mut self, buflen: usize, atype: u16, data: &str) -> bool {
+    pub fn put_str_check(&mut self, atype: u16, data: &str) -> bool {
         let cs = CString::new(data).unwrap();
         unsafe {
-            mnl_attr_put_str_check(self, buflen as size_t, atype, cs.as_ptr())
+            mnl_attr_put_str_check(self.as_raw_mut(), self.buf.len() as size_t, atype, cs.as_ptr())
         }
     }
 
-    pub fn put_strz_check(&mut self, buflen: usize, atype: u16, data: &str) -> bool {
+    pub fn put_strz_check(&mut self, atype: u16, data: &str) -> bool {
         let cs = CString::new(data).unwrap();
         unsafe {
-            mnl_attr_put_strz_check(self, buflen as size_t, atype, cs.as_ptr())
+            mnl_attr_put_strz_check(self.as_raw_mut(), self.buf.len() as size_t, atype, cs.as_ptr())
         }
     }
 
     pub fn nest_start(&mut self, atype: u16) -> &'a mut Attr {
-        unsafe { &mut *mnl_attr_nest_start(self, atype) }
+        unsafe { &mut *mnl_attr_nest_start(self.as_raw_mut(), atype) }
     }
 
-    pub fn nest_start_check(&mut self, buflen: usize, atype: u16) -> &'a mut Attr {
-        unsafe { &mut *mnl_attr_nest_start_check(self, buflen as size_t, atype) }
+    pub fn nest_start_check(&mut self, atype: u16) -> &'a mut Attr {
+        unsafe { &mut *mnl_attr_nest_start_check(self.as_raw_mut(), self.buf.len() as size_t, atype) }
     }
 
     pub fn nest_end(&mut self, start: &mut Attr) {
-        unsafe { mnl_attr_nest_end(self, start) }
+        unsafe { mnl_attr_nest_end(self.as_raw_mut(), start) }
     }
 
     pub fn nest_cancel(&mut self, start: &mut Attr) {
-        unsafe { mnl_attr_nest_cancel(self, start) }
+        unsafe { mnl_attr_nest_cancel(self.as_raw_mut(), start) }
     }
 
     pub fn parse<'b, 'c, T: 'b + ?Sized>(&self, offset: usize, cb: AttrCb<'b, T>, data: &'c mut T) -> io::Result<(CbRet)> {
         let mut cbdata = AttrCbData {cb: cb, data: data};
         let pdata = &mut cbdata as *mut _ as *mut c_void;
-        cvt_cbret!(mnl_attr_parse(self, offset as c_uint, attr_parse_cb::<T>, pdata))
+        cvt_cbret!(mnl_attr_parse(self.as_raw_ref(), offset as c_uint, attr_parse_cb::<T>, pdata))
     }
 
     pub fn attrs(&'a self, offset: usize) -> Box<Iterator<Item=&Attr> + 'a> {
@@ -547,6 +594,10 @@ impl NlmsgBatch {
 
     pub fn current<'a, T>(&'a mut self) -> &'a mut T {
         unsafe { &mut(*(mnl_nlmsg_batch_current(self) as *mut T)) }
+    }
+
+    pub fn current_nlmsg(&mut self) -> Nlmsg {
+        unsafe { Nlmsg::from_raw(mnl_nlmsg_batch_current(self) as *const netlink::Nlmsghdr) }
     }
 
     pub fn is_empty(&self) -> bool {
@@ -663,21 +714,21 @@ pub fn parse_payload<'a, 'b, T: 'a + 'b + ?Sized>(payload: &[u8], payload_len: u
                                       payload_len as size_t, attr_parse_cb::<T>, pdata))
 }
 
-extern fn nlmsg_parse_cb<T: ?Sized>(nlh: *const Nlmsg, data: *mut c_void) -> c_int {
+extern fn nlmsg_parse_cb<T: ?Sized>(nlh: *const netlink::Nlmsghdr, data: *mut c_void) -> c_int {
     unsafe {
         let arg = &mut *(data as *mut CbData<T>);
         if let Some(cb) = arg.cb {
-            return cb(&*nlh, arg.data) as c_int;
+            return cb(Nlmsg::from_raw(nlh), arg.data) as c_int;
         }
         CbRet::OK as c_int // MNL_CB_OK
     }
 }
 
-extern fn nlmsg_ctl_cb<T: ?Sized>(nlh: *const Nlmsg, data: *mut c_void) -> c_int {
+extern fn nlmsg_ctl_cb<T: ?Sized>(nlh: *const netlink::Nlmsghdr, data: *mut c_void) -> c_int {
     unsafe {
         let arg = &mut *(data as *mut CbData<T>);
         if let Some(ctl_cb) = arg.ctl_cb {
-            return ctl_cb(&*nlh, arg.data) as c_int;
+            return ctl_cb(Nlmsg::from_raw(nlh), arg.data) as c_int;
         }
         CbRet::OK as c_int // MNL_CB_OK
     }

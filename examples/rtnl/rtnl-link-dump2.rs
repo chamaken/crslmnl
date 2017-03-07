@@ -42,7 +42,7 @@ fn data_attr_cb(attr: &mnl::Attr, _: &mut u8) -> mnl::CbRet {
     mnl::CbRet::OK
 }
 
-fn data_cb(nlh: &mnl::Nlmsg, _: &mut Option<u8>) -> mnl::CbRet {
+fn data_cb(nlh: mnl::Nlmsg, _: &mut Option<u8>) -> mnl::CbRet {
     let ifm = nlh.payload::<rtnetlink::Ifinfomsg>();
     print!("index={} type={} flags=0x{:x} family={} ",
            ifm.ifi_index, ifm.ifi_type, ifm.ifi_flags, ifm.ifi_family);
@@ -68,14 +68,14 @@ fn main() {
     let mut buf = vec![0u8; mnl::SOCKET_BUFFER_SIZE()];
     let seq = time::now().to_timespec().sec as u32;
     {
-        let nlh = mnl::Nlmsg::new(&mut buf);
-        nlh.nlmsg_type = rtnetlink::RTM_GETLINK;
-        nlh.nlmsg_flags = netlink::NLM_F_REQUEST | netlink::NLM_F_DUMP;
-        nlh.nlmsg_seq = seq;
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        *nlh.nlmsg_type = rtnetlink::RTM_GETLINK;
+        *nlh.nlmsg_flags = netlink::NLM_F_REQUEST | netlink::NLM_F_DUMP;
+        *nlh.nlmsg_seq = seq;
         let rt = nlh.put_sized_header::<rtnetlink::Rtgenmsg>();
         rt.rtgen_family = AF_PACKET as u8;
 
-        nl.send_nlmsg(nlh)
+        nl.send_nlmsg(&nlh)
             .unwrap_or_else(|errno| panic!("mnl_socket_sendto: {}", errno));
     }
 

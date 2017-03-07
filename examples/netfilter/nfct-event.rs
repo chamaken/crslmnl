@@ -162,13 +162,13 @@ fn data_attr_cb<'a>(attr: &'a mnl::Attr, tb: &mut [Option<&'a mnl::Attr>]) -> mn
     mnl::CbRet::OK
 }
 
-fn data_cb(nlh: &mnl::Nlmsg, _: &mut Option<u8>) -> mnl::CbRet {
+fn data_cb(nlh: mnl::Nlmsg, _: &mut Option<u8>) -> mnl::CbRet {
     let mut tb: [Option<&mnl::Attr>; nfct::CTA_MAX as usize + 1]
         = [None; nfct::CTA_MAX as usize + 1];
     // let nfg = nlh.payload::<nfnl::Nfgenmsg>();
-    match nlh.nlmsg_type & 0xFF {
+    match *nlh.nlmsg_type & 0xFF {
         n if n == nfct::CtnlMsgTypes::NEW as u16 => {
-            if nlh.nlmsg_flags & (netlink::NLM_F_CREATE | netlink::NLM_F_EXCL) != 0 {
+            if *nlh.nlmsg_flags & (netlink::NLM_F_CREATE | netlink::NLM_F_EXCL) != 0 {
                 print!("{:9} ", "[NEW] ");
             } else {
                 print!("{:9} ", "[UPDATE] ");

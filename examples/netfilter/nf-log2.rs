@@ -65,7 +65,7 @@ fn parse_attr_cb<'a>(attr: &'a mnl::Attr, tb: &mut HashMap<u16, &'a mnl::Attr>) 
     mnl::CbRet::OK
 }
 
-fn log_cb(nlh: &mnl::Nlmsg, _: &mut Option<u8>) -> mnl::CbRet {
+fn log_cb(nlh: mnl::Nlmsg, _: &mut Option<u8>) -> mnl::CbRet {
     let mut ph: &nful::MsgPacketHdr = &nful::MsgPacketHdr { hw_protocol: 0, hook: 0, _pad: 0 };
     let mut prefix = "";
     let mut mark: u32 = 0;
@@ -87,10 +87,10 @@ fn log_cb(nlh: &mnl::Nlmsg, _: &mut Option<u8>) -> mnl::CbRet {
     mnl::CbRet::OK
 }
 
-fn nflog_build_cfg_pf_request<'a>(buf: &'a mut [u8], command: u8) -> &mut mnl::Nlmsg {
-    let nlh = mnl::Nlmsg::new(buf);
-    nlh.nlmsg_type = (nfnl::NFNL_SUBSYS_ULOG << 8) | nful::MsgTypes::CONFIG as u16;
-    nlh.nlmsg_flags = netlink::NLM_F_REQUEST;
+fn nflog_build_cfg_pf_request<'a>(buf: &'a mut [u8], command: u8) -> mnl::Nlmsg {
+    let mut nlh = mnl::Nlmsg::new(buf);
+    *nlh.nlmsg_type = (nfnl::NFNL_SUBSYS_ULOG << 8) | nful::MsgTypes::CONFIG as u16;
+    *nlh.nlmsg_flags = netlink::NLM_F_REQUEST;
 
     let nfg = nlh.put_sized_header::<nfnl::Nfgenmsg>();
     nfg.nfgen_family = libc::AF_INET as u8;
@@ -101,10 +101,10 @@ fn nflog_build_cfg_pf_request<'a>(buf: &'a mut [u8], command: u8) -> &mut mnl::N
     nlh
 }
 
-fn nflog_build_cfg_request<'a>(buf: &'a mut [u8], command: u8, qnum: u16) -> &mut mnl::Nlmsg {
+fn nflog_build_cfg_request<'a>(buf: &'a mut [u8], command: u8, qnum: u16) -> mnl::Nlmsg {
     let mut nlh = mnl::Nlmsg::new(buf);
-    nlh.nlmsg_type = (nfnl::NFNL_SUBSYS_ULOG << 8) | nful::MsgTypes::CONFIG as u16;
-    nlh.nlmsg_flags = netlink::NLM_F_REQUEST;
+    *nlh.nlmsg_type = (nfnl::NFNL_SUBSYS_ULOG << 8) | nful::MsgTypes::CONFIG as u16;
+    *nlh.nlmsg_flags = netlink::NLM_F_REQUEST;
 
     let nfg = nlh.put_sized_header::<nfnl::Nfgenmsg>();
     nfg.nfgen_family = libc::AF_INET as u8;
@@ -116,10 +116,10 @@ fn nflog_build_cfg_request<'a>(buf: &'a mut [u8], command: u8, qnum: u16) -> &mu
     nlh
 }
 
-fn nflog_build_cfg_params<'a>(buf: &'a mut [u8], mode: u8, range: u32, qnum: u16) -> &mut mnl::Nlmsg {
-    let nlh = mnl::Nlmsg::new(buf);
-    nlh.nlmsg_type = (nfnl::NFNL_SUBSYS_ULOG << 8) | nful::MsgTypes::CONFIG as u16;
-    nlh.nlmsg_flags = netlink::NLM_F_REQUEST;
+fn nflog_build_cfg_params<'a>(buf: &'a mut [u8], mode: u8, range: u32, qnum: u16) -> mnl::Nlmsg {
+    let mut nlh = mnl::Nlmsg::new(buf);
+    *nlh.nlmsg_type = (nfnl::NFNL_SUBSYS_ULOG << 8) | nful::MsgTypes::CONFIG as u16;
+    *nlh.nlmsg_flags = netlink::NLM_F_REQUEST;
 
     let nfg = nlh.put_sized_header::<nfnl::Nfgenmsg>();
     nfg.nfgen_family = 0; // libc::AF_UNSPEC as u8;
@@ -152,25 +152,25 @@ fn main() {
     let mut buf = vec![0u8; mnl::SOCKET_BUFFER_SIZE()];
     {
         let nlh = nflog_build_cfg_pf_request(&mut buf, nful::MsgConfigCmds::PF_UNBIND as u8);
-        nl.send_nlmsg(nlh)
+        nl.send_nlmsg(&nlh)
             .unwrap_or_else(|errno| panic!("mnl_socket_sendto: {}", errno));
     }
 
     {
         let nlh = nflog_build_cfg_pf_request(&mut buf, nful::MsgConfigCmds::PF_BIND as u8);
-        nl.send_nlmsg(nlh)
+        nl.send_nlmsg(&nlh)
             .unwrap_or_else(|errno| panic!("mnl_socket_sendto: {}", errno));
     }
 
     {
         let nlh = nflog_build_cfg_request(&mut buf, nful::MsgConfigCmds::BIND as u8, qnum);
-        nl.send_nlmsg(nlh)
+        nl.send_nlmsg(&nlh)
             .unwrap_or_else(|errno| panic!("mnl_socket_sendto: {}", errno));
     }
 
     {
         let nlh = nflog_build_cfg_params(&mut buf, nful::COPY_PACKET as u8, 0xffff, qnum);
-        nl.send_nlmsg(nlh)
+        nl.send_nlmsg(&nlh)
             .unwrap_or_else(|errno| panic!("mnl_socket_sendto: {}", errno));
     }
 

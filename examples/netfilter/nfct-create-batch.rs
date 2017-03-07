@@ -16,10 +16,10 @@ use mnl::linux::netfilter::nf_conntrack_tcp as nfct_tcp;
 
 fn put_msg(nlh: &mut mnl::Nlmsg, i: u16, seq: u32) {
     nlh.put_header();
-    nlh.nlmsg_type = (nfnl::NFNL_SUBSYS_CTNETLINK << 8) | nfct::IPCTNL_MSG_CT_NEW;
-    nlh.nlmsg_flags = netlink::NLM_F_REQUEST | netlink::NLM_F_CREATE
+    *nlh.nlmsg_type = (nfnl::NFNL_SUBSYS_CTNETLINK << 8) | nfct::IPCTNL_MSG_CT_NEW;
+    *nlh.nlmsg_flags = netlink::NLM_F_REQUEST | netlink::NLM_F_CREATE
         | netlink::NLM_F_EXCL | netlink::NLM_F_ACK;
-    nlh.nlmsg_seq = seq;
+    *nlh.nlmsg_seq = seq;
 
     let nfh = nlh.put_sized_header::<nfnl::Nfgenmsg>();
     nfh.nfgen_family = libc::AF_INET as u8;
@@ -62,8 +62,8 @@ fn put_msg(nlh: &mut mnl::Nlmsg, i: u16, seq: u32) {
     nlh.put_u32(nfct::CTA_TIMEOUT, u32::to_be(1000));
 }
 
-fn ctl_cb(nlh: &mnl::Nlmsg, _: &mut u8) -> mnl::CbRet {
-    match nlh.nlmsg_type {
+fn ctl_cb(nlh: mnl::Nlmsg, _: &mut u8) -> mnl::CbRet {
+    match *nlh.nlmsg_type {
         netlink::NLMSG_ERROR => {
             let err = nlh.payload::<netlink::Nlmsgerr>();
             if err.error != 0 {

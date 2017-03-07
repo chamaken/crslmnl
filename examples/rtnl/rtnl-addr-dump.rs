@@ -41,7 +41,7 @@ fn data_attr_cb<'a>(attr: &'a mnl::Attr, tb: &mut [Option<&'a mnl::Attr>]) -> mn
     mnl::CbRet::OK
 }
 
-fn data_cb(nlh: &mnl::Nlmsg, _: &mut Option<u8>) -> mnl::CbRet {
+fn data_cb(nlh: mnl::Nlmsg, _: &mut Option<u8>) -> mnl::CbRet {
     let mut tb: [Option<&mnl::Attr>; if_link::IFLA_MAX as usize + 1]
         = [None; if_link::IFLA_MAX as usize + 1];
     let ifa = nlh.payload::<if_addr::Ifaddrmsg>();
@@ -88,17 +88,17 @@ fn main() {
     let mut buf = vec![0u8; mnl::SOCKET_BUFFER_SIZE()];
     let seq = time::now().to_timespec().sec as u32;
     {
-        let nlh = mnl::Nlmsg::new(&mut buf);
-        nlh.nlmsg_type = rtnetlink::RTM_GETADDR;
-        nlh.nlmsg_flags = netlink::NLM_F_REQUEST | netlink::NLM_F_DUMP;
-        nlh.nlmsg_seq = seq;
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        *nlh.nlmsg_type = rtnetlink::RTM_GETADDR;
+        *nlh.nlmsg_flags = netlink::NLM_F_REQUEST | netlink::NLM_F_DUMP;
+        *nlh.nlmsg_seq = seq;
         let rt = nlh.put_sized_header::<rtnetlink::Rtgenmsg>();
         if args[1] == "inet" {
         rt.rtgen_family = AF_INET as u8;
         } else if args[1] == "inet6" {
             rt.rtgen_family = AF_INET6 as u8;
         }
-        nl.send_nlmsg(nlh)
+        nl.send_nlmsg(&nlh)
             .unwrap_or_else(|errno| panic!("mnl_socket_sendto: {}", errno));
     }
 
