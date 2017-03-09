@@ -344,7 +344,7 @@ impl <'a> Nlmsg <'a> { // impl <'a> Nlmsg <'a> {
         unsafe { mnl_nlmsg_get_payload_len(self.as_raw_ref()) }
     }
 
-    fn _new(buf: &mut [u8]) -> Nlmsg {
+    pub fn from_bytes(buf: &mut [u8]) -> Nlmsg {
         // XXX: check buf len > sizeof(Nlmsg)
         let p = buf.as_mut_ptr();
         let nlh = Nlmsg {
@@ -359,7 +359,7 @@ impl <'a> Nlmsg <'a> { // impl <'a> Nlmsg <'a> {
     }
 
     pub fn new(buf: &mut [u8]) -> Nlmsg {
-        let mut nlh = Self::_new(buf);
+        let mut nlh = Self::from_bytes(buf);
         nlh.put_header();
         nlh
     }
@@ -369,7 +369,7 @@ impl <'a> Nlmsg <'a> { // impl <'a> Nlmsg <'a> {
             std::slice::from_raw_parts_mut((nlh as *mut u8),
                                            (*nlh).nlmsg_len as usize)
         };
-        Self::_new(buf)
+        Self::from_bytes(buf)
     }
 
     pub fn put_header(&mut self) {
@@ -393,7 +393,7 @@ impl <'a> Nlmsg <'a> { // impl <'a> Nlmsg <'a> {
         // let nlh = unsafe { &mut(*mnl_nlmsg_next(self.as_raw_mut(), &mut rest)) };
         let _ = unsafe { &mut(*mnl_nlmsg_next(self.as_raw_mut(), &mut rest)) };
         let u = self.buf.len() - rest as usize;
-        (Self::_new(&mut self.buf[u..]), rest as isize)
+        (Self::from_bytes(&mut self.buf[u..]), rest as isize)
     }
 
     pub fn seq_ok(&self, seq: usize) -> bool {
