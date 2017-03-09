@@ -227,8 +227,8 @@ pub const NETLINK_CONNECTED: u8		= 1;
 //  <-------------- nlattr->nla_len -------------->
 #[repr(C)]
 pub struct Nlattr {
-    nla_len: u16,
-    nla_type: u16,
+    pub nla_len: u16,
+    pub nla_type: u16,
 }
 
 
