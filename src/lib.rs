@@ -327,6 +327,11 @@ impl <'a> Nlmsg { // impl <'a> Nlmsg <'a> {
         unsafe { &mut(*mnl_nlmsg_put_header(buf.as_ptr() as *mut c_void)) }
     }
 
+    pub fn from_bytes(buf: &mut [u8]) -> &mut Nlmsg {
+        // XXX: check buf len > sizeof(Nlmsg)
+        unsafe { (buf.as_mut_ptr() as *mut _ as *mut Nlmsg).as_mut().unwrap() }
+    }
+
     pub fn put_header(&mut self) {
         unsafe { &mut(*mnl_nlmsg_put_header(self as *mut _ as *mut c_void)); }
     }
