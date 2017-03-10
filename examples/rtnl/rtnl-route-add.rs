@@ -125,7 +125,7 @@ Example: {} eth0 10.0.1.12 32 10.0.1.11
                             unsafe { transmute::<[u8; 4], u32>(addr.octets()) }),
             IpAddr::V6(addr) =>
                 nlh.put(rtnetlink::RTA_DST,
-                        unsafe { transmute::<[u16; 8], in6_addr>(addr.segments()) }),
+                        &unsafe { transmute::<[u16; 8], in6_addr>(addr.segments()) }),
         }
         nlh.put_u32(rtnetlink::RTA_OIF, iface);
         if let Some(nh) = gw {
@@ -135,7 +135,7 @@ Example: {} eth0 10.0.1.12 32 10.0.1.11
                                 unsafe { transmute::<[u8; 4], u32>(addr.octets()) }),
                 IpAddr::V6(addr) =>
                     nlh.put(rtnetlink::RTA_GATEWAY,
-                            unsafe { transmute::<[u16; 8], in6_addr>(addr.segments()) }),
+                            &unsafe { transmute::<[u16; 8], in6_addr>(addr.segments()) }),
             }
         }
         nl.send_nlmsg(nlh)

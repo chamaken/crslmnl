@@ -97,7 +97,7 @@ fn nflog_build_cfg_pf_request<'a>(buf: &'a mut [u8], command: u8) -> &mut mnl::N
     nfg.version = nfnl::NFNETLINK_V0;
 
     let cmd = nful::MsgConfigCmd{command: command};
-    nlh.put(nful::AttrConfig::CMD as u16, cmd);
+    nlh.put(nful::AttrConfig::CMD as u16, &cmd);
     nlh
 }
 
@@ -112,7 +112,7 @@ fn nflog_build_cfg_request<'a>(buf: &'a mut [u8], command: u8, qnum: u16) -> &mu
     nfg.res_id = qnum.to_be();
 
     let cmd = nful::MsgConfigCmd{command: command};
-    nlh.put(nful::AttrConfig::CMD as u16, cmd);
+    nlh.put(nful::AttrConfig::CMD as u16, &cmd);
     nlh
 }
 
@@ -131,7 +131,7 @@ fn nflog_build_cfg_params<'a>(buf: &'a mut [u8], mode: u8, range: u32, qnum: u16
         copy_mode: mode,
         _pad: 0,
     };
-    nlh.put(nful::AttrConfig::MODE as u16, params);
+    nlh.put(nful::AttrConfig::MODE as u16, &params);
     nlh
 }
 

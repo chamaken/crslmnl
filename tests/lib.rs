@@ -233,7 +233,7 @@ fn nlmsg_put() {
     let attr_len = linux::netlink::NLA_HDRLEN() + (size_of::<u64>() as u16);
     {
         let nlh = mnl::Nlmsg::new(&mut buf);
-        nlh.put(123, std::u64::MAX);
+        nlh.put(123, &std::u64::MAX);
         assert!(nlh.nlmsg_len == mnl::NLMSG_HDRLEN() + mnl::ALIGN(attr_len as u32));
 
         let attr = nlh.payload::<linux::netlink::Nlattr>();
