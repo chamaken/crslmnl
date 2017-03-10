@@ -2,7 +2,7 @@
 // no effect? #![link(name = "mnl")]
 
 use std::io;
-use std::mem::{ size_of, zeroed };
+use std::mem::{ size_of, size_of_val, zeroed };
 use std::os::unix::io::{ RawFd, AsRawFd };
 use std::ffi::{ CString, CStr };
 use std::fmt;
@@ -438,9 +438,9 @@ impl <'a> Nlmsg <'a> { // impl <'a> Nlmsg <'a> {
     }
 
     // belows are mnl_attr_...
-    pub fn put<T: Sized>(&mut self, atype: u16, data: T) {
+    pub fn put<T: ?Sized>(&mut self, atype: u16, data: &T) {
         // ???: data must be a #[repr(C)]
-        unsafe { mnl_attr_put(self.as_raw_mut(), atype, size_of::<T>(), &data as *const T as *const c_void) }
+        unsafe { mnl_attr_put(self.as_raw_mut(), atype, size_of_val(data), data as *const T as *const c_void) }
     }
 
     pub fn put_u8(&mut self, atype: u16, data: u8) {

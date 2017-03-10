@@ -90,7 +90,7 @@ fn nfq_build_cfg_pf_request<'a>(buf: &'a mut[u8], command: u8) -> mnl::Nlmsg {
         pf: libc::AF_INET.to_be() as u16,
         ..Default::default()
     };
-    nlh.put(nfq::AttrConfig::CMD as u16, cmd);
+    nlh.put(nfq::AttrConfig::CMD as u16, &cmd);
 
     nlh
 }
@@ -110,7 +110,7 @@ fn nfq_build_cfg_request<'a>(buf: &'a mut[u8], command: u8, queue_num: u16) -> m
         pf: libc::AF_INET.to_be() as u16,
         ..Default::default()
     };
-    nlh.put(nfq::AttrConfig::CMD as u16, cmd);
+    nlh.put(nfq::AttrConfig::CMD as u16, &cmd);
 
     nlh
 }
@@ -126,7 +126,7 @@ fn nfq_build_cfg_params<'a>(buf: &'a mut [u8], mode: u8, range: u32, queue_num: 
     nfg.res_id = queue_num.to_be();
 
     let params = nfq::MsgConfigParams { copy_range: range.to_be(), copy_mode: mode };
-    nlh.put(nfq::AttrConfig::PARAMS as u16, params);
+    nlh.put(nfq::AttrConfig::PARAMS as u16, &params);
 
     nlh
 }
@@ -141,7 +141,7 @@ fn nfq_build_verdict<'a>(buf: &'a mut [u8], id: u32, queue_num: u16, verd: u32) 
     nfg.res_id = queue_num.to_be();
 
     let vh = nfq::MsgVerdictHdr { verdict: verd.to_be(), id: id.to_be() };
-    let _ = nlh.put(nfq::AttrType::VERDICT_HDR as u16, vh);
+    let _ = nlh.put(nfq::AttrType::VERDICT_HDR as u16, &vh);
 
     nlh
 }
