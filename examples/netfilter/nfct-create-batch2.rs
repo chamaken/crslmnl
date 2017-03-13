@@ -116,6 +116,8 @@ fn send_batch(nl: &mut mnl::Socket, b: &mut mnl::NlmsgBatch, portid: u32) {
             return;
         }
     }
+
+    let _ = unsafe {libc::close(epfd as libc::c_int); };
 }
 
 fn main() {
