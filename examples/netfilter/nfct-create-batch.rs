@@ -81,7 +81,10 @@ fn send_batch(nl: &mut mnl::Socket, b: &mut mnl::NlmsgBatch, portid: u32) {
         .unwrap_or_else(|errno| panic!("mnl_socket_sendto: {}", errno));
 
     let poll = mio::Poll::new().unwrap();
-    let mut timer = mio::timer::Timer::default();
+    // let mut timer = mio::timer::Timer::default();
+    let builder = mio::timer::Builder::default().tick_duration(std::time::Duration::new(0, 1));
+    let mut timer = builder.build();
+
     poll.register(&timer, mio::Token(0),
                   mio::Ready::readable(), mio::PollOpt::edge()).unwrap();
 
@@ -92,25 +95,29 @@ fn send_batch(nl: &mut mnl::Socket, b: &mut mnl::NlmsgBatch, portid: u32) {
 
     let mut events = mio::Events::with_capacity(256);
     let mut rcv_buf = vec![0u8; mnl::SOCKET_BUFFER_SIZE()];
+
     loop {
-        timer.set_timeout(std::time::Duration::new(0, 0), 0u8).unwrap();
+        let timeout = timer.set_timeout(std::time::Duration::new(0, 0), 0u8).unwrap();
         poll.poll(&mut events, None).unwrap();
+        timer.cancel_timeout(&timeout);
+        // handle only the first event - for event in events.iter() {
+        match events.get(0) {
+            Some(event) => {
+                if event.token() == mio::Token(0) {
+                    return;
+                }
+            },
+            None => continue, // this happened.
+        }
 
-        for event in events.iter() {
-            let tknum = usize::from(event.token());
-            if tknum == 0 {
-                return;
-            }
-
-            let nrecv = nl.recvfrom(&mut rcv_buf)
-                .unwrap_or_else(|errno| panic!("mnl_socket_recvfrom: {}", errno));
-            let rc = mnl::cb_run2(&rcv_buf[0..nrecv], 0, portid,
-                                  None, &mut 0,
-                                  ctl_cb, &[netlink::NLMSG_ERROR])
-                .unwrap_or_else(|errno| panic!("mnl_cb_run2: {}", errno));
-            if rc == mnl::CbRet::STOP {
-                return;
-            }
+        let nrecv = nl.recvfrom(&mut rcv_buf)
+            .unwrap_or_else(|errno| panic!("mnl_socket_recvfrom: {}", errno));
+        let rc = mnl::cb_run2(&rcv_buf[0..nrecv], 0, portid,
+                              None, &mut 0,
+                              ctl_cb, &[netlink::NLMSG_ERROR])
+            .unwrap_or_else(|errno| panic!("mnl_cb_run2: {}", errno));
+        if rc == mnl::CbRet::STOP {
+            return;
         }
     }
 }
@@ -132,7 +139,7 @@ fn main() {
 
     let seq = time::now().to_timespec().sec as u32;
     for i in 1024u16..65535 {
-        put_msg(b.current::<mnl::Nlmsg>(), i, seq + i as u32 - 1024);
+        put_msg(&mut b.current::<mnl::Nlmsg>(), i, seq + i as u32 - 1024);
 	// is there room for more messages in this batch?
 	// if so, continue.
         if b.next() {
