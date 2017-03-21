@@ -431,9 +431,9 @@ impl <'a> Nlmsg { // impl <'a> Nlmsg <'a> {
         }
     }
 
-    pub fn put_check<T>(&mut self, buflen: usize, atype: u16, data: T) -> bool {
+    pub fn put_check<T>(&mut self, buflen: usize, atype: u16, data: &T) -> bool {
         unsafe { mnl_attr_put_check(self, buflen as size_t, atype,
-                                    size_of::<T>(), &data as *const T as *const c_void) }
+                                    size_of_val(data), data as *const T as *const c_void) }
     }
 
     pub fn put_u8_check(&mut self, buflen: usize, atype: u16, data: u8) -> bool {
