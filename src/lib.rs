@@ -512,8 +512,10 @@ impl <'a> Nlmsg <'a> { // impl <'a> Nlmsg <'a> {
         unsafe { &mut *mnl_attr_nest_start(self.as_raw_mut(), atype) }
     }
 
-    pub fn nest_start_check(&mut self, atype: u16) -> &'a mut Attr {
-        unsafe { &mut *mnl_attr_nest_start_check(self.as_raw_mut(), self.buf.len() as size_t, atype) }
+    pub fn nest_start_check(&mut self, atype: u16) -> Option<&'a mut Attr> {
+        let p = unsafe { mnl_attr_nest_start_check(self.as_raw_mut(), self.buf.len() as size_t, atype) };
+        if p.is_null() { return None; }
+        unsafe { Some(&mut *p) }
     }
 
     pub fn nest_end(&mut self, start: &mut Attr) {
