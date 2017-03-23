@@ -451,3 +451,373 @@ fn nlmsg_put_strz() {
     assert!(std::str::from_utf8(buf_offset_as::<[u8; 10]>(&buf, bi + 4)).unwrap() == s2);
     assert!(*buf_offset_as::<u8>(&buf, attr_tail) == 0);
 }
+
+#[test]
+fn nlmsg_put_check() {
+    let mut buf = vec![0u8; 512];
+    let attr_len = linux::netlink::NLA_HDRLEN() + (size_of::<u64>() as u16);
+    {
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        assert!(nlh.put_check(123, &std::u64::MAX));
+        assert!(*nlh.nlmsg_len == mnl::NLMSG_HDRLEN() + mnl::ALIGN(attr_len as u32));
+
+        let attr = nlh.payload::<linux::netlink::Nlattr>();
+        assert!(attr.nla_len == attr_len);
+        assert!(attr.nla_type == 123);
+        // nlmsg: 16, attr: 4, data: 8 == 28
+    }
+    assert!(*buf_offset_as::<u16>(&buf, 16) == attr_len);
+    assert!(*buf_offset_as::<u16>(&buf, 18) == 123);
+    assert!(*buf_offset_as::<u64>(&buf, 20) == std::u64::MAX);
+
+    {
+        let mut buf = vec![0u8; 39];
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        assert!(nlh.put_check(123, &std::u64::MAX));
+        assert!(!nlh.put_check(234, &std::u64::MAX));
+    }
+    {
+        let mut buf = vec![0u8; 40];
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        assert!(nlh.put_check(123, &std::u64::MAX));
+        assert!(nlh.put_check(234, &std::u64::MAX));
+    }
+}
+
+#[test]
+fn nlmsg_put_u8_check() {
+    let mut buf = vec![0u8; 512];
+    let attr_len = linux::netlink::NLA_HDRLEN() + (size_of::<u8>() as u16);
+    {
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        assert!(nlh.put_u8_check(12, 34));
+        assert!(*nlh.nlmsg_len == mnl::NLMSG_HDRLEN() + mnl::ALIGN(attr_len as u32));
+
+        let attr = nlh.payload::<linux::netlink::Nlattr>();
+        assert!(attr.nla_len == attr_len);
+        assert!(attr.nla_type == 12);
+    }
+    assert!(*buf_offset_as::<u16>(&buf, 16) == attr_len);
+    assert!(*buf_offset_as::<u16>(&buf, 18) == 12);
+    assert!(*buf_offset_as::<u8>(&buf, 20) == 34);
+
+    {
+        let mut buf = vec![0u8; 31];
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        assert!(nlh.put_u8_check(12, 34));
+        assert!(!nlh.put_u8_check(56, 78));
+    }
+
+    buf = vec![0u8; 32];
+    {
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        assert!(nlh.put_u8_check(12, 34));
+        let attr = nlh.payload_tail::<linux::netlink::Nlattr>();
+        assert!(nlh.put_u8_check(56, 78));
+
+        assert!(attr.nla_len == attr_len);
+        assert!(attr.nla_type == 56);
+    }
+    assert!(*buf_offset_as::<u16>(&buf, 24) == attr_len);
+    assert!(*buf_offset_as::<u16>(&buf, 26) == 56);
+    assert!(*buf_offset_as::<u8>(&buf, 28) == 78);
+}
+
+#[test]
+fn nlmsg_put_u16_check() {
+    let mut buf = vec![0u8; 512];
+    let attr_len = linux::netlink::NLA_HDRLEN() + (size_of::<u16>() as u16);
+    {
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        assert!(nlh.put_u16_check(1234, 5678));
+        assert!(*nlh.nlmsg_len == mnl::NLMSG_HDRLEN() + mnl::ALIGN(attr_len as u32));
+
+        let attr = nlh.payload::<linux::netlink::Nlattr>();
+        assert!(attr.nla_len == attr_len);
+        assert!(attr.nla_type == 1234);
+    }
+    assert!(*buf_offset_as::<u16>(&buf, 16) == attr_len);
+    assert!(*buf_offset_as::<u16>(&buf, 18) == 1234);
+    assert!(*buf_offset_as::<u16>(&buf, 20) == 5678);
+
+    {
+        let mut buf = vec![0u8; 31];
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        assert!(nlh.put_u16_check(1234, 5678));
+        assert!(!nlh.put_u16_check(9012, 3456));
+    }
+
+    let mut buf = vec![0u8; 32];
+    {
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        assert!(nlh.put_u16_check(1234, 5678));
+        let attr = nlh.payload_tail::<linux::netlink::Nlattr>();
+        assert!(nlh.put_u16_check(9012, 3456));
+
+        assert!(attr.nla_len == attr_len);
+        assert!(attr.nla_type == 9012);
+    }
+    assert!(*buf_offset_as::<u16>(&buf, 24) == attr_len);
+    assert!(*buf_offset_as::<u16>(&buf, 26) == 9012);
+    assert!(*buf_offset_as::<u16>(&buf, 28) == 3456);
+}
+
+#[test]
+fn nlmsg_put_u32_check() {
+    let mut buf = vec![0u8; 512];
+    let attr_len = linux::netlink::NLA_HDRLEN() + (size_of::<u32>() as u16);
+    {
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        assert!(nlh.put_u32_check(1234, 56789012));
+        assert!(*nlh.nlmsg_len == mnl::NLMSG_HDRLEN() + mnl::ALIGN(attr_len as u32));
+
+        let attr = nlh.payload::<linux::netlink::Nlattr>();
+        assert!(attr.nla_len == attr_len);
+        assert!(attr.nla_type == 1234);
+    }
+    assert!(*buf_offset_as::<u16>(&buf, 16) == attr_len);
+    assert!(*buf_offset_as::<u16>(&buf, 18) == 1234);
+    assert!(*buf_offset_as::<u32>(&buf, 20) == 56789012);
+
+    {
+        let mut buf = vec![0u8; 31];
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        assert!(nlh.put_u32_check(1234, 56789012));
+        assert!(!nlh.put_u32_check(3456, 78901234));
+    }
+
+    buf = vec![0u8; 32];
+    {
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        assert!(nlh.put_u32_check(1234, 56789012));
+        let attr = nlh.payload_tail::<linux::netlink::Nlattr>();
+        assert!(nlh.put_u32_check(3456, 78901234));
+
+        assert!(attr.nla_len == attr_len);
+        assert!(attr.nla_type == 3456);
+    }
+    assert!(*buf_offset_as::<u16>(&buf, 24) == attr_len);
+    assert!(*buf_offset_as::<u16>(&buf, 26) == 3456);
+    assert!(*buf_offset_as::<u32>(&buf, 28) == 78901234);
+}
+
+#[test]
+fn nlmsg_put_u64_check() {
+    let mut buf = vec![0u8; 512];
+    let attr_len = linux::netlink::NLA_HDRLEN() + (size_of::<u64>() as u16);
+    {
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        assert!(nlh.put_u64_check(1234, 0x567890abcdef0123));
+        assert!(*nlh.nlmsg_len == mnl::NLMSG_HDRLEN() + mnl::ALIGN(attr_len as u32));
+
+        let attr = nlh.payload::<linux::netlink::Nlattr>();
+        assert!(attr.nla_len == attr_len);
+        assert!(attr.nla_type == 1234);
+    }
+    assert!(*buf_offset_as::<u16>(&buf, 16) == attr_len);
+    assert!(*buf_offset_as::<u16>(&buf, 18) == 1234);
+    assert!(*buf_offset_as::<u64>(&buf, 20) == 0x567890abcdef0123);
+
+    {
+        let mut buf = vec![0u8; 39];
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        assert!(nlh.put_u64_check(1234, 0x567890abcdef0123));
+        assert!(!nlh.put_u64_check(4567, 0x890abcdef0123456));
+    }
+
+    buf = vec![0u8; 40];
+    {
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        assert!(nlh.put_u64_check(1234, 0x567890abcdef0123));
+        let attr = nlh.payload_tail::<linux::netlink::Nlattr>();
+        assert!(nlh.put_u64_check(4567, 0x890abcdef0123456));
+
+        assert!(attr.nla_len == attr_len);
+        assert!(attr.nla_type == 4567);
+    }
+    assert!(*buf_offset_as::<u16>(&buf, 28) == attr_len);
+    assert!(*buf_offset_as::<u16>(&buf, 30) == 4567);
+    assert!(*buf_offset_as::<u64>(&buf, 32) == 0x890abcdef0123456);
+}
+
+#[test]
+fn nlmsg_put_str_check() {
+    let mut buf = vec![0u8; 512];
+    let s1 = "Hello, world!";
+    let b1 = s1.as_bytes(); // .len() == 13
+    let attr_len1 = linux::netlink::NLA_HDRLEN() + (b1.len() as u16);
+    {
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        assert!(nlh.put_str_check(1234, s1));
+        assert!(*nlh.nlmsg_len == mnl::NLMSG_HDRLEN() + mnl::ALIGN(attr_len1 as u32));
+
+        let attr = nlh.payload::<linux::netlink::Nlattr>();
+        assert!(attr.nla_len == attr_len1);
+        assert!(attr.nla_type == 1234);
+    }
+    assert!(*buf_offset_as::<u16>(&buf, 16) == attr_len1);
+    assert!(*buf_offset_as::<u16>(&buf, 18) == 1234);
+    assert!(std::str::from_utf8(buf_offset_as::<[u8; 13]>(&buf, 20)).unwrap() == s1);
+
+    let s2 = "My name is";
+
+    {
+        let mut buf = vec![0u8; 51];
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        assert!(nlh.put_str_check(1234, s1));
+        assert!(!nlh.put_str_check(5678, s2));
+    }
+
+    buf = vec![0u8; 52];
+    let bi: isize;
+    let b2 = s2.as_bytes(); // .len() == 10
+    let attr_len2 = linux::netlink::NLA_HDRLEN() + (b2.len() as u16);
+    {
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        assert!(nlh.put_str_check(1234, s1));
+        let attr = nlh.payload_tail::<linux::netlink::Nlattr>();
+        bi = *nlh.nlmsg_len as isize;
+        assert!(nlh.put_str_check(5678, s2));
+
+        assert!(attr.nla_len == attr_len2);
+        assert!(attr.nla_type == 5678);
+    }
+    assert!(*buf_offset_as::<u16>(&buf, bi) == attr_len2);
+    assert!(*buf_offset_as::<u16>(&buf, bi + 2) == 5678);
+    assert!(std::str::from_utf8(buf_offset_as::<[u8; 10]>(&buf, bi + 4)).unwrap() == s2);
+}
+
+#[test]
+fn nlmsg_put_strz_check() {
+    let mut buf = vec![0u8; 512];
+    let s1 = "Hello, world!";
+    let b1 = s1.as_bytes(); // .len() == 13
+    let attr_len1 = linux::netlink::NLA_HDRLEN() + (b1.len() as u16) + 1;
+    let mut nlmsg_len = mnl::NLMSG_HDRLEN() + mnl::ALIGN(attr_len1 as u32);
+    {
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        assert!(nlh.put_strz_check(1234, s1));
+        assert!(*nlh.nlmsg_len == nlmsg_len);
+
+        let attr = nlh.payload::<linux::netlink::Nlattr>();
+        assert!(attr.nla_len == attr_len1);
+        assert!(attr.nla_type == 1234);
+    }
+    assert!(*buf_offset_as::<u16>(&buf, 16) == attr_len1);
+    assert!(*buf_offset_as::<u16>(&buf, 18) == 1234);
+    assert!(std::str::from_utf8(buf_offset_as::<[u8; 13]>(&buf, 20)).unwrap() == s1);
+    assert!(*buf_offset_as::<u8>(&buf, nlmsg_len as isize) == 0);
+
+    let s2 = "My name is";
+    {
+        let mut buf = vec![0u8; 51];
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+
+        assert!(nlh.put_strz_check(1234, s1));
+        assert!(!nlh.put_strz_check(5678, s2));
+    }
+
+    let b2 = s2.as_bytes(); // .len() == 10
+    let attr_len2 = linux::netlink::NLA_HDRLEN() + (b2.len() as u16) + 1;
+    nlmsg_len = mnl::NLMSG_HDRLEN() + mnl::ALIGN(attr_len1 as u32) + mnl::ALIGN(attr_len2 as u32);
+    let attr_tail = (mnl::NLMSG_HDRLEN() + mnl::ALIGN(attr_len1 as u32) + attr_len2 as u32 - 1) as isize;
+    let bi: isize;
+    buf = vec![0u8; 52];
+    {
+        set_buf(&mut buf, attr_tail, 0xffu8);
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        assert!(nlh.put_strz_check(1234, s1));
+        let attr = nlh.payload_tail::<linux::netlink::Nlattr>();
+        bi = *nlh.nlmsg_len as isize;
+        assert!(nlh.put_strz_check(5678, s2));
+        assert!(*nlh.nlmsg_len == nlmsg_len);
+
+        assert!(attr.nla_len == attr_len2);
+        assert!(attr.nla_type == 5678);
+    }
+    assert!(*buf_offset_as::<u16>(&buf, bi) == attr_len2);
+    assert!(*buf_offset_as::<u16>(&buf, bi + 2) == 5678);
+    assert!(std::str::from_utf8(buf_offset_as::<[u8; 10]>(&buf, bi + 4)).unwrap() == s2);
+    assert!(*buf_offset_as::<u8>(&buf, attr_tail) == 0);
+}
+
+#[test]
+fn nlmsg_nest_start() {
+    let mut buf = vec![0u8; 512];
+    {
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        let attr = nlh.nest_start(0x123);
+
+        assert!(*nlh.nlmsg_len == linux::netlink::NLMSG_LENGTH(linux::netlink::NLA_HDRLEN() as u32));
+        assert!(attr.nla_len == 0); // will update after _end
+        assert!(attr.nla_type & linux::netlink::NLA_F_NESTED != 0);
+        assert!(attr.nla_type & linux::netlink::NLA_TYPE_MASK == 0x123);
+    }
+    assert!(*buf_offset_as::<u16>(&buf, 16) == 0);
+}
+
+#[test]
+fn nlmsg_nest_start_check() {
+    let mut buf: std::vec::Vec<u8>;
+    {
+        buf = vec![0u8; 19];
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        assert!(nlh.nest_start_check(0x123).is_none());
+    }
+    {
+        buf = vec![0u8; 20];
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        if let Some(attr) = nlh.nest_start_check(0x123) {
+            assert!(*nlh.nlmsg_len == linux::netlink::NLMSG_LENGTH(linux::netlink::NLA_HDRLEN() as u32));
+            assert!(attr.nla_len == 0); // will update after _end
+            assert!(attr.nla_type & linux::netlink::NLA_F_NESTED != 0);
+            assert!(attr.nla_type & linux::netlink::NLA_TYPE_MASK == 0x123);
+        } else {
+            assert!(false);
+        }
+    }
+    assert!(*buf_offset_as::<u16>(&buf, 16) == 0);
+}
+
+#[test]
+fn nlmsg_nest_end() {
+    let mut buf = vec![0u8; 512];
+    {
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        let attr = nlh.nest_start(0x123);
+        nlh.put_u8(0x4567, 0x89);
+        nlh.put_u64(0xabcd, 0xef01234567890abc);
+        nlh.nest_end(attr);
+
+        assert!(*nlh.nlmsg_len == 16 + 4 + 8 + 12);
+        assert!(attr.nla_len == 4 + 8 + 12);
+    }
+    assert!(*buf_offset_as::<u16>(&buf, 16) == 4 + 8 + 12);
+    assert!(*buf_offset_as::<u16>(&buf, 18) == linux::netlink::NLA_F_NESTED | 0x123);
+    assert!(*buf_offset_as::<u16>(&buf, 20) == 5);
+    assert!(*buf_offset_as::<u16>(&buf, 22) == 0x4567);
+    assert!(*buf_offset_as::<u8>(&buf, 24) == 0x89);
+    assert!(*buf_offset_as::<u16>(&buf, 28) == 12);
+    assert!(*buf_offset_as::<u16>(&buf, 30) == 0xabcd);
+    assert!(*buf_offset_as::<u64>(&buf, 32) == 0xef01234567890abc);
+}
+
+#[test]
+fn nlmsg_nest_cancel() {
+    let mut buf = vec![0u8; 512];
+    {
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+
+        let mut attr = nlh.nest_start(0x123);
+        nlh.nest_cancel(attr);
+        assert!(*nlh.nlmsg_len == 16);
+
+        nlh.put_u8(0x2345, 0x67);
+        attr = nlh.nest_start(0x234);
+        nlh.nest_cancel(attr);
+        assert!(*nlh.nlmsg_len == 24);
+    }
+    assert!(*buf_offset_as::<u16>(&buf, 16) == 5);
+    assert!(*buf_offset_as::<u16>(&buf, 18) == 0x2345);
+    assert!(*buf_offset_as::<u8>(&buf, 20) == 0x67);
+}
