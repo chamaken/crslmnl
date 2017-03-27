@@ -75,9 +75,9 @@ pub enum Socket{}
 extern {
     fn mnl_socket_open(bus: c_int) -> *mut Socket;
 
-    #[cfg(feature = "mnl-gt-1_0_4")]
+    #[cfg(feature = "ge-1_0_4")]
     fn mnl_socket_open2(bus: c_int, flags: c_int) -> *mut Socket;
-    #[cfg(feature = "mnl-gt-1_0_4")]
+    #[cfg(feature = "ge-1_0_4")]
     fn mnl_socket_fdopen(fd: c_int) -> *mut Socket;
 
     fn mnl_socket_bind(nl: *mut Socket, group: c_uint, pid: pid_t) -> c_int;
@@ -234,12 +234,12 @@ impl <'a> Socket {
         cvt_null!(mnl_socket_open(bus.c_int()))
     }
 
-    #[cfg(feature = "mnl-gt-1_0_4")]
+    #[cfg(feature = "ge-1_0_4")]
     pub fn open2(bus: netlink::Family, flags: c_int) -> io::Result<&'a mut Socket> {
         cvt_null!(mnl_socket_open2(bus.c_int(), flags))
     }
 
-    #[cfg(feature = "mnl-gt-1_0_4")]
+    #[cfg(feature = "ge-1_0_4")]
     // would be better IntoRawFd instead of &AsRawFd, but Sized trait...
     pub fn fdopen(fd: &AsRawFd) -> io::Result<&'a mut Socket> {
         cvt_null!(mnl_socket_fdopen(fd.as_raw_fd()))
