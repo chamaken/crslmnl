@@ -15,5 +15,5 @@ mio = "0.6"
 epoll = { path = "../epoll" }
 
 [features]
-default = ["mnl-gt-1_0_4"]
-mnl-gt-1_0_4 = []
+default = ["ge-1_0_4"]
+ge-1_0_4 = []
