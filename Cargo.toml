@@ -2,6 +2,11 @@
 name = "crslmnl"
 version = "0.1.0"
 authors = ["Ken-ichirou MATSUZAWA <chamas@h4.dion.ne.jp>"]
+repository = "https://github.com/chamaken/crslmnl"
+keywords = ["netfilter", "netlink"]
+license-file = "COPYING"
+readme = "README.md"
+description = "A rust wrapper for libmnl"
 build = "build.rs"
 
 [lib]
@@ -10,7 +15,8 @@ crate-type = ["rlib"]
 [dependencies]
 libc = "0.2"
 time = "0.1"
-mio = "0.6"
+# mio = "0.6"
+mio = { git = "https://github.com/carllerche/mio.git" }
 # epoll = "2.1"
 epoll = { path = "../epoll" }
 

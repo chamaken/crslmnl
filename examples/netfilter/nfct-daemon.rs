@@ -260,7 +260,7 @@ fn main() {
 
     // mio initializations
     let token = mio::Token(nl.as_raw_fd() as usize);
-    let listener = unsafe { mio::udp::UdpSocket::from_raw_fd(nl.as_raw_fd()) };
+    let listener = unsafe { mio::net::UdpSocket::from_raw_fd(nl.as_raw_fd()) };
     let mut timer = mio::timer::Timer::default();
     timer.set_timeout(std::time::Duration::new(secs as u64, 0), 0u8).unwrap();
 
