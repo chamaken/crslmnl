@@ -9,12 +9,16 @@ use std::os::unix::io::FromRawFd;
 
 extern crate libc;
 extern crate mio;
+extern crate timerfd;
 extern crate crslmnl as mnl;
 
 use libc::{ c_int, c_void, socklen_t };
+use timerfd::{TimerState, SetTimeFlags};
 use mnl::linux::netlink;
 use mnl::linux::netfilter::nfnetlink as nfnl;
 use mnl::linux::netfilter::nfnetlink_conntrack as nfct;
+
+mod mio_timerfd;
 
 macro_rules! println_stderr(
     ($($arg:tt)*) => { {
@@ -261,8 +265,13 @@ fn main() {
     // mio initializations
     let token = mio::Token(nl.as_raw_fd() as usize);
     let listener = unsafe { mio::net::UdpSocket::from_raw_fd(nl.as_raw_fd()) };
-    let mut timer = mio::timer::Timer::default();
-    timer.set_timeout(std::time::Duration::new(secs as u64, 0), 0u8).unwrap();
+    let mut timer = mio_timerfd::Timer::new().unwrap();
+    timer.set_state(
+        TimerState::Periodic {
+            current: std::time::Duration::new(secs as u64, 0),
+            interval: std::time::Duration::new(secs as u64, 0)
+        },
+        SetTimeFlags::Default);
 
     // Create an poll instance
     let poll = mio::Poll::new().unwrap();
@@ -278,7 +287,7 @@ fn main() {
         for event in events.iter() {
             match usize::from(event.token()) {
                 0 => { // timer
-                    timer.set_timeout(std::time::Duration::new(secs as u64, 0), 0).unwrap();
+                    timer.read(); // just consume
                     nl.send_nlmsg(&nlh)
                         .unwrap_or_else(|errno| panic!("mnl_socket_sendto: {}", errno));
                     for (addr, nstats) in hmap.iter() {

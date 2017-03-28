@@ -5,7 +5,11 @@ use std::os::unix::io::AsRawFd;
 extern crate libc;
 extern crate time;
 extern crate mio;
+extern crate timerfd;
 extern crate crslmnl as mnl;
+
+use mio::{ Ready, Poll, PollOpt, Token };
+use timerfd::{TimerState, SetTimeFlags};
 
 use mnl::linux::netlink as netlink;
 use mnl::linux::netfilter::nfnetlink as nfnl;
@@ -13,6 +17,7 @@ use mnl::linux::netfilter::nfnetlink_conntrack as nfct;
 use mnl::linux::netfilter::nf_conntrack_common as nfct_common;
 use mnl::linux::netfilter::nf_conntrack_tcp as nfct_tcp;
 
+mod mio_timerfd;
 
 fn put_msg(nlh: &mut mnl::Nlmsg, i: u16, seq: u32) {
     nlh.put_header();
@@ -80,30 +85,28 @@ fn send_batch(nl: &mut mnl::Socket, b: &mut mnl::NlmsgBatch, portid: u32) {
     nl.send_batch(b)
         .unwrap_or_else(|errno| panic!("mnl_socket_sendto: {}", errno));
 
-    let poll = mio::Poll::new().unwrap();
-    // let mut timer = mio::timer::Timer::default();
-    let builder = mio::timer::Builder::default().tick_duration(std::time::Duration::new(0, 1));
-    let mut timer = builder.build();
-
-    poll.register(&timer, mio::Token(0),
-                  mio::Ready::readable(), mio::PollOpt::edge()).unwrap();
+    let poll = Poll::new().unwrap();
+    let mut timer = mio_timerfd::Timer::new().unwrap();
+    poll.register(&timer, Token(0),
+                  Ready::readable(), PollOpt::edge()).unwrap();
 
     let rawfd = nl.as_raw_fd();
     let listener = mio::unix::EventedFd(&rawfd);
-    poll.register(&listener, mio::Token(rawfd as usize),
-                  mio::Ready::readable(), mio::PollOpt::level()).unwrap();
+    poll.register(&listener, Token(rawfd as usize),
+                  Ready::readable(), PollOpt::level()).unwrap();
 
     let mut events = mio::Events::with_capacity(256);
     let mut rcv_buf = vec![0u8; mnl::SOCKET_BUFFER_SIZE()];
 
     loop {
-        let timeout = timer.set_timeout(std::time::Duration::new(0, 0), 0u8).unwrap();
+        timer.set_state(TimerState::Oneshot(std::time::Duration::new(0, 1)),
+                        SetTimeFlags::Default);
         poll.poll(&mut events, None).unwrap();
-        timer.cancel_timeout(&timeout);
+
         // handle only the first event - for event in events.iter() {
         match events.get(0) {
             Some(event) => {
-                if event.token() == mio::Token(0) {
+                if event.token() == Token(0) {
                     return;
                 }
             },

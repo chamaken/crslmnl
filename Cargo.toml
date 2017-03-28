@@ -19,6 +19,7 @@ time = "0.1"
 mio = { git = "https://github.com/carllerche/mio.git" }
 # epoll = "2.1"
 epoll = { path = "../epoll" }
+timerfd = { git = "https://github.com/main--/rust-timerfd" }
 
 [features]
 default = ["ge-1_0_4"]
