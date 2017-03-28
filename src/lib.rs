@@ -230,27 +230,76 @@ extern {
 }
 
 impl <'a> Socket {
+    /// open a netlink socket
+    ///
+    /// # Arguments
+    /// * `bus` the netlink socket bus ID (see NETLINK_* constants)
+    ///
+    /// # Return value
+    /// On error, it returns errno. Otherwise, it returns a Ok() of the
+    /// mnl_socket structure.
     pub fn open(bus: netlink::Family) -> io::Result<&'a mut Socket> {
         cvt_null!(mnl_socket_open(bus.c_int()))
     }
 
     #[cfg(feature = "ge-1_0_4")]
+    /// open a netlink socket with appropriate flags
+    ///
+    /// This is similar to mnl_socket_open(), but allows to set flags like
+    /// SOCK_CLOEXEC at socket creation time (useful for multi-threaded programs
+    /// performing exec calls).
+    ///
+    /// # Arguments
+    /// * `bus` the netlink socket bus ID (see NETLINK_* constants)
+    /// * `param` flags the netlink socket flags (see SOCK_* constants in socket(2))
+    ///
+    /// # Return value
+    /// On error, it returns errno. Otherwise, it returns a Ok() of the
+    /// mnl_socket structure.
     pub fn open2(bus: netlink::Family, flags: c_int) -> io::Result<&'a mut Socket> {
         cvt_null!(mnl_socket_open2(bus.c_int(), flags))
     }
 
     #[cfg(feature = "ge-1_0_4")]
-    // would be better IntoRawFd instead of &AsRawFd, but Sized trait...
+    /// associates a mnl_socket object with pre-existing socket.
+    ///
+    /// # Arguments
+    /// * `fd` pre-existing socket descriptor.
+    ///
+    /// # Return value
+    /// On error, it returns errno. Otherwise, it returns a Ok() of the
+    /// mnl_socket structure. It also sets the portID if the socket fd is
+    /// already bound and it is AF_NETLINK.
+    ///
+    /// # Note
+    /// get_portid() returns 0 if this function is used with non-netlink socket.
+    /// It would be better to use IntoRawFd instead of &AsRawFd, but Sized trait...
     pub fn fdopen(fd: &AsRawFd) -> io::Result<&'a mut Socket> {
         cvt_null!(mnl_socket_fdopen(fd.as_raw_fd()))
     }
 
+    /// bind netlink socket
+    ///
+    /// # Arguments
+    /// * `groups` the group of message you're interested in
+    /// * `pid` the port ID you want to use (use zero for automatic selection)
+    ///
+    /// # Return value
+    /// On error, this function returns errno. On success, Ok is returned. You
+    /// can use MNL_SOCKET_AUTOPID which is 0 for automatic port ID selection.
     pub fn bind(&mut self, group: u32, pid: u32) -> io::Result<()> {
         try!(cvt_isize!(mnl_socket_bind(self, group as c_uint, pid as pid_t)));
         Ok(())
     }
 
-    // no drop trait, need to call mnl_socket_close() explicitly
+    /// close a given netlink socket
+    ///
+    /// # Return value
+    /// On error, this function returns errno.  On success, it returns Ok.
+    ///
+    /// # Note
+    /// not implemented as drop trait, which means it's needed to call
+    /// close() explicitly
     pub fn close(&mut self) -> io::Result<()> {
         try!(cvt_isize!(mnl_socket_close(self)));
         Ok(())
@@ -258,10 +307,26 @@ impl <'a> Socket {
 
     // mnl_socket_get_fd() is used as a AsRawFd trait
 
+    /// obtain Netlink PortID from netlink socket
+    ///
+    /// # Return value
+    /// This function returns the Netlink PortID of a given netlink socket.
+    /// It's a common mistake to assume that this PortID equals the process ID
+    /// which is not always true. This is the case if you open more than one
+    /// socket that is binded to the same Netlink subsystem from the same
+    /// process.
     pub fn portid(&self) -> u32 {
         unsafe { mnl_socket_get_portid(self) as u32 }
     }
 
+    /// send a netlink message of a certain size
+    ///
+    /// # Arguments
+    /// * `buf` buffer containing the netlink message to be sent
+    ///
+    /// # Return value
+    /// On error, it returns errno. Otherwise, it returns Ok of the number of
+    /// bytes sent.
     pub fn sendto(&self, buf: &[u8]) -> io::Result<usize> {
         let n = try!(cvt_isize!(
             mnl_socket_sendto(self, buf.as_ptr() as *const c_void, buf.len() as size_t)));
@@ -269,23 +334,69 @@ impl <'a> Socket {
     }
 
     pub fn send_nlmsg(&self, nlh: &netlink::Nlmsghdr) -> io::Result<usize> {
+    /// send a netlink message
+    ///
+    /// # Arguments
+    /// * `nlh` the netlink message to be sent
+    ///
+    /// # Return value
+    /// On error, it returns errno. Otherwise, it returns Ok of the number of
+    /// bytes sent.
         let n = try!(cvt_isize!(
             mnl_socket_sendto(self, nlh as *const _ as *const c_void, nlh.nlmsg_len as size_t)));
         Ok(n as usize)
     }
 
+    /// send a netlink batch
+    ///
+    /// # Arguments
+    /// * `b` the bunch of netlink message to be sent
+    ///
+    /// # Return value
+    /// On error, it returns errno. Otherwise, it returns Ok of the number of
+    /// bytes sent.
     pub fn send_batch(&self, b: &mut NlmsgBatch) -> io::Result<usize> {
         let n = try!(cvt_isize!(
             mnl_socket_sendto(self, b.head::<c_void>(), b.size() as size_t)));
         Ok(n as usize)
     }
 
+    /// receive a netlink message
+    ///
+    /// # Arguments
+    /// * `buf` buffer that you want to use to store the netlink message
+    ///
+    /// # Return value
+    /// On error, function returns errno.
     pub fn recvfrom(&self, buf: &mut [u8]) -> io::Result<usize> {
         let n = try!(cvt_isize!(
             mnl_socket_recvfrom(self, buf.as_mut_ptr() as *mut c_void, buf.len() as size_t)));
         Ok(n as usize)
     }
 
+    /// set Netlink socket option
+    ///
+    /// # Arguments
+    /// * `T` type of Netlink socket options
+    /// * `val` the value about this option
+    ///
+    /// This function allows you to set some Netlink socket option. As of writing
+    /// this (see linux/netlink.h), the existing options are:
+    ///
+    ///	- #define NETLINK_ADD_MEMBERSHIP  1
+    ///	- #define NETLINK_DROP_MEMBERSHIP 2
+    ///	- #define NETLINK_PKTINFO         3
+    ///	- #define NETLINK_BROADCAST_ERROR 4
+    ///	- #define NETLINK_NO_ENOBUFS      5
+    ///
+    /// In the early days, Netlink only supported 32 groups expressed in a
+    /// 32-bits mask. However, since 2.6.14, Netlink may have up to 2^32 multicast
+    /// groups but you have to use setsockopt() with NETLINK_ADD_MEMBERSHIP to
+    /// join a given multicast group. This function internally calls setsockopt()
+    /// to join a given netlink multicast group. You can still use mnl_bind()
+    /// and the 32-bit mask to join a set of Netlink multicast groups.
+    ///
+    /// On error, this function returns errno.
     pub fn setsockopt<T>(&self, optname: c_int, val: T) -> io::Result<()> {
         let optval = &val as *const T as *const c_void;
         try!(cvt_isize!(
@@ -294,6 +405,14 @@ impl <'a> Socket {
         Ok(())
     }
 
+    /// get a Netlink socket option
+    ///
+    /// # Arguments
+    /// * `T` type of Netlink socket options
+    /// * `optname` name of Netlink socket options
+    ///
+    /// # Return value
+    /// On error, this function returns errno.
     pub fn getsockopt<T: Copy>(&self, optname: c_int) -> io::Result<T> {
         let mut slot: T = unsafe { zeroed() };
         let mut len = size_of::<T>() as socklen_t;
@@ -307,6 +426,10 @@ impl <'a> Socket {
 }
 
 impl AsRawFd for Socket {
+    /// obtain file descriptor from netlink socket
+    ///
+    /// # Return value
+    /// This function returns the file descriptor of a given netlink socket.
     fn as_raw_fd(&self) -> RawFd {
         unsafe { mnl_socket_get_fd(self) }
     }
