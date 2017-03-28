@@ -1,4 +1,4 @@
-use std::os::unix::io::{RawFd, AsRawFd};
+use std::os::unix::io::AsRawFd;
 use std::mem::size_of;
 use std::iter::repeat;
 // use std::io::Cursor;
@@ -6,7 +6,7 @@ use std::iter::repeat;
 extern crate crslmnl as mnl;
 use mnl::linux as linux;
 extern crate libc;
-use libc::{socket};
+
 
 fn buf_offset_as<T>(buf: &[u8], offset: isize) -> &T {
     assert!(buf.len() >= offset as usize + size_of::<T>());
