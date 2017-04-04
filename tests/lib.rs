@@ -821,3 +821,175 @@ fn nlmsg_nest_cancel() {
     assert!(*buf_offset_as::<u16>(&buf, 18) == 0x2345);
     assert!(*buf_offset_as::<u8>(&buf, 20) == 0x67);
 }
+
+fn nlmsg_parse_cb1(attr: &mnl::Attr, data: &mut u8) -> mnl::CbRet {
+    if attr.nla_type as u8 != *data {
+        return mnl::CbRet::ERROR;
+    }
+    if attr.u8() != 0x10 + *data {
+        return mnl::CbRet::ERROR;
+    }
+    *data += 1;
+    mnl::CbRet::OK
+}
+
+#[test]
+fn nlmsg_parse() {
+    let mut buf = vec![0u8; 512];
+    {
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        nlh.put_u8(1, 0x11);
+        nlh.put_u8(2, 0x12);
+        nlh.put_u8(3, 0x13);
+        nlh.put_u8(4, 0x14);
+        assert!(nlh.parse(0, nlmsg_parse_cb1, &mut 1).unwrap() == mnl::CbRet::OK);
+    }
+    {
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        nlh.put_u8(0, 0x0);
+        assert!(nlh.parse(0, nlmsg_parse_cb1, &mut 1).is_err());
+    }
+}
+
+#[test]
+fn nlmsg_attrs() {
+    let mut buf = vec![0u8; 512];
+    let mut nlh = mnl::Nlmsg::new(&mut buf);
+    nlh.put_u8(0, 0x10);
+    nlh.put_u8(1, 0x11);
+    nlh.put_u8(2, 0x12);
+    nlh.put_u8(3, 0x13);
+
+    for (i, attr) in nlh.attrs(0).enumerate() {
+        assert!(attr.nla_type == i as u16);
+        assert!(attr.u8() == 0x10 + i as u8);
+    }
+}
+
+#[test]
+fn nlmsg_batch_start() {
+    let mut buf = vec![0u8; 512];
+    let _ = mnl::NlmsgBatch::start(&mut buf, 512 / 2).unwrap();
+}
+
+#[test]
+fn nlmsg_batch_next() {
+    let mut buf = vec![0u8; 512];
+    let b = mnl::NlmsgBatch::start(&mut buf, 512 / 2).unwrap();
+    assert!(b.next() == true);
+
+    {
+        let mut nlh = b.current_nlmsg();
+        *nlh.nlmsg_len = 256;
+    }
+    assert!(b.next() == true);
+
+    {
+        let mut nlh = b.current_nlmsg();
+        *nlh.nlmsg_len = 1;
+    }
+    assert!(b.next() == false);
+}
+
+#[test]
+fn nlmsg_batch_size() {
+    let mut buf = vec![0u8; 512];
+    let b = mnl::NlmsgBatch::start(&mut buf, 512 / 2).unwrap();
+    assert!(b.next() == true);
+    assert!(b.size() == 0);
+
+    {
+        let mut nlh = b.current_nlmsg();
+        *nlh.nlmsg_len = 128;
+    }
+    assert!(b.next() == true);
+    assert!(b.size() == 128);
+
+    {
+        let mut nlh = b.current_nlmsg();
+        *nlh.nlmsg_len = 128;
+    }
+    assert!(b.next() == true);
+    assert!(b.size() == 256);
+
+    {
+        let mut nlh = b.current_nlmsg();
+        *nlh.nlmsg_len = 1;
+    }
+    assert!(b.next() == false);
+    assert!(b.size() == 256);
+}
+
+#[test]
+fn nlmsg_batch_reset() {
+    let mut buf = vec![0u8; 512];
+    let b = mnl::NlmsgBatch::start(&mut buf, 512 / 2).unwrap();
+    {
+        let mut nlh = b.current_nlmsg();
+        *nlh.nlmsg_len = 256;
+    }
+    assert!(b.next() == true);
+    assert!(b.size() == 256);
+    b.reset();
+    assert!(b.size() == 0);
+
+    {
+        let mut nlh = b.current_nlmsg();
+        *nlh.nlmsg_len = 256;
+    }
+    assert!(b.next() == true);
+    {
+        let mut nlh = b.current_nlmsg();
+        *nlh.nlmsg_len = 256;
+    }
+    assert!(b.next() == false);
+    b.reset();
+    assert!(b.size() == 256);
+}
+
+#[test]
+fn nlmsg_batch_head() {
+    let mut buf = vec![0u8; 512];
+    let bufptr = buf.as_ptr();
+    let b = mnl::NlmsgBatch::start(&mut *buf, 512 / 2).unwrap();
+    assert!(b.head::<u8>() as *const u8 == bufptr);
+
+    {
+        let mut nlh = b.current_nlmsg();
+        *nlh.nlmsg_len = 256;
+    }
+    assert!(b.next() == true);
+    assert!(b.head::<u8>() as *const u8 == bufptr);
+}
+
+#[test]
+fn nlmsg_batch_current() {
+    let mut buf = vec![0u8; 512];
+    let bufptr = buf.as_ptr();
+    let b = mnl::NlmsgBatch::start(&mut *buf, 512 / 2).unwrap();
+    assert!(b.current::<u8>() as *const u8 == bufptr);
+
+    {
+        let mut nlh = b.current_nlmsg();
+        *nlh.nlmsg_len = 256;
+    }
+    assert!(b.next() == true);
+    assert!(b.current::<u8>() as *const u8
+            == unsafe { bufptr.offset(256) });
+}
+
+#[test]
+fn nlmsg_batch_is_empty() {
+    let mut buf = vec![0u8; 512];
+    let b = mnl::NlmsgBatch::start(&mut *buf, 512 / 2).unwrap();
+    assert!(b.is_empty() == true);
+
+    {
+        let mut nlh = b.current_nlmsg();
+        *nlh.nlmsg_len = 256;
+    }
+    assert!(b.next() == true);
+    assert!(b.is_empty() == false);
+    b.reset();
+    assert!(b.is_empty() == true);
+}
