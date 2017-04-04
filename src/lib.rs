@@ -111,7 +111,8 @@ pub enum NlmsgBatch {}
 #[link(name = "mnl")]
 extern {
     fn mnl_nlmsg_batch_start(buf: *mut c_void, bufsiz: size_t) -> *mut NlmsgBatch;
-    fn mnl_nlmsg_batch_next(b: *mut NlmsgBatch) -> bool;
+    // fn mnl_nlmsg_batch_next(b: *mut NlmsgBatch) -> bool;
+    fn mnl_nlmsg_batch_next(b: *const NlmsgBatch) -> bool;
     fn mnl_nlmsg_batch_stop(b: *mut NlmsgBatch);
     // fn mnl_nlmsg_batch_size(b: *mut NlmsgBatch) -> size_t;
     fn mnl_nlmsg_batch_size(b: *const NlmsgBatch) -> size_t;
@@ -699,7 +700,7 @@ impl NlmsgBatch {
         cvt_null!(mnl_nlmsg_batch_start(buf.as_ptr() as *mut c_void, bufsiz as size_t))
     }
 
-    pub fn next(&mut self) -> bool {
+    pub fn next(&self) -> bool {
         unsafe { mnl_nlmsg_batch_next(self) }
     }
 
