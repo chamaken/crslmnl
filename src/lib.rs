@@ -447,7 +447,7 @@ pub struct Nlmsg <'a> {
     pub nlmsg_pid: &'a mut u32,
 }
 
-impl <'a> Nlmsg <'a> { // impl <'a> Nlmsg <'a> {
+impl <'a> Nlmsg <'a> {
     pub fn buflen(&self) -> usize {
         self.buf.len()
     }
@@ -460,10 +460,24 @@ impl <'a> Nlmsg <'a> { // impl <'a> Nlmsg <'a> {
         unsafe { (self.buf.as_mut_ptr() as *mut netlink::Nlmsghdr).as_mut().unwrap() }
     }
 
+
+    /// calculate the size of Netlink message (without alignment)
+    ///
+    /// # Arguments
+    /// * `len` length of the Netlink payload
+    ///
+    /// # Return value
+    /// This function returns the size of a netlink message (header plus payload)
+    /// without alignment.
     pub fn size(len: usize) -> usize {
         unsafe { mnl_nlmsg_size(len as size_t) }
     }
 
+    /// get the length of the Netlink payload
+    ///
+    /// # Return value
+    /// This function returns the Length of the netlink payload, ie. the length
+    /// of the full message minus the size of the Netlink header.
     pub fn payload_len(&self) -> usize {
         unsafe { mnl_nlmsg_get_payload_len(self.as_raw_ref()) }
     }
@@ -482,6 +496,16 @@ impl <'a> Nlmsg <'a> { // impl <'a> Nlmsg <'a> {
         nlh
     }
 
+    /// create, reserve and prepare room for Netlink header
+    ///
+    /// # Arguments
+    /// * `buf` memory already allocated to store the Netlink header
+    ///
+    /// # Return value
+    /// This function sets to zero the room that is required to put the Netlink
+    /// header in the memory buffer passed as parameter. This function also
+    /// initializes the nlmsg_len field to the size of the Netlink header. This
+    /// function returns a Netlink header structure.
     pub fn new(buf: &mut [u8]) -> Nlmsg {
         let mut nlh = Self::from_bytes(buf);
         nlh.put_header();
@@ -496,10 +520,25 @@ impl <'a> Nlmsg <'a> { // impl <'a> Nlmsg <'a> {
         Self::from_bytes(buf)
     }
 
+    /// reserve and prepare room for Netlink header
+    ///
+    /// This function sets to zero the room that is required to put the Netlink
+    /// header in the memory buffer passed as parameter. This function also
+    /// initializes the nlmsg_len field to the size of the Netlink header.
     pub fn put_header(&mut self) {
         unsafe { &mut(*mnl_nlmsg_put_header(self.as_raw_mut() as *mut _ as *mut c_void)); }
     }
 
+    /// reserve and prepare room for an extra header
+    ///
+    /// # Arguments
+    /// * `size` size of the extra header that we want to put
+    ///
+    /// This function sets to zero the room that is required to put the extra
+    /// header after the initial Netlink header. This function also increases
+    /// the nlmsg_len field. You have to invoke mnl_nlmsg_put_header() before
+    /// you call this function. This function returns a pointer to the extra
+    /// header.
     pub fn put_extra_header<T>(&mut self, size: usize) -> &'a mut T {
         unsafe { &mut(*(mnl_nlmsg_put_extra_header(self.as_raw_mut(), size as usize) as *mut T)) }
     }
@@ -520,14 +559,45 @@ impl <'a> Nlmsg <'a> { // impl <'a> Nlmsg <'a> {
         (Self::from_bytes(&mut self.buf[u..]), rest as isize)
     }
 
+    /// perform sequence tracking
+    ///
+    /// # Arguments
+    /// * `seq` last sequence number used to send a message
+    ///
+    /// # Return values
+    /// This functions returns true if the sequence tracking is fulfilled, otherwise
+    /// false is returned. We skip the tracking for netlink messages whose sequence
+    /// number is zero since it is usually reserved for event-based kernel
+    /// notifications. On the other hand, if seq is set but the message sequence
+    /// number is not set (i.e. this is an event message coming from kernel-space),
+    /// then we also skip the tracking. This approach is good if we use the same
+    /// socket to send commands to kernel-space (that we want to track) and to
+    /// listen to events (that we do not track).
     pub fn seq_ok(&self, seq: usize) -> bool {
         unsafe { mnl_nlmsg_seq_ok(self.as_raw_ref(), seq as c_uint) }
     }
 
+    /// perform portID origin check
+    ///
+    /// # Arguments
+    /// * `portid` netlink portid that we want to check
+    ///
+    /// This functions returns true if the origin is fulfilled, otherwise
+    /// false is returned. We skip the tracking for netlink message whose portID
+    /// is zero since it is reserved for event-based kernel notifications. On the
+    /// other hand, if portid is set but the message PortID is not (i.e. this
+    /// is an event message coming from kernel-space), then we also skip the
+    /// tracking. This approach is good if we use the same socket to send commands
+    /// to kernel-space (that we want to track) and to listen to events (that we
+    /// do not track).
     pub fn portid_ok(&self, portid: u32) -> bool {
         unsafe { mnl_nlmsg_portid_ok(self.as_raw_ref(), portid as c_uint) }
     }
 
+    /// get a pointer to the payload of the netlink message
+    ///
+    /// # Return value
+    /// This function returns a pointer to the payload of the netlink message.
     pub fn payload<T>(&self) -> &'a T {
         unsafe { &(*(mnl_nlmsg_get_payload(self.as_raw_ref()) as *const T)) }
     }
@@ -536,6 +606,14 @@ impl <'a> Nlmsg <'a> { // impl <'a> Nlmsg <'a> {
         unsafe { &mut(*(mnl_nlmsg_get_payload(self.as_raw_mut()) as *mut T)) }
     }
 
+    /// get a pointer to the payload of the message
+    ///
+    /// # Arguments
+    /// * `offset` offset to the payload of the attributes TLV set
+    ///
+    /// # Return value
+    /// This function returns a pointer to the payload of the netlink message plus
+    /// a given offset.
     pub fn payload_offset<T>(&self, offset: usize) -> &'a T {
         unsafe { &(*(mnl_nlmsg_get_payload_offset(self.as_raw_ref(), offset as size_t) as *const T)) }
     }
@@ -544,6 +622,12 @@ impl <'a> Nlmsg <'a> { // impl <'a> Nlmsg <'a> {
         unsafe { &mut(*(mnl_nlmsg_get_payload_offset(self.as_raw_mut(), offset as size_t) as *mut T)) }
     }
 
+    /// get the ending of the netlink message
+    ///
+    /// # Return value
+    /// This function returns a pointer to the netlink message tail. This is useful
+    /// to build a message since we continue adding attributes at the end of the
+    /// message.
     pub fn payload_tail<T>(&self) -> &'a T {
         unsafe { &(*(mnl_nlmsg_get_payload_tail(self.as_raw_ref()) as *const T)) }
     }
@@ -552,6 +636,46 @@ impl <'a> Nlmsg <'a> { // impl <'a> Nlmsg <'a> {
         unsafe { &mut(*(mnl_nlmsg_get_payload_tail(self.as_raw_mut()) as *mut T)) }
     }
 
+    /// print netlink message to file
+    ///
+    /// # Arguments
+    /// * `fd` pointer to file type
+    /// * `extra_header_size` size of the extra header (if any)
+    ///
+    /// This function prints the netlink header to a file handle.
+    /// It may be useful for debugging purposes. One example of the output
+    /// is the following:
+    ///
+    /// ```no run
+    ///     ----------------        ------------------
+    ///     |  0000000040  |        | message length |
+    ///     | 00016 | R-A- |        |  type | flags  |
+    ///     |  1289148991  |        | sequence number|
+    ///     |  0000000000  |        |     port ID    |
+    ///     ----------------        ------------------
+    ///     | 00 00 00 00  |        |  extra header  |
+    ///     | 00 00 00 00  |        |  extra header  |
+    ///     | 01 00 00 00  |        |  extra header  |
+    ///     | 01 00 00 00  |        |  extra header  |
+    ///     |00008|--|00003|        |len |flags| type|
+    ///     | 65 74 68 30  |        |      data      |       e t h 0
+    ///     ----------------        ------------------
+    ///
+    /// This example above shows the netlink message that is send to kernel-space
+    /// to set up the link interface eth0. The netlink and attribute header data
+    /// are displayed in base 10 whereas the extra header and the attribute payload
+    /// are expressed in base 16. The possible flags in the netlink header are:
+    ///
+    /// - `R`, that indicates that NLM_F_REQUEST is set.
+    /// - `M`, that indicates that NLM_F_MULTI is set.
+    /// - `A`, that indicates that NLM_F_ACK is set.
+    /// - `E`, that indicates that NLM_F_ECHO is set.
+    ///
+    /// The lack of one flag is displayed with '-'. On the other hand, the possible
+    /// attribute flags available are:
+    ///
+    /// - `N`, that indicates that NLA_F_NESTED is set.
+    /// - `B`, that indicates that NLA_F_NET_BYTEORDER is set.
     pub fn fprintf(&self, fd: &AsRawFd, extra_header_size: usize) {
         let mode = CString::new("a").unwrap();
         unsafe {
@@ -562,27 +686,75 @@ impl <'a> Nlmsg <'a> { // impl <'a> Nlmsg <'a> {
     }
 
     // belows are mnl_attr_...
+
+    /// add an attribute to netlink message
+    ///
+    /// # Arguments
+    /// * `type` netlink attribute type that you want to add
+    /// * `data` pointer to the data that will be stored by the new attribute
+    ///
+    /// This function updates the length field of the Netlink message (nlmsg_len)
+    /// by adding the size (header + payload) of the new attribute.
     pub fn put<T: ?Sized>(&mut self, atype: u16, data: &T) {
         // ???: data must be a #[repr(C)]
         unsafe { mnl_attr_put(self.as_raw_mut(), atype, size_of_val(data), data as *const T as *const c_void) }
     }
 
+    /// add 8-bit unsigned integer attribute to netlink message
+    ///
+    /// # Arguments
+    /// * `atype` netlink attribute type
+    /// * `data` 8-bit unsigned integer data that is stored by the new attribute
+    ///
+    /// This function updates the length field of the Netlink message (nlmsg_len)
+    /// by adding the size (header + payload) of the new attribute.
     pub fn put_u8(&mut self, atype: u16, data: u8) {
         unsafe { mnl_attr_put_u8(self.as_raw_mut(), atype, data) }
     }
 
+    /// add 16-bit unsigned integer attribute to netlink message
+    ///
+    /// # Arguments
+    /// * `atype` netlink attribute type
+    /// * `data` 16-bit unsigned integer data that is stored by the new attribute
+    ///
+    /// This function updates the length field of the Netlink message (nlmsg_len)
+    /// by adding the size (header + payload) of the new attribute.
     pub fn put_u16(&mut self, atype: u16, data: u16) {
         unsafe { mnl_attr_put_u16(self.as_raw_mut(), atype, data) }
     }
 
+    /// add 32-bit unsigned integer attribute to netlink message
+    ///
+    /// # Arguments
+    /// * `type` netlink attribute type
+    /// * `data` 32-bit unsigned integer data that is stored by the new attribute
+    ///
+    /// This function updates the length field of the Netlink message (nlmsg_len)
+    /// by adding the size (header + payload) of the new attribute.
     pub fn put_u32(&mut self, atype: u16, data: u32) {
         unsafe { mnl_attr_put_u32(self.as_raw_mut(), atype, data) }
     }
 
+    /// add 64-bit unsigned integer attribute to netlink message
+    /// # Arguments
+    /// * `atype netlink attribute type
+    /// * `data` 64-bit unsigned integer data that is stored by the new attribute
+    ///
+    /// This function updates the length field of the Netlink message (nlmsg_len)
+    /// by adding the size (header + payload) of the new attribute.
     pub fn put_u64(&mut self, atype: u16, data: u64) {
         unsafe { mnl_attr_put_u64(self.as_raw_mut(), atype, data) }
     }
 
+    /// add string attribute to netlink message
+    ///
+    /// # Arguments
+    /// * `type` netlink attribute type
+    /// * `data` pointer to string data that is stored by the new attribute
+    ///
+    /// This function updates the length field of the Netlink message (nlmsg_len)
+    /// by adding the size (header + payload) of the new attribute.
     pub fn put_str(&mut self, atype: u16, data: &str) {
         let cs = CString::new(data).unwrap();
         unsafe {
@@ -590,6 +762,17 @@ impl <'a> Nlmsg <'a> { // impl <'a> Nlmsg <'a> {
         }
     }
 
+    /// add string attribute to netlink message
+    ///
+    /// # Arguments
+    /// * `atype` netlink attribute type
+    /// * `data` pointer to string data that is stored by the new attribute
+    ///
+    /// This function is similar to mnl_attr_put_str, but it includes the
+    /// NUL/zero ('\0') terminator at the end of the string.
+    ///
+    /// This function updates the length field of the Netlink message (nlmsg_len)
+    /// by adding the size (header + payload) of the new attribute.
     pub fn put_strz(&mut self, atype: u16, data: &str) {
         let cs = CString::new(data).unwrap();
         unsafe {
@@ -597,27 +780,102 @@ impl <'a> Nlmsg <'a> { // impl <'a> Nlmsg <'a> {
         }
     }
 
+    /// mnl_attr_put_check - add an attribute to netlink message
+    ///
+    /// # Arguments
+    /// * `buflen` size of buffer which stores the message
+    /// * `atype` netlink attribute type that you want to add
+    /// * `data` pointer to the data that will be stored by the new attribute
+    ///
+    /// This function first checks that the data can be added to the message
+    /// (fits into the buffer) and then updates the length field of the Netlink
+    /// message (nlmsg_len) by adding the size (header + payload) of the new
+    /// attribute. The function returns true if the attribute could be added
+    /// to the message, otherwise false is returned.
     pub fn put_check<T: Sized>(&mut self, atype: u16, data: &T) -> bool {
         unsafe { mnl_attr_put_check(self.as_raw_mut(), self.buf.len() as size_t, atype,
                                     size_of_val(data), data as *const T as *const c_void) }
     }
 
+    /// mnl_attr_put_u8_check - add 8-bit unsigned int attribute to netlink message
+    /// \param nlh pointer to the netlink message
+    /// \param buflen size of buffer which stores the message
+    /// \param type netlink attribute type
+    /// \param data 8-bit unsigned integer data that is stored by the new attribute
+    ///
+    /// This function first checks that the data can be added to the message
+    /// (fits into the buffer) and then updates the length field of the Netlink
+    /// message (nlmsg_len) by adding the size (header + payload) of the new
+    /// attribute. The function returns true if the attribute could be added
+    /// to the message, otherwise false is returned.
     pub fn put_u8_check(&mut self, atype: u16, data: u8) -> bool {
         unsafe { mnl_attr_put_u8_check(self.as_raw_mut(), self.buf.len() as size_t, atype, data) }
     }
 
+    /// add 16-bit unsigned int attribute to netlink message
+    ///
+    /// # Arguments
+    /// * `atype` netlink attribute type
+    /// * `data` 16-bit unsigned integer data that is stored by the new attribute
+    ///
+    /// This function first checks that the data can be added to the message
+    /// (fits into the buffer) and then updates the length field of the Netlink
+    /// message (nlmsg_len) by adding the size (header + payload) of the new
+    /// attribute. The function returns true if the attribute could be added
+    /// to the message, otherwise false is returned.
+    /// This function updates the length field of the Netlink message (nlmsg_len)
+    /// by adding the size (header + payload) of the new attribute.
     pub fn put_u16_check(&mut self, atype: u16, data: u16) -> bool {
         unsafe { mnl_attr_put_u16_check(self.as_raw_mut(), self.buf.len() as size_t, atype, data) }
     }
 
+    /// add 32-bit unsigned int attribute to netlink message
+    ///
+    /// # Arguments
+    /// * `atype` netlink attribute type
+    /// * `data` 32-bit unsigned integer data that is stored by the new attribute
+    ///
+    /// This function first checks that the data can be added to the message
+    /// (fits into the buffer) and then updates the length field of the Netlink
+    /// message (nlmsg_len) by adding the size (header + payload) of the new
+    /// attribute. The function returns true if the attribute could be added
+    /// to the message, otherwise false is returned.
+    /// This function updates the length field of the Netlink message (nlmsg_len)
+    /// by adding the size (header + payload) of the new attribute.
     pub fn put_u32_check(&mut self, atype: u16, data: u32) -> bool {
         unsafe { mnl_attr_put_u32_check(self.as_raw_mut(), self.buf.len() as size_t, atype, data) }
     }
 
+    /// add 64-bit unsigned int attribute to netlink message
+    ///
+    /// # Arguments
+    /// * `atype` netlink attribute type
+    /// *  `data` 64-bit unsigned integer data that is stored by the new attribute
+    ///
+    /// This function first checks that the data can be added to the message
+    /// (fits into the buffer) and then updates the length field of the Netlink
+    /// message (nlmsg_len) by adding the size (header + payload) of the new
+    /// attribute. The function returns true if the attribute could be added
+    /// to the message, otherwise false is returned.
+    /// This function updates the length field of the Netlink message (nlmsg_len)
+    /// by adding the size (header + payload) of the new attribute.
     pub fn put_u64_check(&mut self, atype: u16, data: u64) -> bool {
         unsafe { mnl_attr_put_u64_check(self.as_raw_mut(), self.buf.len() as size_t, atype, data) }
     }
 
+    /// add string attribute to netlink message
+    ///
+    /// # Arguments
+    /// * `atype` netlink attribute type
+    /// * `data` pointer to string data that is stored by the new attribute
+    ///
+    /// This function first checks that the data can be added to the message
+    /// (fits into the buffer) and then updates the length field of the Netlink
+    /// message (nlmsg_len) by adding the size (header + payload) of the new
+    /// attribute. The function returns true if the attribute could be added
+    /// to the message, otherwise false is returned.
+    /// This function updates the length field of the Netlink message (nlmsg_len)
+    /// by adding the size (header + payload) of the new attribute.
     pub fn put_str_check(&mut self, atype: u16, data: &str) -> bool {
         let cs = CString::new(data).unwrap();
         unsafe {
@@ -625,6 +883,20 @@ impl <'a> Nlmsg <'a> { // impl <'a> Nlmsg <'a> {
         }
     }
 
+    /// add string attribute to netlink message
+    ///
+    /// # Arguments
+    /// * `atype` netlink attribute type
+    /// * `data` pointer to string data that is stored by the new attribute
+    ///
+    /// This function is similar to mnl_attr_put_str, but it includes the
+    /// NUL/zero ('\0') terminator at the end of the string.
+    ///
+    /// This function first checks that the data can be added to the message
+    /// (fits into the buffer) and then updates the length field of the Netlink
+    /// message (nlmsg_len) by adding the size (header + payload) of the new
+    /// attribute. The function returns true if the attribute could be added
+    /// to the message, otherwise false is returned.
     pub fn put_strz_check(&mut self, atype: u16, data: &str) -> bool {
         let cs = CString::new(data).unwrap();
         unsafe {
@@ -632,24 +904,69 @@ impl <'a> Nlmsg <'a> { // impl <'a> Nlmsg <'a> {
         }
     }
 
+    /// start an attribute nest
+    ///
+    /// # Arguments
+    /// * `atype` netlink attribute type
+    ///
+    /// This function adds the attribute header that identifies the beginning of
+    /// an attribute nest.
+    ///
+    /// #Return value
+    /// This function always returns a valid pointer to the
+    /// beginning of the nest.
     pub fn nest_start(&mut self, atype: u16) -> &'a mut Attr {
         unsafe { &mut *mnl_attr_nest_start(self.as_raw_mut(), atype) }
     }
 
+    /// start an attribute nest
+    ///
+    /// # Arguments
+    /// * `atype` netlink attribute type
+    ///
+    /// This function adds the attribute header that identifies the beginning of
+    /// an attribute nest. If the nested attribute cannot be added then NULL,
+    /// otherwise valid pointer to the beginning of the nest is returned.
     pub fn nest_start_check(&mut self, atype: u16) -> Option<&'a mut Attr> {
         let p = unsafe { mnl_attr_nest_start_check(self.as_raw_mut(), self.buf.len() as size_t, atype) };
         if p.is_null() { return None; }
         unsafe { Some(&mut *p) }
     }
 
+    /// end an attribute nest
+    ///
+    /// # Arguments
+    /// * `start` pointer to the attribute nest returned by mnl_attr_nest_start()
+    ///
+    /// This function updates the attribute header that identifies the nest.
     pub fn nest_end(&mut self, start: &mut Attr) {
         unsafe { mnl_attr_nest_end(self.as_raw_mut(), start) }
     }
 
+    /// cancel an attribute nest
+    ///
+    /// # Arguments
+    /// * `start` pointer to the attribute nest returned by mnl_attr_nest_start()
+    ///
+    /// This function updates the attribute header that identifies the nest.
     pub fn nest_cancel(&mut self, start: &mut Attr) {
         unsafe { mnl_attr_nest_cancel(self.as_raw_mut(), start) }
     }
 
+    /// mnl_attr_parse - parse attributes
+    ///
+    /// # Arguments
+    /// * `offset` offset to start parsing from (if payload is after any header)
+    /// * `cb` callback function that is called for each attribute
+    /// * `data` pointer to data that is passed to the callback function
+    ///
+    /// This function allows to iterate over the sequence of attributes that compose
+    /// the Netlink message. You can then put the attribute in an array as it
+    /// usually happens at this stage or you can use any other data structure (such
+    /// as lists or trees).
+    ///
+    /// This function propagates the return value of the callback, which can be
+    /// MNL_CB_ERROR, MNL_CB_OK or MNL_CB_STOP.
     pub fn parse<'b, 'c, T: 'b + ?Sized>(&self, offset: usize, cb: AttrCb<'b, T>, data: &'c mut T) -> io::Result<(CbRet)> {
         let mut cbdata = AttrCbData {cb: cb, data: data};
         let pdata = &mut cbdata as *mut _ as *mut c_void;
@@ -695,29 +1012,70 @@ impl Drop for NlmsgBatch {
 }
 
 impl NlmsgBatch {
+    /// initialize a batch
+    ///
+    /// # Arguments
+    /// * `buf` pointer to the buffer that will store this batch
+    /// * `limit` maximum size of the batch (should be MNL_SOCKET_BUFFER_SIZE).
+    ///
+    /// The buffer that you pass must be double of MNL_SOCKET_BUFFER_SIZE. The
+    /// limit must be half of the buffer size, otherwise expect funny memory
+    /// corruptions 8-).
+    ///
+    /// You can allocate the buffer that you use to store the batch in the stack or
+    /// the heap, no restrictions in this regard. This function returns NULL on
+    /// error.
     pub fn start<'a>(buf: &'a mut [u8], bufsiz: usize) -> io::Result<&'a mut NlmsgBatch> {
         // cvt_null!(&mut(*mnl_nlmsg_batch_start(buf.as_ptr() as *mut c_void, buf.len() as size_t)))
         cvt_null!(mnl_nlmsg_batch_start(buf.as_ptr() as *mut c_void, bufsiz as size_t))
     }
 
+    /// get room for the next message in the batch
+    ///
+    /// # Return values
+    /// This function returns false if the last message did not fit into the
+    /// batch. Otherwise, it prepares the batch to provide room for the new
+    /// Netlink message in the batch and returns true.
+    ///
+    /// You have to put at least one message in the batch before calling this
+    /// function, otherwise your application is likely to crash.
     pub fn next(&self) -> bool {
         unsafe { mnl_nlmsg_batch_next(self) }
     }
 
     // stop() is used at drop trait
 
+    /// get current size of the batch
+    ///
+    /// # Return values
+    /// This function returns the current size of the batch.
     pub fn size(&self) -> usize {
         unsafe { mnl_nlmsg_batch_size(self) as usize }
     }
 
+    /// reset the batch
+    ///
+    /// This function allows to reset a batch, so you can reuse it to create a
+    /// new one. This function moves the last message which does not fit the
+    /// batch to the head of the buffer, if any.
     pub fn reset(&mut self) {
         unsafe { mnl_nlmsg_batch_reset(self) }
     }
 
+    /// get head of this batch
+    ///
+    /// # Return values
+    /// This function returns a pointer to the head of the batch, which is the
+    /// beginning of the buffer that is used.
     pub fn head<'a, T>(&'a mut self) -> &'a mut T {
         unsafe { &mut(*(mnl_nlmsg_batch_head(self) as *mut T)) }
     }
 
+    /// returns current position in the batch
+    ///
+    /// # Return values
+    /// This function returns a pointer to the current position in the buffer
+    /// that is used to store the batch.
     pub fn current<'a, T>(&'a mut self) -> &'a mut T {
         unsafe { &mut(*(mnl_nlmsg_batch_current(self) as *mut T)) }
     }
@@ -726,6 +1084,10 @@ impl NlmsgBatch {
         unsafe { Nlmsg::from_raw(mnl_nlmsg_batch_current(self) as *const netlink::Nlmsghdr) }
     }
 
+    /// check if there is any message in the batch
+    ///
+    /// # Return values
+    /// This function returns true if the batch is empty.
     pub fn is_empty(&self) -> bool {
         unsafe { mnl_nlmsg_batch_is_empty(self) }
     }
@@ -740,18 +1102,35 @@ impl fmt::Debug for Attr {
 }
 
 impl <'a> Attr {
+    /// get type of netlink attribute
+    ///
+    /// # Return values
+    /// This function returns the attribute type.
     pub fn atype(&self) -> u16 {
         unsafe { mnl_attr_get_type(self) }
     }
 
+    ///  get length of netlink attribute
+    ///
+    /// # Return values
+    /// This function returns the attribute length that is the attribute header
+    /// plus the attribute payload.
     pub fn len(&self) -> u16 {
         unsafe { mnl_attr_get_len(self) }
     }
 
+    /// get the attribute payload-value length
+    ///
+    /// # Return values
+    /// This function returns the attribute payload-value length.
     pub fn payload_len(&self) -> u16 {
         unsafe { mnl_attr_get_payload_len(self) }
     }
 
+    /// get pointer to the attribute payload
+    ///
+    /// # Return values
+    /// This function return a pointer to the attribute payload.
     pub fn payload<T>(&self) -> &'a T {
         unsafe { &(*(mnl_attr_get_payload(self) as *const T)) }
     }
@@ -760,18 +1139,36 @@ impl <'a> Attr {
         unsafe { &mut(*(mnl_attr_get_payload(self) as *mut T)) }
     }
 
+    /// returns 8-bit unsigned integer attribute payload
+    ///
+    /// # Return values
+    /// This function returns the 8-bit value of the attribute payload.
     pub fn u8(&self) -> u8 {
         unsafe { mnl_attr_get_u8(self) }
     }
 
+    /// returns 16-bit unsigned integer attribute payload
+    ///
+    /// # Return values
+    /// This function returns the 16-bit value of the attribute payload.
     pub fn u16(&self) -> u16 {
         unsafe { mnl_attr_get_u16(self) }
     }
 
+    /// returns 32-bit unsigned integer attribute payload
+    ///
+    /// # Return values
+    /// This function returns the 32-bit value of the attribute payload.
     pub fn u32(&self) -> u32 {
         unsafe { mnl_attr_get_u32(self) }
     }
 
+    /// returns 64-bit unsigned integer attribute.
+    ///
+    /// # Return values
+    /// This function returns the 64-bit value of the attribute payload. This
+    /// function is align-safe, since accessing 64-bit Netlink attributes is a
+    /// common source of alignment issues.
     pub fn u64(&self) -> u64 {
         unsafe { mnl_attr_get_u64(self) }
     }
@@ -782,35 +1179,109 @@ impl <'a> Attr {
         }
     }
 
+    /// returns pointer to string attribute.
+    ///
+    /// # Return values
+    /// This function returns the payload of string attribute value.
     pub fn str(&self) -> &'a str {
         unsafe {
             CStr::from_ptr(mnl_attr_get_str(self)).to_str().unwrap()
         }
     }
 
+    /// check if the attribute type is valid
+    ///
+    /// # Arguments
+    /// * `maxtype` maximum attribute type
+    ///
+    /// # Return values
+    /// This function allows to check if the attribute type is higher than the
+    /// maximum supported type. If the attribute type is invalid, this function
+    /// returns -1 and errno is explicitly set. On success, this function returns 1.
+    ///
+    /// Strict attribute checking in user-space is not a good idea since you may
+    /// run an old application with a newer kernel that supports new attributes.
+    /// This leads to backward compatibility breakages in user-space. Better check
+    /// if you support an attribute, if not, skip it.
     pub fn type_valid(&self, maxtype: u16) -> io::Result<()> {
         try!(cvt_isize!(mnl_attr_type_valid(self, maxtype)));
         Ok(())
     }
 
+    /// validate netlink attribute (simplified version)
+    ///
+    /// # Arguments
+    /// * `atype` data type (see enum mnl_attr_data_type)
+    ///
+    /// # Return values
+    /// The validation is based on the data type. Specifically, it checks that
+    /// integers (u8, u16, u32 and u64) have enough room for them. This function
+    /// returns -1 in case of error, and errno is explicitly set.
     pub fn validate(&self, atype: AttrDataType) -> io::Result<()> {
         try!(cvt_isize!(mnl_attr_validate(self, atype as u16)));
         Ok(())
     }
 
+    /// validate netlink attribute (extended version)
+    ///
+    /// # Arguments
+    /// * `atype` attribute type (see enum mnl_attr_data_type)
+    /// * `exp_len` expected attribute data size
+    ///
+    /// # Return values
+    /// This function allows to perform a more accurate validation for attributes
+    /// whose size is variable. If the size of the attribute is not what we expect,
+    /// this functions returns -1 and errno is explicitly set.
     pub fn validate2(&self, atype: AttrDataType, exp_len: usize) -> io::Result<()> {
         try!(cvt_isize!(mnl_attr_validate2(self, atype as u16, exp_len as size_t)));
         Ok(())
     }
 
+    /// check if there is room for an attribute in a buffer
+    ///
+    /// # Arguments
+    /// * `len` remaining bytes in a buffer that contains the attribute
+    ///
+    /// # Return values
+    /// This function is used to check that a buffer, which is supposed to contain
+    /// an attribute, has enough room for the attribute that it stores, i.e. this
+    /// function can be used to verify that an attribute is neither malformed nor
+    /// truncated.
+    ///
+    /// This function does not set errno in case of error since it is intended
+    /// for iterations. Thus, it returns true on success and false on error.
+    ///
+    /// The len parameter may be negative in the case of malformed messages during
+    /// attribute iteration, that is why we use a signed integer.
     pub fn ok(&self, len: usize) -> bool {
         unsafe { mnl_attr_ok(self, len as c_int) }
     }
 
+    /// get the next attribute in the payload of a netlink message
+    ///
+    /// # Return values
+    /// This function returns a pointer to the next attribute after the one passed
+    /// as parameter. You have to use mnl_attr_ok() to ensure that the next
+    /// attribute is valid.
     pub fn next(&self) -> &'a mut Attr {
         unsafe { &mut *mnl_attr_next(self) }
     }
 
+    /// parse attributes inside a nest
+    ///
+    /// # Arguments
+    /// * `nested` pointer to netlink attribute that contains a nest
+    /// * `cb` callback function that is called for each attribute in the nest
+    /// * `data` pointer to data passed to the callback function
+    ///
+    /// This function allows to iterate over the sequence of attributes that compose
+    /// the Netlink message. You can then put the attribute in an array as it
+    /// usually happens at this stage or you can use any other data structure (such
+    /// as lists or trees).
+    ///
+    /// # Return values
+    /// This function propagates the return value of the callback, which can be
+    /// MNL_CB_ERROR, MNL_CB_OK or MNL_CB_STOP.
     pub fn parse_nested<'b, 'c, T: 'b + ?Sized>(&self, cb: AttrCb<'b, T>, data: &'c mut T)
                                        -> io::Result<(CbRet)> {
         let mut cbdata = AttrCbData {cb: cb, data: data};
@@ -833,6 +1304,26 @@ extern fn attr_parse_cb<T: ?Sized>(attr: *const netlink::Nlattr, data: *mut c_vo
     }
 }
 
+/// parse attributes in payload of Netlink message
+///
+/// # Arguments
+/// * `payload` pointer to payload of the Netlink message
+/// * `payload_len` payload length that contains the attributes
+/// * `cb` callback function that is called for each attribute
+/// * `data` pointer to data that is passed to the callback function
+///
+/// This function takes a pointer to the area that contains the attributes,
+/// commonly known as the payload of the Netlink message. Thus, you have to
+/// pass a pointer to the Netlink message payload, instead of the entire
+/// message.
+///
+/// This function allows you to iterate over the sequence of attributes that are
+/// located at some payload offset. You can then put the attributes in one array
+/// as usual, or you can use any other data structure (such as lists or trees).
+///
+/// # Return values
+/// This function propagates the return value of the callback, which can be
+/// MNL_CB_ERROR, MNL_CB_OK or MNL_CB_STOP.
 pub fn parse_payload<'a, 'b, T: 'a + 'b + ?Sized>(payload: &[u8], payload_len: usize, cb: AttrCb<'a, T>, data: &'b mut T) -> io::Result<(CbRet)> {
     let mut cbdata = AttrCbData{ cb: cb, data: data };
     let pdata = &mut cbdata as *mut _ as *mut c_void;
@@ -869,6 +1360,27 @@ pub fn cb_run<'a, 'b, T: 'a + 'b + ?Sized>(buf: &[u8], seq: u32, portid: u32,
                           seq, portid, nlmsg_parse_cb::<T>, argp))
 }
 
+/// callback runqueue for netlink messages
+/// # Arguments
+/// * `buf` buffer that contains the netlink messages
+/// * `seq` sequence number that we expect to receive
+/// * `portid` Netlink PortID that we expect to receive
+/// * `cb_data` callback handler for data messages
+/// * `data` pointer to data that will be passed to the data callback handler
+/// * `cb_ctl` callback handler from control messages
+/// * `ctltypes` list of ctl type which is handled by cb_ctl
+///
+/// Your callback may return three possible values:
+/// 	- `MNL_CB_ERROR (<=-1)`: an error has occurred. Stop callback runqueue.
+/// 	- `MNL_CB_STOP (=0)`: stop callback runqueue.
+/// 	- `MNL_CB_OK (>=1)`: no problem has occurred.
+///
+/// # Return values
+/// This function propagates the callback return value. On error, it returns
+/// -1 and errno is explicitly set. If the portID is not the expected, errno
+/// is set to ESRCH. If the sequence number is not the expected, errno is set
+/// to EPROTO. If the dump was interrupted, errno is set to EINTR and you should
+/// request a new fresh dump again.
 pub fn cb_run2<'a, 'b, T: 'a + 'b + ?Sized>(buf: &[u8], seq: u32, portid: u32,
                                             cb_data: Option<Cb<'a, T>>, data: &'b mut T,
                                             cb_ctl: Cb<'a, T>, ctltypes: &[u16])
@@ -887,5 +1399,4 @@ pub fn cb_run2<'a, 'b, T: 'a + 'b + ?Sized>(buf: &[u8], seq: u32, portid: u32,
     cvt_cbret!(mnl_cb_run2(buf.as_ptr() as *const c_void, buf.len() as size_t,
                            seq, portid, nlmsg_parse_cb::<T>, argp,
                            cb_ctl_array.as_ptr() as *const CbT, netlink::NLMSG_MIN_TYPE as c_uint))
-
 }
