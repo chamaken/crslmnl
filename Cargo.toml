@@ -14,14 +14,22 @@ crate-type = ["rlib"]
 
 [dependencies]
 libc = "0.2"
+
+[dev-dependencies] # for examples
 time = "0.1"
-# for examples
-# mio = "0.6"
-mio = { git = "https://github.com/carllerche/mio.git" }
+mio = "0.6"
+# mio = { git = "https://github.com/carllerche/mio.git" }
+
 # epoll = "2.1"
 epoll = { path = "../epoll" }
+
+# timerfd = "0.2"
 timerfd = { git = "https://github.com/main--/rust-timerfd" }
+
 pnet = "0.16"
+
+[build-dependencies]
+gcc = "0.3"
 
 [features]
 default = ["ge-1_0_4"]

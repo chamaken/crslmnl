@@ -123,6 +123,11 @@ extern {
     fn mnl_nlmsg_batch_is_empty(b: *const NlmsgBatch) -> bool;
 }
 
+extern { // arbitrary function
+    fn mnl_nlmsg_batch_rest(b: *const NlmsgBatch) -> size_t;
+}
+
+
 // Netlink attributes API
 #[link(name = "mnl")]
 extern {
@@ -516,6 +521,13 @@ impl <'a> Nlmsg <'a> {
         let buf: &'a mut[u8] = unsafe {
             std::slice::from_raw_parts_mut((nlh as *mut u8),
                                            (*nlh).nlmsg_len as usize)
+        };
+        Self::from_bytes(buf)
+    }
+
+    pub fn from_raw_parts(p: *mut u8, size: usize) -> Self {
+        let buf: &'a mut[u8] = unsafe {
+            std::slice::from_raw_parts_mut(p, size)
         };
         Self::from_bytes(buf)
     }
@@ -1081,7 +1093,8 @@ impl NlmsgBatch {
     }
 
     pub fn current_nlmsg(&mut self) -> Nlmsg {
-        unsafe { Nlmsg::from_raw(mnl_nlmsg_batch_current(self) as *const netlink::Nlmsghdr) }
+        let p = unsafe { mnl_nlmsg_batch_current(self) as *mut u8 };
+        Nlmsg::from_raw_parts(p, self.rest())
     }
 
     /// check if there is any message in the batch
@@ -1090,6 +1103,10 @@ impl NlmsgBatch {
     /// This function returns true if the batch is empty.
     pub fn is_empty(&self) -> bool {
         unsafe { mnl_nlmsg_batch_is_empty(self) }
+    }
+
+    pub fn rest(&self) -> usize {
+        unsafe { mnl_nlmsg_batch_rest(self) as usize }
     }
 }
 
