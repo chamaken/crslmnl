@@ -457,11 +457,11 @@ impl <'a> Nlmsg <'a> {
         self.buf.len()
     }
 
-    pub fn as_raw_ref(&self) -> &netlink::Nlmsghdr {
+    fn as_raw_ref(&self) -> &netlink::Nlmsghdr {
         unsafe { (self.buf.as_ptr() as *const netlink::Nlmsghdr).as_ref().unwrap() }
     }
 
-    pub fn as_raw_mut(&mut self) -> &mut netlink::Nlmsghdr {
+    fn as_raw_mut(&mut self) -> &mut netlink::Nlmsghdr {
         unsafe { (self.buf.as_mut_ptr() as *mut netlink::Nlmsghdr).as_mut().unwrap() }
     }
 
@@ -517,7 +517,7 @@ impl <'a> Nlmsg <'a> {
         nlh
     }
 
-    pub fn from_raw(nlh: *const netlink::Nlmsghdr) -> Self {
+    fn from_raw(nlh: *const netlink::Nlmsghdr) -> Self {
         let buf: &'a mut[u8] = unsafe {
             std::slice::from_raw_parts_mut((nlh as *mut u8),
                                            (*nlh).nlmsg_len as usize)
@@ -525,7 +525,7 @@ impl <'a> Nlmsg <'a> {
         Self::from_bytes(buf)
     }
 
-    pub fn from_raw_parts(p: *mut u8, size: usize) -> Self {
+    fn from_raw_parts(p: *mut u8, size: usize) -> Self {
         let buf: &'a mut[u8] = unsafe {
             std::slice::from_raw_parts_mut(p, size)
         };
