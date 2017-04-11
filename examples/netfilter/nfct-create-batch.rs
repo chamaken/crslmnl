@@ -1,15 +1,14 @@
 use std::io;
 use std::net;
+use std::time::Duration;
 use std::os::unix::io::AsRawFd;
 
 extern crate libc;
 extern crate time;
 extern crate mio;
-extern crate timerfd;
 extern crate crslmnl as mnl;
 
 use mio::{ Ready, Poll, PollOpt, Token };
-use timerfd::{TimerState, SetTimeFlags};
 
 use mnl::linux::netlink as netlink;
 use mnl::linux::netfilter::nfnetlink as nfnl;
@@ -17,7 +16,7 @@ use mnl::linux::netfilter::nfnetlink_conntrack as nfct;
 use mnl::linux::netfilter::nf_conntrack_common as nfct_common;
 use mnl::linux::netfilter::nf_conntrack_tcp as nfct_tcp;
 
-mod mio_timerfd;
+mod timerfd;
 
 fn put_msg(nlh: &mut mnl::Nlmsg, i: u16, seq: u32) {
     nlh.put_header();
@@ -86,7 +85,7 @@ fn send_batch(nl: &mut mnl::Socket, b: &mut mnl::NlmsgBatch, portid: u32) {
         .unwrap_or_else(|errno| panic!("mnl_socket_sendto: {}", errno));
 
     let poll = Poll::new().unwrap();
-    let mut timer = mio_timerfd::Timer::new().unwrap();
+    let timer = timerfd::Timerfd::create(libc::CLOCK_MONOTONIC, 0).unwrap();
     poll.register(&timer, Token(0),
                   Ready::readable(), PollOpt::edge()).unwrap();
 
@@ -99,8 +98,12 @@ fn send_batch(nl: &mut mnl::Socket, b: &mut mnl::NlmsgBatch, portid: u32) {
     let mut rcv_buf = vec![0u8; mnl::SOCKET_BUFFER_SIZE()];
 
     loop {
-        timer.set_state(TimerState::Oneshot(std::time::Duration::new(0, 1)),
-                        SetTimeFlags::Default);
+        timer.settime(
+            0,
+            &timerfd::Itimerspec {
+                it_interval: Duration::new(0, 0),
+                it_value: Duration::new(0, 1),
+            }).unwrap();
         poll.poll(&mut events, None).unwrap();
 
         // handle only the first event - for event in events.iter() {

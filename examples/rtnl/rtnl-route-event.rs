@@ -3,7 +3,6 @@ use std::mem::size_of;
 use std::ffi::CStr;
 
 extern crate libc;
-extern crate time;
 extern crate crslmnl as mnl;
 use libc::{ c_int, c_char, c_void, socklen_t };
 

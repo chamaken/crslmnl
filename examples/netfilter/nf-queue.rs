@@ -4,7 +4,6 @@ use std::mem::size_of;
 use std::vec::Vec;
 
 extern crate libc;
-extern crate time;
 extern crate crslmnl as mnl;
 
 use mnl::linux::netlink as netlink;

@@ -5,7 +5,6 @@ use std::mem::zeroed;
 
 extern crate libc;
 extern crate time;
-extern crate epoll;
 extern crate crslmnl as mnl;
 
 use mnl::linux::netlink as netlink;
@@ -14,6 +13,7 @@ use mnl::linux::netfilter::nfnetlink_conntrack as nfct;
 use mnl::linux::netfilter::nf_conntrack_common as nfct_common;
 use mnl::linux::netfilter::nf_conntrack_tcp as nfct_tcp;
 
+mod epoll;
 
 fn put_msg(nlh: &mut mnl::Nlmsg, i: u16, seq: u32) {
     nlh.put_header();
@@ -82,23 +82,23 @@ fn send_batch(nl: &mut mnl::Socket, b: &mut mnl::NlmsgBatch, portid: u32) {
         .unwrap_or_else(|errno| panic!("mnl_socket_sendto: {}", errno));
 
     let rawfd = nl.as_raw_fd();
-    let epfd = epoll::create(false)
-        .unwrap_or_else(|errno| panic!("epoll_create: {}", errno));
-    let event = epoll::Event::new(epoll::EPOLLIN, rawfd as u64);
-    epoll::ctl(epfd, epoll::EPOLL_CTL_ADD, rawfd, event)
+    let epoll = epoll::Epoll::create1(0)
+        .unwrap_or_else(|errno| panic!("epoll_create1: {}", errno));
+    let event = epoll::Event::with_fd(libc::EPOLLIN as u32, rawfd);
+    epoll.ctl(libc::EPOLL_CTL_ADD, rawfd, event)
         .unwrap_or_else(|errno| panic!("epoll_ctl: {}", errno));
 
     let mut events: [epoll::Event; 1] = unsafe { zeroed() };
     let mut rcv_buf = vec![0u8; mnl::SOCKET_BUFFER_SIZE()];
     loop {
-        let nevents = epoll::wait(epfd, 0, &mut events[..])
+        let nevents = epoll.wait(&mut events[..], 1)
             .unwrap_or_else(|errno| panic!("epoll_wait: {}", errno));
         if nevents == 0 {
             break;
         }
         let mut found = false;
         for e in &events {
-            if e.data == rawfd as u64 {
+            if e.fd() == rawfd {
                 found = true;
                 break;
             }
@@ -116,8 +116,6 @@ fn send_batch(nl: &mut mnl::Socket, b: &mut mnl::NlmsgBatch, portid: u32) {
             return;
         }
     }
-
-    let _ = unsafe {libc::close(epfd as libc::c_int); };
 }
 
 fn main() {
