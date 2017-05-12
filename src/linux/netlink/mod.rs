@@ -24,6 +24,7 @@ pub const NETLINK_SCSITRANSPORT: c_int	= 18;	// SCSI Transports
 pub const NETLINK_ECRYPTFS: c_int	= 19;
 pub const NETLINK_RDMA: c_int		= 20;
 pub const NETLINK_CRYPTO: c_int		= 21;	// Crypto layer
+pub const NETLINK_SMC: c_int		= 22;	// SMC monitoring
 
 pub const NETLINK_INET_DIAG: c_int	= NETLINK_SOCK_DIAG;
 
@@ -102,12 +103,12 @@ pub struct Nlmsghdr { // pub struct Nlmsghdr <'a> {
 }
 
 // Flags values
-pub const NLM_F_REQUEST: u16		= 1;	// It is request message.
-pub const NLM_F_MULTI: u16		= 2;	// Multipart message, terminated by NLMSG_DONE
-pub const NLM_F_ACK: u16		= 4;	// Reply with ack, with zero or error code
-pub const NLM_F_ECHO: u16		= 8;	// Echo this request
-pub const NLM_F_DUMP_INTR: u16		= 16;	// Dump was inconsistent due to sequence change
-pub const NLM_F_DUMP_FILTERED: u16	= 32;	// Dump was filtered as requested
+pub const NLM_F_REQUEST: u16		= 0x01;	// It is request message.
+pub const NLM_F_MULTI: u16		= 0x02;	// Multipart message, terminated by NLMSG_DONE
+pub const NLM_F_ACK: u16		= 0x04;	// Reply with ack, with zero or error code
+pub const NLM_F_ECHO: u16		= 0x08;	// Echo this request
+pub const NLM_F_DUMP_INTR: u16		= 0x10;	// Dump was inconsistent due to sequence change
+pub const NLM_F_DUMP_FILTERED: u16	= 0x20;	// Dump was filtered as requested
 
 // Modifiers to GET request
 pub const NLM_F_ROOT: u16	= 0x100;	// specify tree	root
@@ -120,6 +121,10 @@ pub const NLM_F_REPLACE: u16	= 0x100;	// Override existing
 pub const NLM_F_EXCL: u16	= 0x200;	// Do not touch, if it exists
 pub const NLM_F_CREATE: u16	= 0x400;	// Create, if it does not exist
 pub const NLM_F_APPEND: u16	= 0x800;	// Add to end of list
+
+// Flags for ACK message
+pub const NLM_F_CAPPED: u16	= 0x100;	// request was capped
+pub const NLM_F_ACK_TLVS: u16	= 0x200;	// extended ACK TVLs were included
 
 
 // 4.4BSD ADD		NLM_F_CREATE|NLM_F_EXCL
@@ -195,7 +200,38 @@ pub const NLMSG_MIN_TYPE: u16	= 0x10;	// < 0x10: reserved control messages
 pub struct Nlmsgerr {		// pub struct Nlmsgerr <'a> {
     pub error: c_int,
     pub msg: Nlmsghdr,		// pub msg: Nlmsghdr<'a>,
+    //followed by the message contents unless NETLINK_CAP_ACK was set
+    //or the ACK indicates success (error == 0)
+    // message length is aligned with NLMSG_ALIGN()
+
+    // followed by TLVs defined in enum nlmsgerr_attrs
+    // if NETLINK_EXT_ACK was set
 }
+
+// enum nlmsgerr_attrs - nlmsgerr attributes
+// @NLMSGERR_ATTR_UNUSED: unused
+// @NLMSGERR_ATTR_MSG: error message string (string)
+// @NLMSGERR_ATTR_OFFS: offset of the invalid attribute in the original
+//      message, counting from the beginning of the header (u32)
+// @NLMSGERR_ATTR_COOKIE: arbitrary subsystem specific cookie to
+//     be used - in the success case - to identify a created
+//     object or operation or similar (binary)
+// @__NLMSGERR_ATTR_MAX: number of attributes
+// @NLMSGERR_ATTR_MAX: highest attribute number
+#[allow(non_camel_case_types)]
+#[repr(u16)]
+pub enum NlmsgerrAttrs {
+    UNUSED	= 0,
+    MSG		= 1,
+    OFFS	= 2,
+    COOKIE	= 3,
+    MAX		= 4,
+}
+pub const NLMSGERR_ATTR_UNUSED: u16	= NlmsgerrAttrs::UNUSED as u16;
+pub const NLMSGERR_ATTR_MSG: u16	= NlmsgerrAttrs::MSG as u16;
+pub const NLMSGERR_ATTR_OFFS: u16	= NlmsgerrAttrs::OFFS as u16;
+pub const NLMSGERR_ATTR_COOKIE: u16	= NlmsgerrAttrs::COOKIE as u16;
+pub const NLMSGERR_ATTR_MAX: u16	= NlmsgerrAttrs::MAX as u16 - 1;
 
 pub const NETLINK_ADD_MEMBERSHIP: c_int		= 1;
 pub const NETLINK_DROP_MEMBERSHIP: c_int	= 2;
@@ -207,6 +243,7 @@ pub const NETLINK_NO_ENOBUFS: c_int		= 5;
 pub const NETLINK_LISTEN_ALL_NSID: c_int	= 8;
 pub const NETLINK_LIST_MEMBERSHIPS: c_int	= 9;
 pub const NETLINK_CAP_ACK: c_int		= 10;
+pub const NETLINK_EXT_ACK: c_int		= 11;
 
 pub struct NlPktinfo {
     group: u32,

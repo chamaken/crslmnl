@@ -415,7 +415,10 @@ enum AttrBrport {
     MULTICAST_ROUTER	= 25,
     PAD			= 26,
     MCAST_FLOOD		= 27,
-    _MAX		= 28,
+    MCAST_TO_UCAST	= 28,
+    VLAN_TUNNEL		= 29,
+    BCAST_FLOOD		= 30,
+    _MAX		= 31,
 }
 pub const IFLA_BRPORT_UNSPEC: u16		= AttrBrport::UNSPEC as u16;
 pub const IFLA_BRPORT_STATE: u16		= AttrBrport::STATE as u16;
@@ -445,6 +448,9 @@ pub const IFLA_BRPORT_FLUSH: u16		= AttrBrport::FLUSH as u16;
 pub const IFLA_BRPORT_MULTICAST_ROUTER: u16	= AttrBrport::MULTICAST_ROUTER as u16;
 pub const IFLA_BRPORT_PAD: u16			= AttrBrport::PAD as u16;
 pub const IFLA_BRPORT_MCAST_FLOOD: u16		= AttrBrport::MCAST_FLOOD as u16;
+pub const IFLA_BRPORT_MCAST_TO_UCAST: u16	= AttrBrport::MCAST_TO_UCAST as u16;
+pub const IFLA_BRPORT_VLAN_TUNNEL: u16		= AttrBrport::VLAN_TUNNEL as u16;
+pub const IFLA_BRPORT_BCAST_FLOOD: u16		= AttrBrport::BCAST_FLOOD as u16;
 pub const IFLA_BRPORT_MAX: u16			= AttrBrport::_MAX as u16 - 1;
 
 #[repr(C)]
@@ -781,6 +787,15 @@ pub const IFLA_PPP_DEV_FD: u16	= Ppp::DEV_FD as u16;
 pub const IFLA_PPP_MAX: u16	= Ppp::_MAX as u16 - 1;
 
 // GTP section
+#[repr(u32)]
+#[allow(non_camel_case_types)]
+pub enum IflaGtpRole {
+    GGSN	= 0,
+    SGSN	= 1,
+}
+pub const GTP_ROLE_GGSN: u32	= IflaGtpRole::GGSN as u32;
+pub const GTP_ROLE_SGSN: u32	= IflaGtpRole::SGSN as u32;
+
 #[repr(u16)]
 #[allow(non_camel_case_types)]
 pub enum Gtp {
@@ -788,12 +803,14 @@ pub enum Gtp {
     FD0			= 1,
     FD1			= 2,
     PDP_HASHSIZE	= 3,
-    _MAX		= 4,
+    ROLE		= 4,
+    _MAX		= 5,
 }
 pub const IFLA_GTP_UNSPEC: u16		= Gtp::UNSPEC as u16;
 pub const IFLA_GTP_FD0: u16		= Gtp::FD0 as u16;
 pub const IFLA_GTP_FD1: u16		= Gtp::FD1 as u16;
 pub const IFLA_GTP_PDP_HASHSIZE: u16	= Gtp::PDP_HASHSIZE as u16;
+pub const IFLA_GTP_ROLE: u16		= Gtp::ROLE as u16;
 pub const IFLA_GTP_MAX: u16		= Gtp::_MAX as u16 - 1;
 
 // Bonding section
@@ -1212,13 +1229,15 @@ pub enum Stats {
     LINK_XSTATS		= 2,
     LINK_XSTATS_SLAVE	= 3,
     LINK_OFFLOAD_XSTATS	= 4,
-    _MAX		= 5,
+    AF_SPEC		= 5,
+    _MAX		= 6,
 }
 pub const IFLA_STATS_UNSPEC: u16		= Stats::UNSPEC as u16;
 pub const IFLA_STATS_LINK_64: u16		= Stats::LINK_64 as u16;
 pub const IFLA_STATS_LINK_XSTATS: u16		= Stats::LINK_XSTATS as u16;
 pub const IFLA_STATS_LINK_XSTATS_SLAVE: u16	= Stats::LINK_XSTATS_SLAVE as u16;
 pub const IFLA_STATS_LINK_OFFLOAD_XSTATS: u16	= Stats::LINK_OFFLOAD_XSTATS as u16;
+pub const IFLA_STATS_AF_SPEC: u16		= Stats::AF_SPEC as u16;
 pub const IFLA_STATS_MAX: u16			= Stats::_MAX as u16 - 1;
 
 #[allow(non_snake_case)]
@@ -1255,7 +1274,8 @@ pub const IFLA_OFFLOAD_XSTATS_MAX: u16		= OffloadXstats::_MAX as u16 - 1;
 
 // XDP section
 pub const XDP_FLAGS_UPDATE_IF_NOEXIST: u32	= 1 << 0;
-pub const XDP_FLAGS_MASK: u32			= XDP_FLAGS_UPDATE_IF_NOEXIST;
+pub const XDP_FLAGS_SKB_MODE: u32		= 2 << 0;
+pub const XDP_FLAGS_MASK: u32			= (XDP_FLAGS_UPDATE_IF_NOEXIST | XDP_FLAGS_SKB_MODE);
 
 #[repr(u16)]
 #[allow(non_camel_case_types)]

@@ -21,6 +21,9 @@ pub enum IpConntrackInfo {
 
     // Number of distinct IP_CT types.
     NUMBER		= 5,
+
+    // NEW_REOLY	= NUMBER
+    UNTRACKED		= 7,
 }
 pub const IP_CT_ESTABLISHED: u8		= IpConntrackInfo::ESTABLISHED as u8;
 pub const IP_CT_RELATED: u8		= IpConntrackInfo::RELATED as u8;
@@ -30,13 +33,14 @@ pub const IP_CT_ESTABLISHED_REPLY: u8	= IP_CT_ESTABLISHED as u8 + IP_CT_IS_REPLY
 pub const IP_CT_RELATED_REPLY: u8	= IP_CT_RELATED as u8 + IP_CT_IS_REPLY as u8;
 pub const IP_CT_NUMBER: u8		= IpConntrackInfo::NUMBER as u8;
 pub const IP_CT_NEW_REPLY: u8		= IP_CT_NUMBER as u8;
+pub const IP_CT_UNTRACKED: u8		= IpConntrackInfo::UNTRACKED as u8;
 
 pub const NFCT_STATE_INVALID_BIT: u32	= 1 << 0;
 #[allow(non_snake_case)]
 pub fn NF_CT_STATE_BIT(ctinfo: u8) -> u32 {
     1 << ((ctinfo) % IP_CT_IS_REPLY + 1)
 }
-pub const NF_CT_STATE_UNTRACKED_BIT: u32	= 1 << (IP_CT_NUMBER as u32 + 1);
+pub const NF_CT_STATE_UNTRACKED_BIT: u32	= 1 << (IP_CT_UNTRACKED as u32 + 1);
 
 pub const IPS_EXPECTED_BIT: u8		= 0;
 pub const IPS_SEEN_REPLY_BIT: u8	= 1;
@@ -83,10 +87,18 @@ pub enum IpConntrackStatus { // unsigned int
     FIXED_TIMEOUT	= 1 << IPS_FIXED_TIMEOUT_BIT,
     // Conntrack is a template
     TEMPLATE		= 1 << IPS_TEMPLATE_BIT,
-    // Conntrack is a fake untracked entry
+    // Conntrack is a fake untracked entry. Obsolete and not used anymore
     UNTRACKED		= 1 << IPS_UNTRACKED_BIT,
     // Conntrack got a helper explicitly attached via CT target.
     HELPER		= 1 << IPS_HELPER_BIT,
+
+    // Be careful here, modifying these bits can make things messy,
+    // so don't let users modify them directly.
+    UNCHANGEABLE_MASK	= (IPS_NAT_DONE_MASK | IPS_NAT_MASK |
+			   IPS_EXPECTED | IPS_CONFIRMED | IPS_DYING |
+			   IPS_SEQ_ADJUST | IPS_TEMPLATE),
+
+    MAX_BIT = 14,
 }
 pub const IPS_EXPECTED: u32		= IpConntrackStatus::EXPECTED as u32;
 pub const IPS_SEEN_REPLY: u32		= IpConntrackStatus::SEEN_REPLY as u32;
@@ -104,6 +116,7 @@ pub const IPS_FIXED_TIMEOUT: u32	= IpConntrackStatus::FIXED_TIMEOUT as u32;
 pub const IPS_TEMPLATE: u32		= IpConntrackStatus::TEMPLATE as u32;
 pub const IPS_UNTRACKED: u32		= IpConntrackStatus::UNTRACKED as u32;
 pub const IPS_HELPER: u32		= IpConntrackStatus::HELPER as u32;
+pub const IPS_UNCHANGEABLE_MASK: u32	= IpConntrackStatus::UNCHANGEABLE_MASK as u32;
 
 #[repr(u8)]
 pub enum IpConntrackEvents { // shift bit
@@ -119,6 +132,7 @@ pub enum IpConntrackEvents { // shift bit
     // NATSEQADJ	= SEQADJ
     SECMARK	= 9,    // new security mark has been set
     LABEL	= 10,   // new connlabel has been set
+    _MAX	= 11,
 }
 pub const IPCT_NEW: u8		= IpConntrackEvents::NEW as u8;
 pub const IPCT_RELATED: u8	= IpConntrackEvents::RELATED as u8;

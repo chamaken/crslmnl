@@ -24,6 +24,10 @@
 #include <linux/socket.h>		/* for "struct sockaddr" et al	*/
 #include <linux/compiler.h>		/* for "__user" et al           */
 
+#ifndef __KERNEL__
+#include <sys/socket.h>			/* for struct sockaddr.		*/
+#endif
+
 #if __UAPI_DEF_IF_IFNAMSIZ
 #define	IFNAMSIZ	16
 #endif /* __UAPI_DEF_IF_IFNAMSIZ */
@@ -231,13 +235,11 @@ struct ifreq {
 	} ifr_ifrn;
 
 	union {
-		/* ERROR:bindgen: if.h:237:19: error: field has incomplete type 'struct sockaddr'
-		 * struct	sockaddr ifru_addr;
-		 * struct	sockaddr ifru_dstaddr;
-		 * struct	sockaddr ifru_broadaddr;
-		 * struct	sockaddr ifru_netmask;
-		 * struct  sockaddr ifru_hwaddr;
-		 */
+		struct	sockaddr ifru_addr;
+		struct	sockaddr ifru_dstaddr;
+		struct	sockaddr ifru_broadaddr;
+		struct	sockaddr ifru_netmask;
+		struct  sockaddr ifru_hwaddr;
 		short	ifru_flags;
 		int	ifru_ivalue;
 		int	ifru_mtu;

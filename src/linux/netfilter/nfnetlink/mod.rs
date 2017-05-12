@@ -75,3 +75,15 @@ pub const NFNL_SUBSYS_COUNT: u16		= 12;
 // Reserved control nfnetlink messages
 pub const NFNL_MSG_BATCH_BEGIN: u16	= netlink::NLMSG_MIN_TYPE;
 pub const NFNL_MSG_BATCH_END: u16	= netlink::NLMSG_MIN_TYPE + 1;
+
+// enum nfnl_batch_attributes - nfnetlink batch netlink attributes
+// @NFNL_BATCH_GENID: generation ID for this changeset (NLA_U32)
+#[repr(u32)]
+enum NfnlBatchAttributes {
+    UNSPEC	= 0,
+    GENID	= 1,
+    _MAX	= 2,
+}
+pub const NFNL_BATCH_UNSPEC: u32	= NfnlBatchAttributes::UNSPEC as u32;
+pub const NFNL_BATCH_GENID: u32		= NfnlBatchAttributes::GENID as u32;
+pub const NFNL_BATCH_MAX: u32		= NfnlBatchAttributes::_MAX as u32 - 1;

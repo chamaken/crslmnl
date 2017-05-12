@@ -60,6 +60,7 @@ pub enum RTM {
     GETDCB		= 78,
     SETDCB		= 79,
     NEWNETCONF		= 80,
+    DELNETCONF		= 81,
     GETNETCONF		= 82,
     NEWMDB		= 84,
     DELMDB		= 85,
@@ -101,18 +102,19 @@ pub const RTM_NEWACTION: u16		= RTM::NEWACTION as u16;
 pub const RTM_DELACTION: u16		= RTM::DELACTION as u16;
 pub const RTM_GETACTION: u16		= RTM::GETACTION as u16;
 pub const RTM_NEWPREFIX: u16		= RTM::NEWPREFIX as u16;
-pub const RTM_GETMULTICAST: u16	= RTM::GETMULTICAST as u16;
+pub const RTM_GETMULTICAST: u16		= RTM::GETMULTICAST as u16;
 pub const RTM_GETANYCAST: u16		= RTM::GETANYCAST as u16;
-pub const RTM_NEWNEIGHTBL: u16	= RTM::NEWNEIGHTBL as u16;
-pub const RTM_GETNEIGHTBL: u16	= RTM::GETNEIGHTBL as u16;
-pub const RTM_SETNEIGHTBL: u16	= RTM::SETNEIGHTBL as u16;
-pub const RTM_NEWNDUSEROPT: u16	= RTM::NEWNDUSEROPT as u16;
-pub const RTM_NEWADDRLABEL: u16	= RTM::NEWADDRLABEL as u16;
-pub const RTM_DELADDRLABEL: u16	= RTM::DELADDRLABEL as u16;
-pub const RTM_GETADDRLABEL: u16	= RTM::GETADDRLABEL as u16;
+pub const RTM_NEWNEIGHTBL: u16		= RTM::NEWNEIGHTBL as u16;
+pub const RTM_GETNEIGHTBL: u16		= RTM::GETNEIGHTBL as u16;
+pub const RTM_SETNEIGHTBL: u16		= RTM::SETNEIGHTBL as u16;
+pub const RTM_NEWNDUSEROPT: u16		= RTM::NEWNDUSEROPT as u16;
+pub const RTM_NEWADDRLABEL: u16		= RTM::NEWADDRLABEL as u16;
+pub const RTM_DELADDRLABEL: u16		= RTM::DELADDRLABEL as u16;
+pub const RTM_GETADDRLABEL: u16		= RTM::GETADDRLABEL as u16;
 pub const RTM_GETDCB: u16		= RTM::GETDCB as u16;
 pub const RTM_SETDCB: u16		= RTM::SETDCB as u16;
 pub const RTM_NEWNETCONF: u16		= RTM::NEWNETCONF as u16;
+pub const RTM_DELNETCONF: u16		= RTM::DELNETCONF as u16;
 pub const RTM_GETNETCONF: u16		= RTM::GETNETCONF as u16;
 pub const RTM_NEWMDB: u16		= RTM::NEWMDB as u16;
 pub const RTM_DELMDB: u16		= RTM::DELMDB as u16;
@@ -303,61 +305,63 @@ pub const RT_TABLE_MAX: u32	= RtClass::MAX as u32;
 #[allow(non_camel_case_types)]
 #[repr(u16)]
 pub enum RtattrType {
-    UNSPEC	= 0,
-    DST		= 1,
-    SRC		= 2,
-    IIF		= 3,
-    OIF		= 4,
-    GATEWAY	= 5,
-    PRIORITY	= 6,
-    PREFSRC	= 7,
-    METRICS	= 8,
-    MULTIPATH	= 9,
-    PROTOINFO	= 10,	// no longer used
-    FLOW	= 11,
-    CACHEINFO	= 12,
-    SESSION	= 13,	// no longer used
-    MP_ALGO	= 14,	// no longer used
-    TABLE	= 15,
-    MARK	= 16,
-    MFC_STATS	= 17,
-    VIA		= 18,
-    NEWDST	= 19,
-    PREF	= 20,
-    ENCAP_TYPE	= 21,
-    ENCAP	= 22,
-    EXPIRES	= 23,
-    PAD		= 24,
-    UID		= 25,
-    _MAX	= 26,
+    UNSPEC		= 0,
+    DST			= 1,
+    SRC			= 2,
+    IIF			= 3,
+    OIF			= 4,
+    GATEWAY		= 5,
+    PRIORITY		= 6,
+    PREFSRC		= 7,
+    METRICS		= 8,
+    MULTIPATH		= 9,
+    PROTOINFO		= 10,	// no longer used
+    FLOW		= 11,
+    CACHEINFO		= 12,
+    SESSION		= 13,	// no longer used
+    MP_ALGO		= 14,	// no longer used
+    TABLE		= 15,
+    MARK		= 16,
+    MFC_STATS		= 17,
+    VIA			= 18,
+    NEWDST		= 19,
+    PREF		= 20,
+    ENCAP_TYPE		= 21,
+    ENCAP		= 22,
+    EXPIRES		= 23,
+    PAD			= 24,
+    UID			= 25,
+    TTL_PROPAGATE	= 26,
+    _MAX		= 27,
 }
-pub const RTA_UNSPEC: u16	= RtattrType::UNSPEC as u16;
-pub const RTA_DST: u16		= RtattrType::DST as u16;
-pub const RTA_SRC: u16		= RtattrType::SRC as u16;
-pub const RTA_IIF: u16		= RtattrType::IIF as u16;
-pub const RTA_OIF: u16		= RtattrType::OIF as u16;
-pub const RTA_GATEWAY: u16	= RtattrType::GATEWAY as u16;
-pub const RTA_PRIORITY: u16	= RtattrType::PRIORITY as u16;
-pub const RTA_PREFSRC: u16	= RtattrType::PREFSRC as u16;
-pub const RTA_METRICS: u16	= RtattrType::METRICS as u16;
-pub const RTA_MULTIPATH: u16	= RtattrType::MULTIPATH as u16;
-pub const RTA_PROTOINFO: u16	= RtattrType::PROTOINFO as u16;
-pub const RTA_FLOW: u16		= RtattrType::FLOW as u16;
-pub const RTA_CACHEINFO: u16	= RtattrType::CACHEINFO as u16;
-pub const RTA_SESSION: u16	= RtattrType::SESSION as u16;
-pub const RTA_MP_ALGO: u16	= RtattrType::MP_ALGO as u16;
-pub const RTA_TABLE: u16	= RtattrType::TABLE as u16;
-pub const RTA_MARK: u16		= RtattrType::MARK as u16;
-pub const RTA_MFC_STATS: u16	= RtattrType::MFC_STATS as u16;
-pub const RTA_VIA: u16		= RtattrType::VIA as u16;
-pub const RTA_NEWDST: u16	= RtattrType::NEWDST as u16;
-pub const RTA_PREF: u16		= RtattrType::PREF as u16;
-pub const RTA_ENCAP_TYPE: u16	= RtattrType::ENCAP_TYPE as u16;
-pub const RTA_ENCAP: u16	= RtattrType::ENCAP as u16;
-pub const RTA_EXPIRES: u16	= RtattrType::EXPIRES as u16;
-pub const RTA_PAD: u16		= RtattrType::PAD as u16;
-pub const RTA_UID: u16		= RtattrType::UID as u16;
-pub const RTA_MAX: u16		= 26 - 1; // RtattrType::_MAX as u16 - 1;
+pub const RTA_UNSPEC: u16		= RtattrType::UNSPEC as u16;
+pub const RTA_DST: u16			= RtattrType::DST as u16;
+pub const RTA_SRC: u16			= RtattrType::SRC as u16;
+pub const RTA_IIF: u16			= RtattrType::IIF as u16;
+pub const RTA_OIF: u16			= RtattrType::OIF as u16;
+pub const RTA_GATEWAY: u16		= RtattrType::GATEWAY as u16;
+pub const RTA_PRIORITY: u16		= RtattrType::PRIORITY as u16;
+pub const RTA_PREFSRC: u16		= RtattrType::PREFSRC as u16;
+pub const RTA_METRICS: u16		= RtattrType::METRICS as u16;
+pub const RTA_MULTIPATH: u16		= RtattrType::MULTIPATH as u16;
+pub const RTA_PROTOINFO: u16		= RtattrType::PROTOINFO as u16;
+pub const RTA_FLOW: u16			= RtattrType::FLOW as u16;
+pub const RTA_CACHEINFO: u16		= RtattrType::CACHEINFO as u16;
+pub const RTA_SESSION: u16		= RtattrType::SESSION as u16;
+pub const RTA_MP_ALGO: u16		= RtattrType::MP_ALGO as u16;
+pub const RTA_TABLE: u16		= RtattrType::TABLE as u16;
+pub const RTA_MARK: u16			= RtattrType::MARK as u16;
+pub const RTA_MFC_STATS: u16		= RtattrType::MFC_STATS as u16;
+pub const RTA_VIA: u16			= RtattrType::VIA as u16;
+pub const RTA_NEWDST: u16		= RtattrType::NEWDST as u16;
+pub const RTA_PREF: u16			= RtattrType::PREF as u16;
+pub const RTA_ENCAP_TYPE: u16		= RtattrType::ENCAP_TYPE as u16;
+pub const RTA_ENCAP: u16		= RtattrType::ENCAP as u16;
+pub const RTA_EXPIRES: u16		= RtattrType::EXPIRES as u16;
+pub const RTA_PAD: u16			= RtattrType::PAD as u16;
+pub const RTA_UID: u16			= RtattrType::UID as u16;
+pub const RTA_TTL_PROPAGATE: u16	= RtattrType::TTL_PROPAGATE as u16;
+pub const RTA_MAX: u16			= 27 - 1; // RtattrType::_MAX as u16 - 1;
 
 #[allow(non_snake_case)]
 pub fn RTM_RTA(r: &mut Rtmsg) -> &mut Rtattr {
@@ -388,6 +392,7 @@ pub const RTNH_F_PERVASIVE: u8	= 2;	// Do recursive gateway lookup
 pub const RTNH_F_ONLINK: u8	= 4;	// Gateway is forced on link
 pub const RTNH_F_OFFLOAD: u8	= 8;	// offloaded route
 pub const RTNH_F_LINKDOWN: u8	= 16;	// carrier-down on nexthop
+pub const RTNH_F_UNRESOLVED: u8	= 32;	// The entry is unresolved (ipmr)
 
 pub const RTNH_COMPARE_MASK: u8	= (RTNH_F_DEAD | RTNH_F_LINKDOWN | RTNH_F_OFFLOAD);
 
@@ -599,31 +604,34 @@ pub struct Tcmsg {
     pub tcm_info: u32,
 }
 
+#[allow(non_camel_case_types)]
 #[repr(u16)]
 pub enum TCA {
-    UNSPEC	= 0,
-    KIND	= 1,
-    OPTIONS	= 2,
-    STATS	= 3,
-    XSTATS	= 4,
-    RATE	= 5,
-    FCNT	= 6,
-    STATS2	= 7,
-    STAB	= 8,
-    PAD		= 9,
-    MAX		= 10,
+    UNSPEC		= 0,
+    KIND		= 1,
+    OPTIONS		= 2,
+    STATS		= 3,
+    XSTATS		= 4,
+    RATE		= 5,
+    FCNT		= 6,
+    STATS2		= 7,
+    STAB		= 8,
+    PAD			= 9,
+    DUMP_INVISIBLE	= 10,
+    MAX			= 11,
 }
-pub const TCA_UNSPEC: u16	= TCA::UNSPEC as u16;
-pub const TCA_KIND: u16		= TCA::KIND as u16;
-pub const TCA_OPTIONS: u16	= TCA::OPTIONS as u16;
-pub const TCA_STATS: u16	= TCA::STATS as u16;
-pub const TCA_XSTATS: u16	= TCA::XSTATS as u16;
-pub const TCA_RATE: u16		= TCA::RATE as u16;
-pub const TCA_FCNT: u16		= TCA::FCNT as u16;
-pub const TCA_STATS2: u16	= TCA::STATS2 as u16;
-pub const TCA_STAB: u16		= TCA::STAB as u16;
-pub const TCA_PAD: u16		= TCA::PAD as u16;
-pub const TCA_MAX: u16		= TCA::MAX as u16 - 1;
+pub const TCA_UNSPEC: u16		= TCA::UNSPEC as u16;
+pub const TCA_KIND: u16			= TCA::KIND as u16;
+pub const TCA_OPTIONS: u16		= TCA::OPTIONS as u16;
+pub const TCA_STATS: u16		= TCA::STATS as u16;
+pub const TCA_XSTATS: u16		= TCA::XSTATS as u16;
+pub const TCA_RATE: u16			= TCA::RATE as u16;
+pub const TCA_FCNT: u16			= TCA::FCNT as u16;
+pub const TCA_STATS2: u16		= TCA::STATS2 as u16;
+pub const TCA_STAB: u16			= TCA::STAB as u16;
+pub const TCA_PAD: u16			= TCA::PAD as u16;
+pub const TCA_DUMP_INVISIBLE: u16	= TCA::DUMP_INVISIBLE as u16;
+pub const TCA_MAX: u16			= TCA::MAX as u16 - 1;
 
 #[allow(non_snake_case)]
 pub fn TCA_RTA(r: &mut Tcmsg)  -> &Rtattr {
@@ -714,7 +722,8 @@ pub enum RtnetlinkGroups {
     MDB			= 26,
     MPLS_ROUTE		= 27,
     NSID		= 28,
-    _MAX		= 29,
+    MPLS_NETCONF	= 29,
+    _MAX		= 30,
 }
 pub const RTNLGRP_NONE: u32		= RtnetlinkGroups::NONE as u32;
 pub const RTNLGRP_LINK: u32		= RtnetlinkGroups::LINK as u32;
@@ -748,6 +757,7 @@ pub const RTNLGRP_IPV6_NETCONF: u32	= RtnetlinkGroups::IPV6_NETCONF as u32;
 pub const RTNLGRP_MDB: u32		= RtnetlinkGroups::MDB as u32;
 pub const RTNLGRP_MPLS_ROUTE: u32	= RtnetlinkGroups::MPLS_ROUTE as u32;
 pub const RTNLGRP_NSID: u32		= RtnetlinkGroups::NSID as u32;
+pub const RTNLGRP_MPLS_NETCONF: u32	= RtnetlinkGroups::MPLS_NETCONF as u32;
 pub const RTNLGRP_MAX: u32		= RtnetlinkGroups::_MAX as u32 - 1;
 
 // TC action piece

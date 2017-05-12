@@ -35,7 +35,7 @@ pub enum VlanAttr {
     TCI		= 2,    // __be16 skb htons(vlan_tci)
     _MAX	= 3,
 }
-pub const NFQA_VLAN_MAX: u16 = 3 + 1; // ??? 3 - 1
+pub const NFQA_VLAN_MAX: u16 = 3 - 1;
 
 #[allow(non_camel_case_types)]
 #[repr(u16)]
