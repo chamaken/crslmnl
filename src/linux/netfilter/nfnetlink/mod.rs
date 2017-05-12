@@ -32,7 +32,8 @@ pub const NFNLGRP_CONNTRACK_EXP_DESTROY: u32  	= Groups::CONNTRACK_EXP_DESTROY a
 pub const NFNLGRP_NFTABLES: u32			= Groups::NFTABLES as u32;
 pub const NFNLGRP_ACCT_QUOTA: u32		= Groups::ACCT_QUOTA as u32;
 pub const NFNLGRP_NFTRACE: u32			= Groups::NFTRACE as u32;
-pub const NFNLGRP_MAX: u32			= Groups::_MAX as u32 - 1;
+pub const __NFNLGRP_MAX: u32			= Groups::_MAX as u32;
+pub const NFNLGRP_MAX: u32			= __NFNLGRP_MAX - 1;
 
 // General form of address family dependent message.
 #[repr(C)]
@@ -86,4 +87,5 @@ enum NfnlBatchAttributes {
 }
 pub const NFNL_BATCH_UNSPEC: u32	= NfnlBatchAttributes::UNSPEC as u32;
 pub const NFNL_BATCH_GENID: u32		= NfnlBatchAttributes::GENID as u32;
-pub const NFNL_BATCH_MAX: u32		= NfnlBatchAttributes::_MAX as u32 - 1;
+pub const __NFNL_BATCH_MAX: u32		= NfnlBatchAttributes::_MAX as u32;
+pub const NFNL_BATCH_MAX: u32		= __NFNL_BATCH_MAX - 1;

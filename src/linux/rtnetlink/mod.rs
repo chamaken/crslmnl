@@ -124,7 +124,8 @@ pub const RTM_DELNSID: u16		= RTM::DELNSID as u16;
 pub const RTM_GETNSID: u16		= RTM::GETNSID as u16;
 pub const RTM_NEWSTATS: u16		= RTM::NEWSTATS as u16;
 pub const RTM_GETSTATS: u16		= RTM::GETSTATS as u16;
-pub const RTM_MAX: u16			= ((RTM::_MAX as u16 + 3) & !3) - 1;
+pub const __RTM_MAX: u16		= RTM::_MAX as u16;
+pub const RTM_MAX: u16			= ((__RTM_MAX as u16 + 3) & !3) - 1;
 
 pub const RTM_NR_MSGTYPES: u16		= RTM_MAX + 1 - RTM_BASE;
 pub const RTM_NR_FAMILIES: u16		= RTM_NR_MSGTYPES >> 2;
@@ -227,7 +228,8 @@ pub const RTN_PROHIBIT: u8	= RTN::PROHIBIT as u8;
 pub const RTN_THROW: u8		= RTN::THROW as u8;
 pub const RTN_NAT: u8		= RTN::NAT as u8;
 pub const RTN_XRESOLVE: u8	= RTN::XRESOLVE as u8;
-pub const RTN_MAX: u8		= RTN::_MAX as u8 - 1;
+pub const __RTN_MAX: u8		= RTN::_MAX as u8;
+pub const RTN_MAX: u8		= __RTN_MAX - 1;
 
 // rtm_protocol
 pub const RTPROT_UNSPEC: u8	= 0;
@@ -361,7 +363,8 @@ pub const RTA_EXPIRES: u16		= RtattrType::EXPIRES as u16;
 pub const RTA_PAD: u16			= RtattrType::PAD as u16;
 pub const RTA_UID: u16			= RtattrType::UID as u16;
 pub const RTA_TTL_PROPAGATE: u16	= RtattrType::TTL_PROPAGATE as u16;
-pub const RTA_MAX: u16			= 27 - 1; // RtattrType::_MAX as u16 - 1;
+pub const __RTA_MAX: u16		= RtattrType::_MAX as u16;
+pub const RTA_MAX: u16			= 27 - 1; // __RTA_MAX - 1;
 
 #[allow(non_snake_case)]
 pub fn RTM_RTA(r: &mut Rtmsg) -> &mut Rtattr {
@@ -454,6 +457,7 @@ pub struct RtaCacheinfo {
 pub const RTNETLINK_HAVE_PEERINFO: u32	= 1;	// XXX: ???
 
 // RTM_METRICS --- array of struct rtattr with types of RTAX_*
+#[allow(non_camel_case_types)]
 #[repr(C)]
 pub enum RTAX {
     UNSPEC	= 0,
@@ -492,7 +496,8 @@ pub const RTAX_RTO_MIN: c_int		= RTAX::RTO_MIN as c_int;
 pub const RTAX_INITRWND: c_int		= RTAX::INITRWND as c_int;
 pub const RTAX_QUICKACK: c_int		= RTAX::QUICKACK as c_int;
 pub const RTAX_CC_ALGO: c_int		= RTAX::CC_ALGO as c_int;
-pub const RTAX_MAX: c_int		= 17 - 1; // RTAX::_MAX as c_int - 1;
+pub const __RTAX_MAX: c_int		= RTAX::_MAX as c_int;
+pub const RTAX_MAX: c_int		= 17 - 1; // __RTAX_MAX - 1;
 
 pub const RTAX_FEATURE_ECN: u32		= (1 << 0);
 pub const RTAX_FEATURE_SACK: u32	= (1 << 1);
@@ -583,7 +588,8 @@ pub enum PREFIX {
 pub const PREFIX_UNSPEC: u16	= PREFIX::UNSPEC as u16;
 pub const PREFIX_ADDRESS: u16	= PREFIX::ADDRESS as u16;
 pub const PREFIX_CACHEINFO: u16	= PREFIX::CACHEINFO as u16;
-pub const PREFIX_MAX: u16	= PREFIX::_MAX as u16 - 1;
+pub const __PREFIX_MAX: u16	= PREFIX::_MAX as u16;
+pub const PREFIX_MAX: u16	= __PREFIX_MAX - 1;
 
 #[repr(C)]
 pub struct PrefixCacheinfo {
@@ -618,7 +624,7 @@ pub enum TCA {
     STAB		= 8,
     PAD			= 9,
     DUMP_INVISIBLE	= 10,
-    MAX			= 11,
+    _MAX		= 11,
 }
 pub const TCA_UNSPEC: u16		= TCA::UNSPEC as u16;
 pub const TCA_KIND: u16			= TCA::KIND as u16;
@@ -631,7 +637,8 @@ pub const TCA_STATS2: u16		= TCA::STATS2 as u16;
 pub const TCA_STAB: u16			= TCA::STAB as u16;
 pub const TCA_PAD: u16			= TCA::PAD as u16;
 pub const TCA_DUMP_INVISIBLE: u16	= TCA::DUMP_INVISIBLE as u16;
-pub const TCA_MAX: u16			= TCA::MAX as u16 - 1;
+pub const __TCA_MAX: u16		= TCA::_MAX as u16 - 1;
+pub const TCA_MAX: u16			= __TCA_MAX - 1;
 
 #[allow(non_snake_case)]
 pub fn TCA_RTA(r: &mut Tcmsg)  -> &Rtattr {
@@ -668,7 +675,8 @@ pub enum NDUSEROPT {
 }
 pub const NDUSEROPT_UNSPEC: u16		= NDUSEROPT::UNSPEC as u16;
 pub const NDUSEROPT_SRCADDR: u16	= NDUSEROPT::SRCADDR as u16;
-pub const NDUSEROPT_MAX: u16		= NDUSEROPT::_MAX as u16 - 1;
+pub const __NDUSEROPT_MAX: u16		= NDUSEROPT::_MAX as u16;
+pub const NDUSEROPT_MAX: u16		= __NDUSEROPT_MAX - 1;
 
 // RTnetlink multicast groups - backwards compatibility for userspace
 pub const RTMGRP_LINK: u32		= 1;
@@ -758,7 +766,8 @@ pub const RTNLGRP_MDB: u32		= RtnetlinkGroups::MDB as u32;
 pub const RTNLGRP_MPLS_ROUTE: u32	= RtnetlinkGroups::MPLS_ROUTE as u32;
 pub const RTNLGRP_NSID: u32		= RtnetlinkGroups::NSID as u32;
 pub const RTNLGRP_MPLS_NETCONF: u32	= RtnetlinkGroups::MPLS_NETCONF as u32;
-pub const RTNLGRP_MAX: u32		= RtnetlinkGroups::_MAX as u32 - 1;
+pub const __RTNLGRP_MAX: u32		= RtnetlinkGroups::_MAX as u32;
+pub const RTNLGRP_MAX: u32		= __RTNLGRP_MAX - 1;
 
 // TC action piece
 #[allow(non_snake_case)]

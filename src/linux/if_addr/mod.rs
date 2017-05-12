@@ -42,7 +42,8 @@ pub const IFA_ANYCAST: u16	= IFA::ANYCAST as u16;
 pub const IFA_CACHEINFO: u16	= IFA::CACHEINFO as u16;
 pub const IFA_MULTICAST: u16	= IFA::MULTICAST as u16;
 pub const IFA_FLAGS: u16	= IFA::FLAGS as u16;
-pub const IFA_MAX: u16		= IFA::_MAX as u16 - 1;
+pub const __IFA_MAX: u16	= IFA::_MAX as u16;
+pub const IFA_MAX: u16		= __IFA_MAX - 1;
 
 //ifa_flags
 pub const IFA_F_SECONDARY: u32		= 0x01;

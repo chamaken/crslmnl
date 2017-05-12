@@ -231,7 +231,8 @@ pub const NLMSGERR_ATTR_UNUSED: u16	= NlmsgerrAttrs::UNUSED as u16;
 pub const NLMSGERR_ATTR_MSG: u16	= NlmsgerrAttrs::MSG as u16;
 pub const NLMSGERR_ATTR_OFFS: u16	= NlmsgerrAttrs::OFFS as u16;
 pub const NLMSGERR_ATTR_COOKIE: u16	= NlmsgerrAttrs::COOKIE as u16;
-pub const NLMSGERR_ATTR_MAX: u16	= NlmsgerrAttrs::MAX as u16 - 1;
+pub const __NLMSGERR_ATTR_MAX: u16	= NlmsgerrAttrs::MAX as u16;
+pub const MSGERR_ATTR_MAX: u16		= __NLMSGERR_ATTR_MAX - 1;
 
 pub const NETLINK_ADD_MEMBERSHIP: c_int		= 1;
 pub const NETLINK_DROP_MEMBERSHIP: c_int	= 2;

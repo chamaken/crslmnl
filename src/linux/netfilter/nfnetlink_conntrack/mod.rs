@@ -92,8 +92,8 @@ pub const CTA_TIMESTAMP: u16		= CtattrType::TIMESTAMP as u16;
 pub const CTA_MARK_MASK: u16		= CtattrType::MARK_MASK as u16;
 pub const CTA_LABELS: u16		= CtattrType::LABELS as u16;
 pub const CTA_LABELS_MASK: u16		= CtattrType::LABELS_MASK as u16;
-// pub const CTA_MAX: u16		= CtattrType::_MAX as u16 - 1;
-pub const CTA_MAX: u16 			= 24 - 1;
+pub const __CTA_MAX: u16 		= CtattrType::_MAX as u16;
+pub const CTA_MAX: u16 			= 24 - 1; // __CTA_MAX - 1
 
 
 #[allow(non_camel_case_types)]
@@ -109,8 +109,8 @@ pub const CTA_TUPLE_UNSPEC: u16	= CtattrTuple::UNSPEC as u16;
 pub const CTA_TUPLE_IP: u16	= CtattrTuple::IP as u16;
 pub const CTA_TUPLE_PROTO: u16	= CtattrTuple::PROTO as u16;
 pub const CTA_TUPLE_ZONE: u16	= CtattrTuple::ZONE as u16;
-// pub const CTA_TUPLE_MAX: u16	= CtattrTuple::_MAX as u16 - 1;
-pub const CTA_TUPLE_MAX: u16	 = 4 - 1;
+pub const __CTA_TUPLE_MAX: u16	= CtattrTuple::_MAX as u16;
+pub const CTA_TUPLE_MAX: u16	= 4 - 1; // __CTA_TUPLE_MAX - 1
 
 #[allow(non_camel_case_types)]
 #[repr(u16)]
@@ -127,8 +127,8 @@ pub const CTA_IP_V4_SRC: u16	= CtattrIp::V4_SRC as u16;
 pub const CTA_IP_V4_DST: u16	= CtattrIp::V4_DST as u16;
 pub const CTA_IP_V6_SRC: u16	= CtattrIp::V6_SRC as u16;
 pub const CTA_IP_V6_DST: u16	= CtattrIp::V6_DST as u16;
-// pub const CTA_IP_MAX: u16	= CtattrIp::_MAX as u16 - 1;
-pub const CTA_IP_MAX: u16	= 5 - 1;
+pub const __CTA_IP_MAX: u16	= CtattrIp::_MAX as u16;
+pub const CTA_IP_MAX: u16	= 5 - 1; // __CTA_IP_MAX - 1
 
 #[allow(non_camel_case_types)]
 #[repr(u16)]
@@ -143,7 +143,7 @@ pub enum CtattrL4proto {
     ICMPV6_ID	= 7,
     ICMPV6_TYPE	= 8,
     ICMPV6_CODE	= 9,
-    _MAX = 10,
+    _MAX	= 10,
 }
 pub const CTA_PROTO_UNSPEC: u16		= CtattrL4proto::UNSPEC as u16;
 pub const CTA_PROTO_NUM: u16		= CtattrL4proto::NUM as u16;
@@ -155,8 +155,8 @@ pub const CTA_PROTO_ICMP_CODE: u16	= CtattrL4proto::ICMP_CODE as u16;
 pub const CTA_PROTO_ICMPV6_ID: u16	= CtattrL4proto::ICMPV6_ID as u16;
 pub const CTA_PROTO_ICMPV6_TYPE: u16	= CtattrL4proto::ICMPV6_TYPE as u16;
 pub const CTA_PROTO_ICMPV6_CODE: u16	= CtattrL4proto::ICMPV6_CODE as u16;
-// pub const CTA_PROTO_MAX: u16		= CtattrL4proto::_MAX as u16 - 1;
-pub const CTA_PROTO_MAX: u16		= 10 - 1;
+pub const __CTA_PROTO_MAX: u16		= CtattrL4proto::_MAX as u16;
+pub const CTA_PROTO_MAX: u16		= 10 - 1; // __CTA_PROTO_MAX - 1
 
 #[allow(non_camel_case_types)]
 #[repr(u32)]
@@ -209,7 +209,8 @@ pub const CTA_PROTOINFO_DCCP_STATE: u16		= CtattrProtoinfoDccp::STATE as u16;
 pub const CTA_PROTOINFO_DCCP_ROLE: u16		= CtattrProtoinfoDccp::ROLE as u16;
 pub const CTA_PROTOINFO_DCCP_HANDSHAKE_SEQ: u16	= CtattrProtoinfoDccp::HANDSHAKE_SEQ as u16;
 pub const CTA_PROTOINFO_DCCP_PAD: u16		= CtattrProtoinfoDccp::PAD as u16;
-pub const CTA_PROTOINFO_DCCP_MAX: u16		= CtattrProtoinfoDccp::_MAX as u16 - 1;
+pub const __CTA_PROTOINFO_DCCP_MAX: u16		= CtattrProtoinfoDccp::_MAX as u16;
+pub const CTA_PROTOINFO_DCCP_MAX: u16		= __CTA_PROTOINFO_DCCP_MAX as u16 - 1;
 
 #[allow(non_camel_case_types)]
 #[repr(u16)]
@@ -224,7 +225,8 @@ pub const CTA_PROTOINFO_SCTP_UNSPEC: u16	= CtattrProtoinfoSctp::UNSPEC as u16;
 pub const CTA_PROTOINFO_SCTP_STATE: u16		= CtattrProtoinfoSctp::STATE as u16;
 pub const CTA_PROTOINFO_SCTP_VTAG_ORIGINAL: u16	= CtattrProtoinfoSctp::VTAG_ORIGINAL as u16;
 pub const CTA_PROTOINFO_SCTP_VTAG_REPLY: u16	= CtattrProtoinfoSctp::VTAG_REPLY as u16;
-pub const CTA_PROTOINFO_SCTP_MAX: u16		= (CtattrProtoinfoSctp::_MAX as u16) - 1;
+pub const __CTA_PROTOINFO_SCTP_MAX: u16		= CtattrProtoinfoSctp::_MAX as u16;
+pub const CTA_PROTOINFO_SCTP_MAX: u16		= __CTA_PROTOINFO_SCTP_MAX - 1;
 
 #[allow(non_camel_case_types)]
 #[repr(u16)]
@@ -243,8 +245,8 @@ pub const CTA_COUNTERS_BYTES: u16	= CtattrCounters::BYTES as u16;
 pub const CTA_COUNTERS32_PACKETS: u16	= CtattrCounters::PACKETS32 as u16;
 pub const CTA_COUNTERS32_BYTES: u16	= CtattrCounters::BYTES32 as u16;
 pub const CTA_COUNTERS_PAD: u16		= CtattrCounters::PAD as u16;
-// pub const CTA_COUNTERS_MAX: u16	= (CtattrCounters::_MAX as u16) - 1;
-pub const CTA_COUNTERS_MAX: u16		= 6 - 1;
+pub const __CTA_COUNTERS_MAX: u16	= CtattrCounters::_MAX as u16 - 1;
+pub const CTA_COUNTERS_MAX: u16		= 6 - 1; // __CTA_COUNTERS_MAX - 1
 
 #[allow(non_camel_case_types)]
 #[repr(u16)]
@@ -259,7 +261,8 @@ pub const CTA_TIMESTAMP_UNSPEC: u16	= CtattrTstamp::UNSPEC as u16;
 pub const CTA_TIMESTAMP_START: u16	= CtattrTstamp::START as u16;
 pub const CTA_TIMESTAMP_STOP: u16	= CtattrTstamp::STOP as u16;
 pub const CTA_TIMESTAMP_PAD: u16	= CtattrTstamp::PAD as u16;
-pub const CTA_TIMESTAMP_MAX: u16	= CtattrTstamp::_MAX as u16 - 1;
+pub const __CTA_TIMESTAMP_MAX: u16	= CtattrTstamp::_MAX as u16;
+pub const CTA_TIMESTAMP_MAX: u16	= __CTA_TIMESTAMP_MAX - 1;
 
 #[allow(non_camel_case_types)]
 #[repr(u16)]
@@ -280,7 +283,8 @@ pub const CTATTR_NAT_MAXIP: u16	= CTA_NAT_V4_MAXIP;
 pub const CTA_NAT_PROTO: u16	= CtattrNat::PROTO as u16;
 pub const CTA_NAT_V6_MINIP: u16	= CtattrNat::V6_MINIP as u16;
 pub const CTA_NAT_V6_MAXIP: u16	= CtattrNat::V6_MAXIP as u16;
-pub const CTA_NAT_MAX: u16	= CtattrNat::_MAX as u16 - 1;
+pub const __CTA_NAT_MAX: u16	= CtattrNat::_MAX as u16;
+pub const CTA_NAT_MAX: u16	= __CTA_NAT_MAX - 1;
 
 #[allow(non_camel_case_types)]
 #[repr(u16)]
@@ -293,7 +297,8 @@ pub enum CtattrProtonat {
 pub const CTA_PROTONAT_UNSPEC: u16	= CtattrProtonat::UNSPEC as u16;
 pub const CTA_PROTONAT_PORT_MIN: u16	= CtattrProtonat::PORT_MIN as u16;
 pub const CTA_PROTONAT_PORT_MAX: u16	= CtattrProtonat::PORT_MAX as u16;
-pub const CTA_PROTONAT_MAX: u16		= CtattrProtonat::_MAX as u16 - 1;
+pub const __CTA_PROTONAT_MAX: u16	= CtattrProtonat::_MAX as u16;
+pub const CTA_PROTONAT_MAX: u16		= __CTA_PROTONAT_MAX - 1;
 
 #[allow(non_camel_case_types)]
 #[repr(u16)]
@@ -308,7 +313,8 @@ pub const CTA_SEQADJ_UNSPEC: u16		= CtattrSeqadj::UNSPEC as u16;
 pub const CTA_SEQADJ_CORRECTION_POS: u16	= CtattrSeqadj::CORRECTION_POS as u16;
 pub const CTA_SEQADJ_OFFSET_BEFORE: u16		= CtattrSeqadj::OFFSET_BEFORE as u16;
 pub const CTA_SEQADJ_OFFSET_AFTER: u16		= CtattrSeqadj::OFFSET_AFTER as u16;
-pub const CTA_SEQADJ_MAX: u16			= CtattrSeqadj::_MAX as u16 - 1;
+pub const __CTA_SEQADJ_MAX: u16			= CtattrSeqadj::_MAX as u16;
+pub const CTA_SEQADJ_MAX: u16			= __CTA_SEQADJ_MAX - 1;
 
 #[allow(non_camel_case_types)]
 #[repr(u16)]
@@ -323,7 +329,8 @@ pub const CTA_NAT_SEQ_UNSPEC: u16		= CtattrNatseq::UNSPEC as u16;
 pub const CTA_NAT_SEQ_CORRECTION_POS: u16	= CtattrNatseq::CORRECTION_POS as u16;
 pub const CTA_NAT_SEQ_OFFSET_BEFORE: u16	= CtattrNatseq::OFFSET_BEFORE as u16;
 pub const CTA_NAT_SEQ_OFFSET_AFTER: u16		= CtattrNatseq::OFFSET_AFTER as u16;
-pub const CTA_NAT_SEQ_MAX: u16			= CtattrNatseq::_MAX as u16 - 1;
+pub const __CTA_NAT_SEQ_MAX: u16		= CtattrNatseq::_MAX as u16;
+pub const CTA_NAT_SEQ_MAX: u16			= __CTA_NAT_SEQ_MAX - 1;
 
 #[allow(non_camel_case_types)]
 #[repr(u16)]
@@ -354,7 +361,8 @@ pub const CTA_EXPECT_FLAGS: u16		= CtattrExpect::FLAGS as u16;
 pub const CTA_EXPECT_CLASS: u16		= CtattrExpect::CLASS as u16;
 pub const CTA_EXPECT_NAT: u16		= CtattrExpect::NAT as u16;
 pub const CTA_EXPECT_FN: u16		= CtattrExpect::FN as u16;
-pub const CTA_EXPECT_MAX: u16		= CtattrExpect::_MAX as u16 - 1;
+pub const __CTA_EXPECT_MAX: u16		= CtattrExpect::_MAX as u16;
+pub const CTA_EXPECT_MAX: u16		= __CTA_EXPECT_MAX - 1;
 
 #[allow(non_camel_case_types)]
 #[repr(u16)]
@@ -367,7 +375,8 @@ pub enum CtattrExpectNat {
 pub const CTA_EXPECT_NAT_UNSPEC: u16	= CtattrExpectNat::UNSPEC as u16;
 pub const CTA_EXPECT_NAT_DIR: u16	= CtattrExpectNat::DIR as u16;
 pub const CTA_EXPECT_NAT_TUPLE: u16	= CtattrExpectNat::TUPLE as u16;
-pub const CTA_EXPECT_NAT_MAX: u16	= CtattrExpectNat::_MAX as u16 - 1;
+pub const __CTA_EXPECT_NAT_MAX: u16	= CtattrExpectNat::_MAX as u16;
+pub const CTA_EXPECT_NAT_MAX: u16	= __CTA_EXPECT_NAT_MAX - 1;
 
 #[allow(non_camel_case_types)]
 #[repr(u16)]
@@ -380,7 +389,8 @@ pub enum CtattrHelp {
 pub const CTA_HELP_UNSPEC: u16	= CtattrHelp::UNSPEC as u16;
 pub const CTA_HELP_NAME: u16	= CtattrHelp::NAME as u16;
 pub const CTA_HELP_INFO: u16	= CtattrHelp::INFO as u16;
-pub const CTA_HELP_MAX: u16	= CtattrHelp::_MAX as u16 - 1;
+pub const __CTA_HELP_MAX: u16	= CtattrHelp::_MAX as u16;
+pub const CTA_HELP_MAX: u16	= __CTA_HELP_MAX - 1;
 
 #[allow(non_camel_case_types)]
 #[repr(u16)]
@@ -391,7 +401,8 @@ pub enum CtattrSecctx {
 }
 pub const CTA_SECCTX_UNSPEC: u16	= CtattrSecctx::UNSPEC as u16;
 pub const CTA_SECCTX_NAME: u16		= CtattrSecctx::NAME as u16;
-pub const CTA_SECCTX_MAX: u16		= CtattrSecctx::_MAX as u16 - 1;
+pub const __CTA_SECCTX_MAX: u16		= CtattrSecctx::_MAX as u16;
+pub const CTA_SECCTX_MAX: u16		= __CTA_SECCTX_MAX - 1;
 
 #[allow(non_camel_case_types)]
 #[repr(u16)]
@@ -426,7 +437,8 @@ pub const CTA_STATS_DROP: u16		= CtattrStatsCpu::DROP as u16;
 pub const CTA_STATS_EARLY_DROP: u16	= CtattrStatsCpu::EARLY_DROP as u16;
 pub const CTA_STATS_ERROR: u16		= CtattrStatsCpu::ERROR as u16;
 pub const CTA_STATS_SEARCH_RESTART: u16	= CtattrStatsCpu::SEARCH_RESTART as u16;
-pub const CTA_STATS_MAX: u16		= CtattrStatsCpu::_MAX as u16 - 1;
+pub const __CTA_STATS_MAX: u16		= CtattrStatsCpu::_MAX as u16;
+pub const CTA_STATS_MAX: u16		= __CTA_STATS_MAX - 1;
 
 #[allow(non_camel_case_types)]
 #[repr(u16)]
@@ -437,7 +449,8 @@ pub enum CtattrStatsGlobal {
 }
 pub const CTA_STATS_GLOBAL_UNSPEC: u16	= CtattrStatsGlobal::UNSPEC as u16;
 pub const CTA_STATS_GLOBAL_ENTRIES: u16	= CtattrStatsGlobal::ENTRIES as u16;
-pub const CTA_STATS_GLOBAL: u16		= CtattrStatsGlobal::_MAX as u16 - 1;
+pub const __CTA_STATS_GLOBAL: u16	= CtattrStatsGlobal::_MAX as u16;
+pub const CTA_STATS_GLOBAL: u16		= __CTA_STATS_GLOBAL - 1;
 
 #[allow(non_camel_case_types)]
 #[repr(u16)]
@@ -452,7 +465,8 @@ pub const CTA_STATS_EXP_UNSPEC: u16	= CtattrExpectStats::UNSPEC as u16;
 pub const CTA_STATS_EXP_NEW: u16	= CtattrExpectStats::NEW as u16;
 pub const CTA_STATS_EXP_CREATE: u16	= CtattrExpectStats::CREATE as u16;
 pub const CTA_STATS_EXP_DELETE: u16	= CtattrExpectStats::DELETE as u16;
-pub const CTA_STATS_EXP_MAX: u16	= CtattrExpectStats::_MAX as u16 - 1;
+pub const __CTA_STATS_EXP_MAX: u16	= CtattrExpectStats::_MAX as u16;
+pub const CTA_STATS_EXP_MAX: u16	= __CTA_STATS_EXP_MAX - 1;
 
 // XXX: copy only NF_NETLINK_ from nfnetlink_compat.h
 // Old nfnetlink macros for userspace */

@@ -5,10 +5,13 @@
 #[repr(u16)]
 #[allow(non_camel_case_types)]
 pub enum MsgTypes {
-    PACKET = 0,		// packet from kernel to userspace
-    CONFIG = 1,		// connect to a particular queue
-    MAX = 2,
+    PACKET 	= 0,	// packet from kernel to userspace
+    CONFIG 	= 1,	// connect to a particular queue
+    MAX		= 2,
 }
+pub const NFULNL_MSG_PACKET: u16	= MsgTypes::PACKET as u16;
+pub const NFULNL_MSG_CONFIG: u16	= MsgTypes::CONFIG as u16;
+pub const NFULNL_MSG_MAX: u16		= MsgTypes::MAX as u16;
 
 #[repr(C)]
 pub struct MsgPacketHdr {
@@ -55,8 +58,28 @@ pub enum AttrType {
     CT_INFO		= 19,	// enum ip_conntrack_info
     _MAX		= 20,
 }
-// pub const ATTR_TYPE_MAX: u16 = AttrType::_MAX as u16 - 1;
-pub const NFULA_MAX: u16 = 20 - 1;
+pub const NFULA_UNSPEC: u16		= AttrType::UNSPEC as u16;
+pub const NFULA_PACKET_HDR: u16		= AttrType::PACKET_HDR as u16;
+pub const NFULA_MARK: u16		= AttrType::MARK as u16;
+pub const NFULA_TIMESTAMP: u16		= AttrType::TIMESTAMP as u16;
+pub const NFULA_IFINDEX_INDEV: u16	= AttrType::IFINDEX_INDEV as u16;
+pub const NFULA_IFINDEX_OUTDEV: u16	= AttrType::IFINDEX_OUTDEV as u16;
+pub const NFULA_IFINDEX_PHYSINDEV: u16	= AttrType::IFINDEX_PHYSINDEV as u16;
+pub const NFULA_IFINDEX_PHYSOUTDEV: u16	= AttrType::IFINDEX_PHYSOUTDEV as u16;
+pub const NFULA_HWADDR: u16		= AttrType::HWADDR as u16;
+pub const NFULA_PAYLOAD: u16		= AttrType::PAYLOAD as u16;
+pub const NFULA_PREFIX: u16		= AttrType::PREFIX as u16;
+pub const NFULA_UID: u16		= AttrType::UID as u16;
+pub const NFULA_SEQ: u16		= AttrType::SEQ as u16;
+pub const NFULA_SEQ_GLOBAL: u16		= AttrType::SEQ_GLOBAL as u16;
+pub const NFULA_GID: u16		= AttrType::GID as u16;
+pub const NFULA_HWTYPE: u16		= AttrType::HWTYPE as u16;
+pub const NFULA_HWHEADER: u16		= AttrType::HWHEADER as u16;
+pub const NFULA_HWLEN: u16		= AttrType::HWLEN as u16;
+pub const NFULA_CT: u16			= AttrType::CT as u16;
+pub const NFULA_CT_INFO: u16		= AttrType::CT_INFO as u16;
+pub const __NFULA_MAX: u16		= AttrType::_MAX as u16;
+pub const NFULA_MAX: u16		= 20 - 1; // __NFULA_MAX - 1
 
 #[allow(non_camel_case_types)]
 #[repr(u8)]
@@ -92,7 +115,15 @@ pub enum AttrConfig {
     FLAGS	= 6,	// __u16
     _MAX	= 7,
 }
-pub const ATTR_CONFIG_MAX: u32 = AttrConfig::_MAX as u32 - 1;
+pub const NFULA_CFG_UNSPEC: u32		= AttrConfig::UNSPEC as u32;
+pub const NFULA_CFG_CMD: u32		= AttrConfig::CMD as u32;
+pub const NFULA_CFG_MODE: u32		= AttrConfig::MODE as u32;
+pub const NFULA_CFG_NLBUFSIZ: u32	= AttrConfig::NLBUFSIZ as u32;
+pub const NFULA_CFG_TIMEOUT: u32	= AttrConfig::TIMEOUT as u32;
+pub const NFULA_CFG_QTHRESH: u32	= AttrConfig::QTHRESH as u32;
+pub const NFULA_CFG_FLAGS: u32		= AttrConfig::FLAGS as u32;
+pub const __NFULA_CFG_MAX: u32		= AttrConfig::_MAX as u32;
+pub const NFULA_CFG_MAX: u32 		= __NFULA_CFG_MAX - 1;
 
 pub const COPY_NONE: u8		= 0x00;
 pub const COPY_META: u8		= 0x01;

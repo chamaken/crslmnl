@@ -1,12 +1,17 @@
 #[allow(non_camel_case_types)]
-#[repr(u32)]
+#[repr(usize)]
 pub enum MsgTypes {
     PACKET		= 0,	// packet from kernel to userspace
     VERDICT		= 1,	// verdict from userspace to kernel
     CONFIG		= 2,    // connect to a particular queue
     VERDICT_BATCH	= 3,    // batchv from userspace to kernel
-    _MAX		= 4,
+    MAX			= 4,
 }
+pub const NFQNL_MSG_PACKET: usize		= MsgTypes::PACKET as usize;
+pub const NFQNL_MSG_VERDICT: usize		= MsgTypes::VERDICT as usize;
+pub const NFQNL_MSG_CONFIG: usize		= MsgTypes::CONFIG as usize;
+pub const NFQNL_MSG_VERDICT_BATCH: usize	= MsgTypes::VERDICT_BATCH as usize;
+pub const NFQNL_MSG_MAX: usize			= MsgTypes::MAX as usize;
 
 #[repr(C, packed)]
 pub struct MsgPacketHdr {
@@ -28,14 +33,18 @@ pub struct MsgPacketTimestamp {
     pub usec: u64,
 }
 
-#[repr(u32)]
+#[repr(u16)]
 pub enum VlanAttr {
     UNSPEC	= 0,
     PROTO	= 1,	// __be16 skb vlan_proto
     TCI		= 2,    // __be16 skb htons(vlan_tci)
     _MAX	= 3,
 }
-pub const NFQA_VLAN_MAX: u16 = 3 - 1;
+pub const NFQA_VLAN_UNSPEC: u16	= VlanAttr::UNSPEC as u16;
+pub const NFQA_VLAN_PROTO: u16	= VlanAttr::PROTO as u16;
+pub const NFQA_VLAN_TCI: u16	= VlanAttr::TCI as u16;
+pub const __NFQA_VLAN_MAX: u16	= VlanAttr::_MAX as u16;
+pub const NFQA_VLAN_MAX: u16 = 3 - 1; // __NFQA_VLAN_MAX - 1
 
 #[allow(non_camel_case_types)]
 #[repr(u16)]
@@ -63,7 +72,29 @@ pub enum AttrType {
     L2HDR		= 20,   // full L2 header
     _MAX		= 21,
 }
-pub const NFQA_MAX: u16 = 21 - 1;
+pub const NFQA_UNSPEC: u16		= AttrType::UNSPEC as u16;
+pub const NFQA_PACKET_HDR: u16		= AttrType::PACKET_HDR as u16;
+pub const NFQA_VERDICT_HDR: u16		= AttrType::VERDICT_HDR as u16;
+pub const NFQA_MARK: u16		= AttrType::MARK as u16;
+pub const NFQA_TIMESTAMP: u16		= AttrType::TIMESTAMP as u16;
+pub const NFQA_IFINDEX_INDEV: u16	= AttrType::IFINDEX_INDEV as u16;
+pub const NFQA_IFINDEX_OUTDEV: u16	= AttrType::IFINDEX_OUTDEV as u16;
+pub const NFQA_IFINDEX_PHYSINDEV: u16	= AttrType::IFINDEX_PHYINDEV as u16;
+pub const NFQA_IFINDEX_PHYSOUTDEV: u16	= AttrType::IFINDEX_PHYOUTDEV as u16;
+pub const NFQA_HWADDR: u16		= AttrType::HWADDR as u16;
+pub const NFQA_PAYLOAD: u16		= AttrType::PAYLOAD as u16;
+pub const NFQA_CT: u16			= AttrType::CT as u16;
+pub const NFQA_CT_INFO: u16		= AttrType::CT_INFO as u16;
+pub const NFQA_CAP_LEN: u16		= AttrType::CAP_LEN as u16;
+pub const NFQA_SKB_INFO: u16		= AttrType::SKB_INFO as u16;
+pub const NFQA_EXP: u16			= AttrType::EXP as u16;
+pub const NFQA_UID: u16			= AttrType::UID as u16;
+pub const NFQA_GID: u16			= AttrType::GID as u16;
+pub const NFQA_SECCTX: u16		= AttrType::SECCTX as u16;
+pub const NFQA_VLAN: u16		= AttrType::VLAN as u16;
+pub const NFQA_L2HDR: u16		= AttrType::L2HDR as u16;
+pub const __NFQA_MAX: u16		= AttrType::_MAX as u16;
+pub const NFQA_MAX: u16 = 21 - 1; // __NFQA_MAX - 1
 
 #[repr(C)]
 pub struct MsgVerdictHdr {
@@ -114,7 +145,14 @@ pub enum AttrConfig {
     FLAGS		= 5,    // value of these flags (__u32)
     _MAX		= 6,
 }
-pub const NFQA_CFG_MAX: u32 = 6 - 1;
+pub const NFQA_CFG_UNSPEC: u32		= AttrConfig::UNSPEC as u32;
+pub const NFQA_CFG_CMD: u32		= AttrConfig::CMD as u32;
+pub const NFQA_CFG_PARAMS: u32		= AttrConfig::PARAMS as u32;
+pub const NFQA_CFG_QUEUE_MAXLEN: u32	= AttrConfig::QUEUE_MAXLEN as u32;
+pub const NFQA_CFG_MASK: u32		= AttrConfig::MASK as u32;
+pub const NFQA_CFG_FLAGS: u32		= AttrConfig::FLAGS as u32;
+pub const __NFQA_CFG_MAX: u32		= AttrConfig::_MAX as u32;
+pub const NFQA_CFG_MAX: u32 		= 6 - 1; // __NFQA_CFG_MAX
 
 // Flags for NFQA_CFG_FLAGS
 pub const NFQA_CFG_F_FAIL_OPEN: u32	= (1 << 0);

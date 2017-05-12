@@ -189,7 +189,8 @@ pub const IFLA_GSO_MAX_SEGS: u16	= AttrType::GSO_MAX_SEGS as u16;
 pub const IFLA_GSO_MAX_SIZE: u16	= AttrType::GSO_MAX_SIZE as u16;
 pub const IFLA_PAD: u16			= AttrType::PAD as u16;
 pub const IFLA_XDP: u16			= AttrType::XDP as u16;
-pub const IFLA_MAX: u16			= 44 - 1; // AttrType::_MAX as u16 - 1;
+pub const __IFLA_MAX: u16		= AttrType::_MAX as u16;
+pub const IFLA_MAX: u16			= 44 - 1; // __IFLA_MAX - 1;
 
 #[repr(u16)]
 #[allow(non_camel_case_types)]
@@ -200,7 +201,8 @@ pub enum AttrTypeInet {
 }
 pub const IFLA_INET_UNSPEC: u16	= AttrTypeInet::UNSPEC as u16;
 pub const IFLA_INET_CONF: u16	= AttrTypeInet::CONF as u16;
-pub const IFLA_INET_MAX: u16	= AttrTypeInet::_MAX as u16 - 1;
+pub const __IFLA_INET_MAX: u16	= AttrTypeInet::_MAX as u16;
+pub const IFLA_INET_MAX: u16	= __IFLA_INET_MAX - 1;
 
 
 // ifi_flags.
@@ -255,7 +257,8 @@ pub const IFLA_INET6_CACHEINFO: u16	= AttrTypeInet6::CACHEINFO as u16;
 pub const IFLA_INET6_ICMP6STATS: u16	= AttrTypeInet6::ICMP6STATS as u16;
 pub const IFLA_INET6_TOKEN: u16		= AttrTypeInet6::TOKEN as u16;
 pub const IFLA_INET6_ADDR_GEN_MODE: u16	= AttrTypeInet6::ADDR_GEN_MODE as u16;
-pub const IFLA_INET6_MAX: u16		= AttrTypeInet6::_MAX as u16 - 1;
+pub const __IFLA_INET6_MAX: u16		= AttrTypeInet6::_MAX as u16;
+pub const IFLA_INET6_MAX: u16		= __IFLA_INET6_MAX - 1;
 
 #[repr(u16)]
 #[allow(non_camel_case_types)]
@@ -366,7 +369,8 @@ pub const IFLA_BR_VLAN_STATS_ENABLED: u16		= AttrTypeBr::VLAN_STATS_ENABLED as u
 pub const IFLA_BR_MCAST_STATS_ENABLED: u16		= AttrTypeBr::MCAST_STATS_ENABLED as u16;
 pub const IFLA_BR_MCAST_IGMP_VERSION: u16		= AttrTypeBr::MCAST_IGMP_VERSION as u16;
 pub const IFLA_BR_MCAST_MLD_VERSION: u16		= AttrTypeBr::MCAST_MLD_VERSION as u16;
-pub const IFLA_BR_MAX: u16				= AttrTypeBr::_MAX as u16 - 1;
+pub const __IFLA_BR_MAX: u16				= AttrTypeBr::_MAX as u16;
+pub const IFLA_BR_MAX: u16				= __IFLA_BR_MAX - 1;
 
 #[repr(C)]
 pub struct IflaBridgeId {
@@ -451,7 +455,8 @@ pub const IFLA_BRPORT_MCAST_FLOOD: u16		= AttrBrport::MCAST_FLOOD as u16;
 pub const IFLA_BRPORT_MCAST_TO_UCAST: u16	= AttrBrport::MCAST_TO_UCAST as u16;
 pub const IFLA_BRPORT_VLAN_TUNNEL: u16		= AttrBrport::VLAN_TUNNEL as u16;
 pub const IFLA_BRPORT_BCAST_FLOOD: u16		= AttrBrport::BCAST_FLOOD as u16;
-pub const IFLA_BRPORT_MAX: u16			= AttrBrport::_MAX as u16 - 1;
+pub const __IFLA_BRPORT_MAX: u16		= AttrBrport::_MAX as u16;
+pub const IFLA_BRPORT_MAX: u16			= __IFLA_BRPORT_MAX - 1;
 
 #[repr(C)]
 pub struct IflaCacheinfo {
@@ -478,8 +483,8 @@ pub const IFLA_INFO_DATA: u16		= AttrTypeInfo::DATA as u16;
 pub const IFLA_INFO_XSTATS: u16		= AttrTypeInfo::XSTATS as u16;
 pub const IFLA_INFO_SLAVE_KIND: u16	= AttrTypeInfo::SLAVE_KIND as u16;
 pub const IFLA_INFO_SLAVE_DATA: u16	= AttrTypeInfo::SLAVE_DATA as u16;
-pub const IFLA_INFO_MAX: u16		= AttrTypeInfo::_MAX as u16 - 1;
-
+pub const __IFLA_INFO_MAX: u16		= AttrTypeInfo::_MAX as u16;
+pub const IFLA_INFO_MAX: u16		= __IFLA_INFO_MAX - 1;
 // VLAN section
 #[repr(u16)]
 #[allow(non_camel_case_types)]
@@ -498,7 +503,8 @@ pub const IFLA_VLAN_FLAGS: u16		= AttrTypeVlan::FLAGS as u16;
 pub const IFLA_VLAN_EGRESS_QOS: u16	= AttrTypeVlan::EGRESS_QOS as u16;
 pub const IFLA_VLAN_INGRESS_QOS: u16	= AttrTypeVlan::INGRESS_QOS as u16;
 pub const IFLA_VLAN_PROTOCOL: u16	= AttrTypeVlan::PROTOCOL as u16;
-pub const IFLA_VLAN_MAX: u16		= AttrTypeVlan::_MAX as u16 - 1;
+pub const __IFLA_VLAN_MAX: u16		= AttrTypeVlan::_MAX as u16;
+pub const IFLA_VLAN_MAX: u16		= __IFLA_VLAN_MAX - 1;
 
 #[repr(C)]
 pub struct IflaVlanFlags {
@@ -515,7 +521,8 @@ pub enum AttrTypeVlanQos {
 }
 pub const IFLA_VLAN_QOS_UNSPEC: u16	= AttrTypeVlanQos::QOS_UNSPEC as u16;
 pub const IFLA_VLAN_QOS_MAPPING: u16	= AttrTypeVlanQos::QOS_MAPPING as u16;
-pub const IFLA_VLAN_QOS_MAX: u16	= AttrTypeVlanQos::_MAX as u16 - 1;
+pub const __IFLA_VLAN_QOS_MAX: u16	= AttrTypeVlanQos::_MAX as u16;
+pub const IFLA_VLAN_QOS_MAX: u16	= __IFLA_VLAN_QOS_MAX - 1;
 
 #[repr(C)]
 pub struct IflaVlanQosMapping {
@@ -543,7 +550,8 @@ pub const IFLA_MACVLAN_MACADDR_MODE: u16	= AttrTypeMacvlan::MACADDR_MODE as u16;
 pub const IFLA_MACVLAN_MACADDR: u16		= AttrTypeMacvlan::MACADDR as u16;
 pub const IFLA_MACVLAN_MACADDR_DATA: u16	= AttrTypeMacvlan::MACADDR_DATA as u16;
 pub const IFLA_MACVLAN_MACADDR_COUNT: u16	= AttrTypeMacvlan::MACADDR_COUNT as u16;
-pub const IFLA_MACVLAN_MAX: u16			= AttrTypeMacvlan::_MAX as u16 - 1;
+pub const __IFLA_MACVLAN_MAX: u16		= AttrTypeMacvlan::_MAX as u16;
+pub const IFLA_MACVLAN_MAX: u16			= __IFLA_MACVLAN_MAX - 1;
 
 #[repr(u32)]
 pub enum MacvlanMode {
@@ -583,7 +591,8 @@ pub enum Vrf {
 }
 pub const IFLA_VRF_UNSPEC: u16	= Vrf::UNSPEC as u16;
 pub const IFLA_VRF_TABLE: u16	= Vrf::TABLE as u16;
-pub const IFLA_VRF_MAX: u16	= Vrf::_MAX as u16 - 1;
+pub const __IFLA_VRF_MAX: u16	= Vrf::_MAX as u16;
+pub const IFLA_VRF_MAX: u16	= __IFLA_VRF_MAX - 1;
 
 #[repr(u16)]
 #[allow(non_camel_case_types)]
@@ -592,9 +601,10 @@ pub enum VrfPort {
     TABLE	= 1,
     _MAX	= 2,
 }
-pub const UNSPEC: u16	= VrfPort::UNSPEC as u16;
-pub const TABLE: u16	= VrfPort::TABLE as u16;
-pub const _MAX: u16	= VrfPort::_MAX as u16 - 1;
+pub const IFLA_VRF_PORT_UNSPEC: u16	= VrfPort::UNSPEC as u16;
+pub const IFLA_VRF_PORT_TABLE: u16	= VrfPort::TABLE as u16;
+pub const __IFLA_VRF_PORT_MAX: u16	= VrfPort::_MAX as u16;
+pub const IFLA_VRF_PORT_MAX: u16	= __IFLA_VRF_PORT_MAX - 1;
 
 // MACSEC section
 #[repr(u16)]
@@ -632,7 +642,8 @@ pub const IFLA_MACSEC_SCB: u16			= Macsec::SCB as u16;
 pub const IFLA_MACSEC_REPLAY_PROTECT: u16	= Macsec::REPLAY_PROTECT as u16;
 pub const IFLA_MACSEC_VALIDATION: u16		= Macsec::VALIDATION as u16;
 pub const IFLA_MACSEC_PAD: u16			= Macsec::PAD as u16;
-pub const IFLA_MACSEC_MAX: u16			= Macsec::_MAX as u16 - 1;
+pub const __IFLA_MACSEC_MAX: u16		= Macsec::_MAX as u16;
+pub const IFLA_MACSEC_MAX: u16			= __IFLA_MACSEC_MAX - 1;
 
 #[repr(u8)]
 #[allow(non_camel_case_types)]
@@ -645,7 +656,8 @@ pub enum MacsecValidationType {
 pub const MACSEC_VALIDATE_DISABLED: u8	= MacsecValidationType::DISABLED as u8;
 pub const MACSEC_VALIDATE_CHECK: u8	= MacsecValidationType::CHECK as u8;
 pub const MACSEC_VALIDATE_STRICT: u8	= MacsecValidationType::STRICT as u8;
-pub const MACSEC_VALIDATE_MAX: u8	= MacsecValidationType::_END as u8 - 1;
+pub const __MACSEC_VALIDATE_END: u8	= MacsecValidationType::_END as u8;
+pub const MACSEC_VALIDATE_MAX: u8	= __MACSEC_VALIDATE_END - 1;
 
 // IPVLAN section
 #[repr(u16)]
@@ -657,7 +669,8 @@ pub enum Ipvlan {
 }
 pub const IFLA_IPVLAN_UNSPEC: u16	= Ipvlan::UNSPEC as u16;
 pub const IFLA_IPVLAN_MODE: u16		= Ipvlan::MODE as u16;
-pub const IFLA_IPVLAN_MAX: u16		= Ipvlan::_MAX as u16 - 1;
+pub const __IFLA_IPVLAN_MAX: u16	= Ipvlan::_MAX as u16;
+pub const IFLA_IPVLAN_MAX: u16		= __IFLA_IPVLAN_MAX - 1;
 
 #[repr(u16)]
 #[allow(non_camel_case_types)]
@@ -734,7 +747,8 @@ pub const IFLA_VXLAN_REMCSUM_NOPARTIAL: u16	= Vxlan::REMCSUM_NOPARTIAL as u16;
 pub const IFLA_VXLAN_COLLECT_METADATA: u16	= Vxlan::COLLECT_METADATA as u16;
 pub const IFLA_VXLAN_LABEL: u16			= Vxlan::LABEL as u16;
 pub const IFLA_VXLAN_GPE: u16			= Vxlan::GPE as u16;
-pub const IFLA_VXLAN_MAX: u16			= Vxlan::_MAX as u16 - 1;
+pub const __IFLA_VXLAN_MAX: u16			= Vxlan::_MAX as u16;
+pub const IFLA_VXLAN_MAX: u16			= __IFLA_VXLAN_MAX - 1;
 
 #[repr(C)]
 pub struct IflaVxlanPortRange {
@@ -772,7 +786,8 @@ pub const IFLA_GENEVE_UDP_CSUM: u16		= Geneve::UDP_CSUM as u16;
 pub const IFLA_GENEVE_UDP_ZERO_CSUM6_TX: u16	= Geneve::UDP_ZERO_CSUM6_TX as u16;
 pub const IFLA_GENEVE_UDP_ZERO_CSUM6_RX: u16	= Geneve::UDP_ZERO_CSUM6_RX as u16;
 pub const IFLA_GENEVE_LABEL: u16		= Geneve::LABEL as u16;
-pub const IFLA_GENEVE_MAX: u16			= Geneve::_MAX as u16 - 1;
+pub const __IFLA_GENEVE_MAX: u16		= Geneve::_MAX as u16;
+pub const IFLA_GENEVE_MAX: u16			= __IFLA_GENEVE_MAX - 1;
 
 // PPP section
 #[repr(u16)]
@@ -784,7 +799,8 @@ pub enum Ppp {
 }
 pub const IFLA_PPP_UNSPEC: u16	= Ppp::UNSPEC as u16;
 pub const IFLA_PPP_DEV_FD: u16	= Ppp::DEV_FD as u16;
-pub const IFLA_PPP_MAX: u16	= Ppp::_MAX as u16 - 1;
+pub const __IFLA_PPP_MAX: u16	= Ppp::_MAX as u16;
+pub const IFLA_PPP_MAX: u16	= __IFLA_PPP_MAX - 1;
 
 // GTP section
 #[repr(u32)]
@@ -811,7 +827,8 @@ pub const IFLA_GTP_FD0: u16		= Gtp::FD0 as u16;
 pub const IFLA_GTP_FD1: u16		= Gtp::FD1 as u16;
 pub const IFLA_GTP_PDP_HASHSIZE: u16	= Gtp::PDP_HASHSIZE as u16;
 pub const IFLA_GTP_ROLE: u16		= Gtp::ROLE as u16;
-pub const IFLA_GTP_MAX: u16		= Gtp::_MAX as u16 - 1;
+pub const __IFLA_GTP_MAX: u16		= Gtp::_MAX as u16;
+pub const IFLA_GTP_MAX: u16		= __IFLA_GTP_MAX - 1;
 
 // Bonding section
 #[repr(u16)]
@@ -875,7 +892,8 @@ pub const IFLA_BOND_AD_ACTOR_SYS_PRIO: u16	= Bond::AD_ACTOR_SYS_PRIO as u16;
 pub const IFLA_BOND_AD_USER_PORT_KEY: u16	= Bond::AD_USER_PORT_KEY as u16;
 pub const IFLA_BOND_AD_ACTOR_SYSTEM: u16	= Bond::AD_ACTOR_SYSTEM as u16;
 pub const IFLA_BOND_TLB_DYNAMIC_LB: u16		= Bond::TLB_DYNAMIC_LB as u16;
-pub const IFLA_BOND_MAX: u16			= Bond::_MAX as u16 - 1;
+pub const __IFLA_BOND_MAX: u16			= Bond::_MAX as u16;
+pub const IFLA_BOND_MAX: u16			= __IFLA_BOND_MAX - 1;
 
 #[repr(u16)]
 #[allow(non_camel_case_types)]
@@ -894,7 +912,8 @@ pub const IFLA_BOND_AD_INFO_NUM_PORTS: u16	= BondAdInfo::NUM_PORTS as u16;
 pub const IFLA_BOND_AD_INFO_ACTOR_KEY: u16	= BondAdInfo::ACTOR_KEY as u16;
 pub const IFLA_BOND_AD_INFO_PARTNER_KEY: u16	= BondAdInfo::PARTNER_KEY as u16;
 pub const IFLA_BOND_AD_INFO_PARTNER_MAC: u16	= BondAdInfo::PARTNER_MAC as u16;
-pub const IFLA_BOND_AD_INFO_MAX: u16		= BondAdInfo::_MAX as u16 - 1;
+pub const __IFLA_BOND_AD_INFO_MAX: u16		= BondAdInfo::_MAX as u16;
+pub const IFLA_BOND_AD_INFO_MAX: u16		= __IFLA_BOND_AD_INFO_MAX - 1;
 
 #[repr(u16)]
 #[allow(non_camel_case_types)]
@@ -919,7 +938,8 @@ pub const IFLA_BOND_SLAVE_QUEUE_ID: u16				= BondSlave::QUEUE_ID as u16;
 pub const IFLA_BOND_SLAVE_AD_AGGREGATOR_ID: u16			= BondSlave::AD_AGGREGATOR_ID as u16;
 pub const IFLA_BOND_SLAVE_AD_ACTOR_OPER_PORT_STATE: u16		= BondSlave::AD_ACTOR_OPER_PORT_STATE as u16;
 pub const IFLA_BOND_SLAVE_AD_PARTNER_OPER_PORT_STATE: u16	= BondSlave::AD_PARTNER_OPER_PORT_STATE as u16;
-pub const IFLA_BOND_SLAVE_MAX: u16				= BondSlave::_MAX as u16 - 1;
+pub const __IFLA_BOND_SLAVE_MAX: u16				= BondSlave::_MAX as u16;
+pub const IFLA_BOND_SLAVE_MAX: u16				= __IFLA_BOND_SLAVE_MAX - 1;
 
 // SR-IOV virtual function management section
 #[repr(u16)]
@@ -931,7 +951,8 @@ pub enum SrIov { // XXX: naming
 }
 pub const IFLA_VF_INFO_UNSPEC: u16	= SrIov::UNSPEC as u16;
 pub const IFLA_VF_INFO: u16		= SrIov::INFO as u16;
-pub const IFLA_VF_INFO_MAX: u16		= SrIov::_MAX as u16 - 1;
+pub const __IFLA_VF_INFO_MAX: u16	= SrIov::_MAX as u16;
+pub const IFLA_VF_INFO_MAX: u16		= __IFLA_VF_INFO_MAX - 1;
 
 #[repr(u16)]
 #[allow(non_camel_case_types)]
@@ -965,7 +986,8 @@ pub const IFLA_VF_TRUST: u16		= VrInfo::TRUST as u16;
 pub const IFLA_VF_IB_NODE_GUID: u16	= VrInfo::IB_NODE_GUID as u16;
 pub const IFLA_VF_IB_PORT_GUID: u16	= VrInfo::IB_PORT_GUID as u16;
 pub const IFLA_VF_VLAN_LIST: u16	= VrInfo::VLAN_LIST as u16;
-pub const IFLA_VF_MAX: u16		= VrInfo::_MAX as u16 - 1;
+pub const __IFLA_VF_MAX: u16		= VrInfo::_MAX as u16;
+pub const IFLA_VF_MAX: u16		= __IFLA_VF_MAX - 1;
 
 #[repr(C)]
 pub struct IflaVfMac {
@@ -990,7 +1012,8 @@ pub enum VfVlan { // XXX: naming
 
 pub const IFLA_VF_VLAN_INFO_UNSPEC: u16	= VfVlan::UNSPEC as u16;
 pub const IFLA_VF_VLAN_INFO: u16	= VfVlan::INFO as u16;
-pub const IFLA_VF_VLAN_INFO_MAX: u16	= VfVlan::_MAX as u16 - 1;
+pub const __IFLA_VF_VLAN_INFO_MAX: u16	= VfVlan::_MAX as u16;
+pub const IFLA_VF_VLAN_INFO_MAX: u16	= __IFLA_VF_VLAN_INFO_MAX - 1;
 pub const MAX_VLAN_LIST_LEN: usize	= 1usize;
 
 #[repr(C)]
@@ -1034,7 +1057,7 @@ pub enum VfLinkState {
     DISABLE	= 2,	// link always down
     _MAX	= 3,
 }
-// no MAX def
+// XXX: no MAX def?
 
 #[repr(C)]
 pub struct IflaVfLinkState {
@@ -1067,7 +1090,8 @@ pub const IFLA_VF_STATS_TX_BYTES: u16	= VfStats::TX_BYTES as u16;
 pub const IFLA_VF_STATS_BROADCAST: u16	= VfStats::BROADCAST as u16;
 pub const IFLA_VF_STATS_MULTICAST: u16	= VfStats::MULTICAST as u16;
 pub const IFLA_VF_STATS_PAD: u16	= VfStats::PAD as u16;
-pub const IFLA_VF_STATS_MAX: u16	= VfStats::_MAX as u16 - 1;
+pub const __IFLA_VF_STATS_MAX: u16	= VfStats::_MAX as u16;
+pub const IFLA_VF_STATS_MAX: u16	= __IFLA_VF_STATS_MAX - 1;
 
 #[repr(C)]
 pub struct ifla_vf_trust {
@@ -1098,7 +1122,8 @@ pub enum VfPort { // XXX: naming
 }
 pub const IFLA_VF_PORT_UNSPEC: u16	= VfPort::UNSPEC as u16;
 pub const IFLA_VF_PORT: u16		= VfPort::PORT as u16;	// nest
-pub const IFLA_VF_PORT_MAX: u16		= VfPort::_MAX as u16 - 1;
+pub const __IFLA_VF_PORT_MAX: u16	= VfPort::_MAX as u16;
+pub const IFLA_VF_PORT_MAX: u16		= __IFLA_VF_PORT_MAX - 1;
 
 #[repr(u16)]
 #[allow(non_camel_case_types)]
@@ -1121,7 +1146,8 @@ pub const IFLA_PORT_INSTANCE_UUID: u16	= VfPortInfo::INSTANCE_UUID as u16;
 pub const IFLA_PORT_HOST_UUID: u16	= VfPortInfo::HOST_UUID as u16;
 pub const IFLA_PORT_REQUEST: u16	= VfPortInfo::REQUEST as u16;
 pub const IFLA_PORT_RESPONSE: u16	= VfPortInfo::RESPONSE as u16;
-pub const IFLA_PORT_MAX: u16		= VfPortInfo::_MAX as u16 - 1;
+pub const __IFLA_PORT_MAX: u16		= VfPortInfo::_MAX as u16;
+pub const IFLA_PORT_MAX: u16		= __IFLA_PORT_MAX - 1;
 
 pub const PORT_PROFILE_MAX: usize	= 40;
 pub const PORT_UUID_MAX: usize		= 16;
@@ -1178,7 +1204,8 @@ pub const IFLA_IPOIB_UNSPEC: u16	= Ipoib::UNSPEC as u16;
 pub const IFLA_IPOIB_PKEY: u16		= Ipoib::PKEY as u16;
 pub const IFLA_IPOIB_MODE: u16		= Ipoib::MODE as u16;
 pub const IFLA_IPOIB_UMCAST: u16	= Ipoib::UMCAST as u16;
-pub const IFLA_IPOIB_MAX: u16		= Ipoib::_MAX as u16 - 1;
+pub const __IFLA_IPOIB_MAX: u16		= Ipoib::_MAX as u16;
+pub const IFLA_IPOIB_MAX: u16		= __IFLA_IPOIB_MAX - 1;
 
 #[repr(u16)]
 #[allow(non_camel_case_types)]
@@ -1207,7 +1234,8 @@ pub const IFLA_HSR_MULTICAST_SPEC: u16		= Hsr::MULTICAST_SPEC as u16;
 pub const IFLA_HSR_SUPERVISION_ADDR: u16	= Hsr::SUPERVISION_ADDR as u16;
 pub const IFLA_HSR_SEQ_NR: u16			= Hsr::SEQ_NR as u16;
 pub const IFLA_HSR_VERSION: u16			= Hsr::VERSION as u16;
-pub const IFLA_HSR_MAX: u16			= Hsr::_MAX as u16 - 1;
+pub const __IFLA_HSR_MAX: u16			= Hsr::_MAX as u16;
+pub const IFLA_HSR_MAX: u16			= __IFLA_HSR_MAX - 1;
 
 // STATS section
 #[repr(C)]
@@ -1238,7 +1266,8 @@ pub const IFLA_STATS_LINK_XSTATS: u16		= Stats::LINK_XSTATS as u16;
 pub const IFLA_STATS_LINK_XSTATS_SLAVE: u16	= Stats::LINK_XSTATS_SLAVE as u16;
 pub const IFLA_STATS_LINK_OFFLOAD_XSTATS: u16	= Stats::LINK_OFFLOAD_XSTATS as u16;
 pub const IFLA_STATS_AF_SPEC: u16		= Stats::AF_SPEC as u16;
-pub const IFLA_STATS_MAX: u16			= Stats::_MAX as u16 - 1;
+pub const __IFLA_STATS_MAX: u16			= Stats::_MAX as u16;
+pub const IFLA_STATS_MAX: u16			= __IFLA_STATS_MAX - 1;
 
 #[allow(non_snake_case)]
 pub fn IFLA_STATS_FILTER_BIT(ATTR: u16) -> u16 {
@@ -1258,7 +1287,8 @@ pub enum LinkXstatsType {
 }
 pub const LINK_XSTATS_TYPE_UNSPEC: u16	 = LinkXstatsType::UNSPEC as u16;
 pub const LINK_XSTATS_TYPE_BRIDGE: u16	 = LinkXstatsType::BRIDGE as u16;
-pub const LINK_XSTATS_TYPE_MAX: u16	 = LinkXstatsType::_MAX as u16 - 1;
+pub const __LINK_XSTATS_TYPE_MAX: u16	 = LinkXstatsType::_MAX as u16;
+pub const LINK_XSTATS_TYPE_MAX: u16	 = __LINK_XSTATS_TYPE_MAX - 1;
 
 // These are stats embedded into IFLA_STATS_LINK_OFFLOAD_XSTATS
 #[repr(u16)]
@@ -1270,7 +1300,8 @@ pub enum OffloadXstats {
 }
 pub const IFLA_OFFLOAD_XSTATS_UNSPEC: u16	= OffloadXstats::UNSPEC as u16;
 pub const IFLA_OFFLOAD_XSTATS_CPU_HIT: u16	= OffloadXstats::CPU_HIT as u16;
-pub const IFLA_OFFLOAD_XSTATS_MAX: u16		= OffloadXstats::_MAX as u16 - 1;
+pub const __IFLA_OFFLOAD_XSTATS_MAX: u16	= OffloadXstats::_MAX as u16;
+pub const IFLA_OFFLOAD_XSTATS_MAX: u16		= __IFLA_OFFLOAD_XSTATS_MAX - 1;
 
 // XDP section
 pub const XDP_FLAGS_UPDATE_IF_NOEXIST: u32	= 1 << 0;
@@ -1290,4 +1321,5 @@ pub const IFLA_XDP_UNSPEC: u16		= Xdp::UNSPEC as u16;
 pub const IFLA_XDP_FD: u16		= Xdp::FD as u16;
 pub const IFLA_XDP_ATTACHED: u16	= Xdp::ATTACHED as u16;
 pub const IFLA_XDP_FLAGS: u16		= Xdp::FLAGS as u16;
-pub const IFLA_XDP_MAX: u16		= Xdp::_MAX as u16 - 1;
+pub const __IFLA_XDP_MAX: u16		= Xdp::_MAX as u16;
+pub const IFLA_XDP_MAX: u16		= __IFLA_XDP_MAX - 1;
