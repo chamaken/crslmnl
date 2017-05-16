@@ -979,7 +979,7 @@ impl <'a> Nlmsg <'a> {
     ///
     /// This function propagates the return value of the callback, which can be
     /// MNL_CB_ERROR, MNL_CB_OK or MNL_CB_STOP.
-    pub fn parse<'b, 'c, T: 'b + ?Sized>(&self, offset: usize, cb: AttrCb<'b, T>, data: &'c mut T) -> io::Result<(CbRet)> {
+    pub fn parse<T: ?Sized + 'a>(&self, offset: usize, cb: AttrCb<'a, T>, data: &mut T) -> io::Result<(CbRet)> {
         let mut cbdata = AttrCbData {cb: cb, data: data};
         let pdata = &mut cbdata as *mut _ as *mut c_void;
         cvt_cbret!(mnl_attr_parse(self.as_raw_ref(), offset as c_uint, attr_parse_cb::<T>, pdata))
@@ -1299,8 +1299,8 @@ impl <'a> Attr {
     /// # Return values
     /// This function propagates the return value of the callback, which can be
     /// MNL_CB_ERROR, MNL_CB_OK or MNL_CB_STOP.
-    pub fn parse_nested<'b, 'c, T: 'b + ?Sized>(&self, cb: AttrCb<'b, T>, data: &'c mut T)
-                                       -> io::Result<(CbRet)> {
+    pub fn parse_nested<T: ?Sized + 'a>(&self, cb: AttrCb<'a, T>, data: &mut T)
+                                        -> io::Result<(CbRet)> {
         let mut cbdata = AttrCbData {cb: cb, data: data};
         let pdata = &mut cbdata as *mut _ as *mut c_void;
         cvt_cbret!(mnl_attr_parse_nested(self, attr_parse_cb::<T>, pdata))
@@ -1341,7 +1341,7 @@ extern fn attr_parse_cb<T: ?Sized>(attr: *const netlink::Nlattr, data: *mut c_vo
 /// # Return values
 /// This function propagates the return value of the callback, which can be
 /// MNL_CB_ERROR, MNL_CB_OK or MNL_CB_STOP.
-pub fn parse_payload<'a, 'b, T: 'a + 'b + ?Sized>(payload: &[u8], payload_len: usize, cb: AttrCb<'a, T>, data: &'b mut T) -> io::Result<(CbRet)> {
+pub fn parse_payload<'a, T: 'a + ?Sized>(payload: &[u8], payload_len: usize, cb: AttrCb<'a, T>, data: &mut T) -> io::Result<(CbRet)> {
     let mut cbdata = AttrCbData{ cb: cb, data: data };
     let pdata = &mut cbdata as *mut _ as *mut c_void;
     cvt_cbret!(mnl_attr_parse_payload(payload.as_ptr() as *const c_void,
