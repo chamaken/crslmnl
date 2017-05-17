@@ -2,7 +2,7 @@
 // no effect? #![link(name = "mnl")]
 
 use std::io;
-use std::mem::{ size_of, size_of_val, zeroed };
+use std::mem::{ size_of, size_of_val, zeroed, forget };
 use std::os::unix::io::{ RawFd, AsRawFd };
 use std::ffi::{ CString, CStr };
 use std::fmt;
@@ -985,6 +985,11 @@ impl <'a> Nlmsg <'a> {
         cvt_cbret!(mnl_attr_parse(self.as_raw_ref(), offset as c_uint, attr_parse_cb::<T>, pdata))
     }
 
+    pub fn parse2<'b, 'c>(&self, offset: usize, cb: Box<FnMut(&'b Attr) -> CbRet + 'c>) -> io::Result<(CbRet)> {
+        cvt_cbret!(mnl_attr_parse(self.as_raw_ref(), offset as c_uint, attr_parse_cb2,
+                                  Box::into_raw(Box::new(cb)) as *mut c_void))
+    }
+
     pub fn attrs(&'a self, offset: usize) -> Box<Iterator<Item=&Attr> + 'a> {
         Box::new(AttrIterator { attr: self.payload_offset::<Attr>(offset),
                                 tail: self.payload_tail::<Attr>() as *const _ as uintptr_t })
@@ -1306,6 +1311,10 @@ impl <'a> Attr {
         cvt_cbret!(mnl_attr_parse_nested(self, attr_parse_cb::<T>, pdata))
     }
 
+    pub fn parse_nested2<'b>(&self, cb: Box<FnMut(&'a Attr) -> CbRet + 'b>) -> io::Result<(CbRet)> {
+        cvt_cbret!(mnl_attr_parse_nested(self, attr_parse_cb2, Box::into_raw(Box::new(cb)) as *mut c_void))
+    }
+
     pub fn nesteds(&'a self) -> Box<Iterator<Item=&Attr> + 'a> {
         Box::new(AttrIterator { attr: self.payload::<Attr>(),
                                 tail: self.payload::<Attr>() as *const _ as uintptr_t
@@ -1318,6 +1327,15 @@ extern fn attr_parse_cb<T: ?Sized>(attr: *const netlink::Nlattr, data: *mut c_vo
     unsafe {
         let cbdata = &mut *(data as *mut AttrCbData<T>);
         (cbdata.cb)(attr.as_ref().unwrap(), cbdata.data) as c_int
+    }
+}
+
+extern fn attr_parse_cb2(attr: *const netlink::Nlattr, data: *mut c_void) -> c_int {
+    unsafe {
+        let mut cb = Box::from_raw(data as *mut Box<FnMut(&Attr) -> CbRet>);
+        let rc = (cb)(attr.as_ref().unwrap()) as c_int;
+        forget(cb);
+        rc
     }
 }
 
@@ -1358,6 +1376,19 @@ extern fn nlmsg_parse_cb<T: ?Sized>(nlh: *const netlink::Nlmsghdr, data: *mut c_
     }
 }
 
+extern fn nlmsg_parse_cb2(nlh: *const netlink::Nlmsghdr, data: *mut c_void) -> c_int {
+    unsafe {
+        let mut op = Box::from_raw(data as *mut (Option<Box<FnMut(Nlmsg) -> CbRet>>,
+                                                 Option<Box<FnMut(Nlmsg) -> CbRet>>));
+        let mut rc = CbRet::OK as c_int;
+        if let Some(ref mut cb) = op.0.as_mut() {
+            rc = cb(Nlmsg::from_raw(nlh)) as c_int;
+        }
+        forget(op);
+        rc
+    }
+}
+
 extern fn nlmsg_ctl_cb<T: ?Sized>(nlh: *const netlink::Nlmsghdr, data: *mut c_void) -> c_int {
     unsafe {
         let arg = &mut *(data as *mut CbData<T>);
@@ -1368,6 +1399,16 @@ extern fn nlmsg_ctl_cb<T: ?Sized>(nlh: *const netlink::Nlmsghdr, data: *mut c_vo
     }
 }
 
+extern fn nlmsg_ctl_cb2(nlh: *const netlink::Nlmsghdr, data: *mut c_void) -> c_int {
+    unsafe {
+        let mut op = Box::from_raw(data as *mut (Option<Box<FnMut(Nlmsg) -> CbRet>>,
+                                                 Option<Box<FnMut(Nlmsg) -> CbRet>>));
+        let rc = op.1.as_mut().unwrap()(Nlmsg::from_raw(nlh)) as c_int;
+        forget(op);
+        rc
+    }
+}
+
 pub fn cb_run<'a, 'b, T: 'a + 'b + ?Sized>(buf: &[u8], seq: u32, portid: u32,
                                            cb_data: Option<Cb<'a, T>>, data: &'b mut T)
                                            -> io::Result<(CbRet)> {
@@ -1375,6 +1416,14 @@ pub fn cb_run<'a, 'b, T: 'a + 'b + ?Sized>(buf: &[u8], seq: u32, portid: u32,
     let argp = &mut arg as *mut _ as *mut c_void;
     cvt_cbret!(mnl_cb_run(buf.as_ptr() as *const c_void, buf.len() as size_t,
                           seq, portid, nlmsg_parse_cb::<T>, argp))
+}
+
+pub fn cb_run3<'a, 'b>(buf: &[u8], seq: u32, portid: u32,
+                       cb_data: Option<Box<FnMut(Nlmsg<'a>) -> CbRet + 'b>>)
+                       -> io::Result<(CbRet)> {
+    cvt_cbret!(mnl_cb_run(buf.as_ptr() as *const c_void, buf.len() as size_t,
+                          seq, portid, nlmsg_parse_cb2,
+                          Box::into_raw(Box::new((cb_data, None::<Box<FnMut(Nlmsg) -> CbRet>>))) as *mut c_void))
 }
 
 /// callback runqueue for netlink messages
@@ -1415,5 +1464,20 @@ pub fn cb_run2<'a, 'b, T: 'a + 'b + ?Sized>(buf: &[u8], seq: u32, portid: u32,
     let argp = &mut arg as *mut _ as *mut c_void;
     cvt_cbret!(mnl_cb_run2(buf.as_ptr() as *const c_void, buf.len() as size_t,
                            seq, portid, nlmsg_parse_cb::<T>, argp,
+                           cb_ctl_array.as_ptr() as *const CbT, netlink::NLMSG_MIN_TYPE as c_uint))
+}
+
+pub fn cb_run4<'a, 'b>(buf: &[u8], seq: u32, portid: u32,
+                       cb_data: Option<Box<FnMut(Nlmsg<'a>) -> CbRet + 'b>>,
+                       cb_ctl: Box<FnMut(Nlmsg<'a>) -> CbRet + 'b>, ctltypes: &[u16])
+                       -> io::Result<(CbRet)> {
+    let mut cb_ctl_array: [CbT; netlink::NLMSG_MIN_TYPE as usize - 1] = unsafe { zeroed() };
+    for i in ctltypes.into_iter() {
+        cb_ctl_array[*i as usize] = nlmsg_ctl_cb2;
+    }
+
+    let data = Box::into_raw(Box::new((cb_data, Some(cb_ctl)))) as *mut c_void;
+    cvt_cbret!(mnl_cb_run2(buf.as_ptr() as *const c_void, buf.len() as size_t,
+                           seq, portid, nlmsg_parse_cb2, data,
                            cb_ctl_array.as_ptr() as *const CbT, netlink::NLMSG_MIN_TYPE as c_uint))
 }

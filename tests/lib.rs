@@ -852,6 +852,45 @@ fn nlmsg_parse() {
 }
 
 #[test]
+fn nlmsg_parse_2() {
+    let mut buf = vec![0u8; 512];
+    {
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        nlh.put_u8(1, 0x11);
+        nlh.put_u8(2, 0x12);
+        nlh.put_u8(3, 0x13);
+        nlh.put_u8(4, 0x14);
+        let mut data = 1;
+        assert!(nlh.parse2(0, Box::new(|attr| {
+            if attr.nla_type as u8 != data {
+                return mnl::CbRet::ERROR;
+            }
+            if attr.u8() != 0x10 + data {
+                return mnl::CbRet::ERROR;
+            }
+            data += 1;
+            mnl::CbRet::OK
+        })).unwrap() == mnl::CbRet::OK);
+    }
+    {
+        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        nlh.put_u8(0, 0x0);
+        let mut data = 1;
+        assert!(nlh.parse2(0, Box::new(|attr| {
+            if attr.nla_type as u8 != data {
+                return mnl::CbRet::ERROR;
+            }
+            if attr.u8() != 0x10 + data {
+                return mnl::CbRet::ERROR;
+            }
+            data += 1;
+            mnl::CbRet::OK
+        })).is_err());
+    }
+}
+
+
+#[test]
 fn nlmsg_attrs() {
     let mut buf = vec![0u8; 512];
     let mut nlh = mnl::Nlmsg::new(&mut buf);
