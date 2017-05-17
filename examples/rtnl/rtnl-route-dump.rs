@@ -30,10 +30,10 @@ impl AddrFamily for libc::in6_addr {
 }
 
 fn _inet_ntoa<T: AddrFamily>(addr: &T) -> String {
-    let mut buf = [0u8; INET_ADDRSTRLEN];
+    let mut buf = [0u8; INET6_ADDRSTRLEN];
     unsafe {
         let rs = inet_ntop(addr.family(), addr as *const _ as *const c_void,
-                           buf.as_mut_ptr() as *mut c_char, INET_ADDRSTRLEN as socklen_t);
+                           buf.as_mut_ptr() as *mut c_char, INET6_ADDRSTRLEN as socklen_t);
         CStr::from_ptr(rs).to_string_lossy().into_owned()
     }
 }
