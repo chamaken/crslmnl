@@ -693,7 +693,7 @@ impl <'a> Nlmsg <'a> {
         unsafe {
             let f = libc::fdopen(fd.as_raw_fd(), mode.as_ptr());
             mnl_nlmsg_fprintf(f, self.as_raw_ref() as *const _ as *const c_void,
-                              *self.nlmsg_len as size_t, extra_header_size as size_t)
+                              self.buf.len() as size_t, extra_header_size as size_t)
         }
     }
 
