@@ -1,5 +1,22 @@
 #include <stddef.h>
 #include <stdbool.h>
+#include <libmnl/libmnl.h>
+
+struct nlmsghdr *mnl_nlmsg_put_header_check(void *buf, size_t buflen)
+{
+        if (MNL_NLMSG_HDRLEN < buflen)
+                return NULL;
+
+        return mnl_nlmsg_put_header(buf);
+}
+
+void *mnl_nlmsg_put_extra_header_check(struct nlmsghdr *nlh, size_t buflen, size_t size)
+{
+        if (nlh->nlmsg_len + MNL_ALIGN(size) > buflen)
+                return NULL;
+
+        return mnl_nlmsg_put_extra_header(nlh, size);
+}
 
 struct mnl_nlmsg_batch {
 	/* the buffer that is used to store the batch. */
