@@ -150,8 +150,9 @@ fn nlmsg_next_header() {
     let mut buf: Vec<u8> = repeat(0u8).take(512).collect();
     {
         let mut nlh = mnl::Nlmsg::new(&mut buf);
-        let (next_nlh, rest) = nlh.next(512);
-        assert!(rest == 512 - hdrlen as isize);
+        // let (next_nlh, rest) = nlh.next(512);
+        let next_nlh = nlh.next().unwrap();
+        // assert!(rest == 512 - hdrlen as isize);
         assert!(*next_nlh.nlmsg_len == 0);
         *next_nlh.nlmsg_len = 0x11111111;
     }

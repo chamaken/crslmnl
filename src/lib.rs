@@ -445,6 +445,7 @@ impl AsRawFd for Socket {
 
 pub struct Nlmsg <'a> {
     buf: &'a mut [u8],
+    remaining: isize,
     pub nlmsg_len: &'a mut u32,
     pub nlmsg_type: &'a mut u16,
     pub nlmsg_flags: &'a mut u16,
@@ -487,11 +488,13 @@ impl <'a> Nlmsg <'a> {
         unsafe { mnl_nlmsg_get_payload_len(self.as_raw_ref()) }
     }
 
-    pub fn from_bytes(buf: &mut [u8]) -> Nlmsg {
+    pub fn from_bytes(buf: &'a mut [u8]) -> Self {
         // XXX: check buf len > sizeof(Nlmsg)
+        let buflen = buf.len() as isize;
         let p = buf.as_mut_ptr();
         let nlh = Nlmsg {
             buf:	 buf,
+            remaining:	 buflen,
             nlmsg_len:   unsafe { (p as *mut u32).offset(0).as_mut().unwrap() },
             nlmsg_type:  unsafe { (p as *mut u16).offset(2).as_mut().unwrap() },
             nlmsg_flags: unsafe { (p as *mut u16).offset(3).as_mut().unwrap() },
@@ -511,7 +514,7 @@ impl <'a> Nlmsg <'a> {
     /// header in the memory buffer passed as parameter. This function also
     /// initializes the nlmsg_len field to the size of the Netlink header. This
     /// function returns a Netlink header structure.
-    pub fn new(buf: &mut [u8]) -> Nlmsg {
+    pub fn new(buf: &'a mut [u8]) -> Self {
         let mut nlh = Self::from_bytes(buf);
         nlh.put_header();
         nlh
@@ -559,13 +562,12 @@ impl <'a> Nlmsg <'a> {
         unsafe { &mut(*(mnl_nlmsg_put_extra_header(self.as_raw_mut(), size_of::<T>()) as *mut T)) }
     }
 
-    pub fn ok(&self, len: usize) -> bool {
+    pub fn ok(&self, len: isize) -> bool {
         unsafe { mnl_nlmsg_ok(self.as_raw_ref(), len as c_int) }
     }
 
-    pub fn next(&mut self, len: isize) -> (Nlmsg, isize) {
+    pub fn raw_next<'b: 'a>(&'b mut self, len: isize) -> (Self, isize) {
         let mut rest = len as c_int;
-        // let nlh = unsafe { &mut(*mnl_nlmsg_next(self.as_raw_mut(), &mut rest)) };
         let _ = unsafe { &mut(*mnl_nlmsg_next(self.as_raw_mut(), &mut rest)) };
         let u = self.buf.len() - rest as usize;
         (Self::from_bytes(&mut self.buf[u..]), rest as isize)
@@ -996,26 +998,31 @@ impl <'a> Nlmsg <'a> {
     }
 }
 
+impl <'a> Iterator for Nlmsg<'a> {
+    type Item = Self;
+
+    fn next(&mut self) -> Option<Self> {
+        if ! unsafe { mnl_nlmsg_ok(self.as_raw_ref(), self.remaining as c_int) } {
+            return None;
+        }
+        let nlh = unsafe { &mut(*mnl_nlmsg_next(self.as_raw_mut(), &mut (self.remaining as c_int))) };
+        Some(Self::from_raw(nlh))
+    }
+}
+
 struct AttrIterator<'a> {
     attr: &'a Attr,
     tail: uintptr_t,
 }
 
-impl <'a> AttrIterator <'a> {
-    fn ok(&self) -> bool {
-        self.attr.ok(
-            self.tail - self.attr as *const _ as uintptr_t
-        )
-    }
-}
-
-impl <'a> Iterator for AttrIterator <'a> {
+impl <'a> Iterator for AttrIterator<'a> {
     type Item = &'a Attr;
 
     fn next(&mut self) -> Option<&'a Attr> {
-        if !self.ok() {
+        if !self.attr.ok(self.tail - self.attr as *const _ as uintptr_t) {
             return None;
         }
+
         let curr = self.attr;
         self.attr = curr.next();
         Some(curr)
