@@ -162,8 +162,9 @@ fn data_ipv6_attr_cb<'a, 'b>(tb: &'b mut [Option<&'a mnl::Attr>]) -> Box<FnMut(&
 }
 
 // fn data_cb<'a>(nlh: mnl::Nlmsg, _: &mut Option<u8>) -> mnl::CbRet {
-fn data_cb<'a>() -> Box<FnMut(mnl::Nlmsg<'a>) -> mnl::CbRet> {
-    Box::new(move |nlh: mnl::Nlmsg<'a>| {
+// fn data_cb<'a>() -> Box<FnMut(mnl::Nlmsg<'a>) -> mnl::CbRet> {
+fn data_cb() -> Box<FnMut(mnl::Nlmsg) -> mnl::CbRet> {
+    Box::new(move |nlh: mnl::Nlmsg| {
     let rm = nlh.payload::<rtnetlink::Rtmsg>();
 
     // protocol family = AF_INET | AF_INET6 //
@@ -237,7 +238,7 @@ fn data_cb<'a>() -> Box<FnMut(mnl::Nlmsg<'a>) -> mnl::CbRet> {
     // 	RTM_F_PREFIX	= 0x800: Prefix addresses
     print!("flags={:x} ", rm.rtm_flags);
 
-    let mut tb: [Option<&'a mnl::Attr>; rtnetlink::RTA_MAX as usize + 1]
+    let mut tb: [Option<&mnl::Attr>; rtnetlink::RTA_MAX as usize + 1]
         = [None; rtnetlink::RTA_MAX as usize + 1];
     match rm.rtm_family as c_int {
         libc::AF_INET => {

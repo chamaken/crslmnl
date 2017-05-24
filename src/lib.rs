@@ -219,10 +219,10 @@ pub enum CbRet {
 
 type CbT = extern "C" fn(nlh: *const netlink::Nlmsghdr, data: *mut c_void) -> c_int;
 pub type Cb<'a, T: ?Sized> = fn(nlh: Nlmsg, data: &'a mut T) -> CbRet;
-struct CbData <'a, 'b, T: 'a + 'b + ?Sized> {
-    cb: Option<Cb<'a, T>>,
-    ctl_cb: Option<Cb<'a, T>>,
-    data: &'b mut T,
+struct CbData <'a, 'b: 'a, T: 'b + ?Sized> {
+    cb: Option<Cb<'b, T>>,
+    ctl_cbs: &'a [Option<Cb<'b, T>>],
+    data: &'a mut T,
 }
 
 
@@ -1386,7 +1386,7 @@ extern fn nlmsg_parse_cb<T: ?Sized>(nlh: *const netlink::Nlmsghdr, data: *mut c_
 extern fn nlmsg_parse_cb2(nlh: *const netlink::Nlmsghdr, data: *mut c_void) -> c_int {
     unsafe {
         let mut op = Box::from_raw(data as *mut (Option<Box<FnMut(Nlmsg) -> CbRet>>,
-                                                 Option<Box<FnMut(Nlmsg) -> CbRet>>));
+                                                 &[Option<Box<FnMut(Nlmsg) -> CbRet>>]));
         let mut rc = CbRet::OK as c_int;
         if let Some(ref mut cb) = op.0.as_mut() {
             rc = cb(Nlmsg::from_raw(nlh)) as c_int;
@@ -1399,7 +1399,7 @@ extern fn nlmsg_parse_cb2(nlh: *const netlink::Nlmsghdr, data: *mut c_void) -> c
 extern fn nlmsg_ctl_cb<T: ?Sized>(nlh: *const netlink::Nlmsghdr, data: *mut c_void) -> c_int {
     unsafe {
         let arg = &mut *(data as *mut CbData<T>);
-        if let Some(ctl_cb) = arg.ctl_cb {
+        if let Some(ctl_cb) = arg.ctl_cbs[(*nlh).nlmsg_type as usize] {
             return ctl_cb(Nlmsg::from_raw(nlh), arg.data) as c_int;
         }
         CbRet::OK as c_int // MNL_CB_OK
@@ -1408,29 +1408,33 @@ extern fn nlmsg_ctl_cb<T: ?Sized>(nlh: *const netlink::Nlmsghdr, data: *mut c_vo
 
 extern fn nlmsg_ctl_cb2(nlh: *const netlink::Nlmsghdr, data: *mut c_void) -> c_int {
     unsafe {
-        let mut op = Box::from_raw(data as *mut (Option<Box<FnMut(Nlmsg) -> CbRet>>,
-                                                 Option<Box<FnMut(Nlmsg) -> CbRet>>));
-        let rc = op.1.as_mut().unwrap()(Nlmsg::from_raw(nlh)) as c_int;
-        forget(op);
+        let mut cbs = Box::from_raw(data as *mut (Option<Box<FnMut(Nlmsg) -> CbRet>>,
+                                                  &mut [Option<Box<FnMut(Nlmsg) -> CbRet>>]));
+        let rc = match cbs.1[(*nlh).nlmsg_type as usize] {
+            Some(ref mut cb) => cb(Nlmsg::from_raw(nlh)) as c_int,
+            None => CbRet::OK as c_int,
+        };
+        forget(cbs);
         rc
     }
 }
 
-pub fn cb_run<'a, 'b, T: 'a + 'b + ?Sized>(buf: &[u8], seq: u32, portid: u32,
-                                           cb_data: Option<Cb<'a, T>>, data: &'b mut T)
-                                           -> io::Result<(CbRet)> {
-    let mut arg = CbData{ cb: cb_data, ctl_cb: None, data: data };
+pub fn cb_run<'a, T>(buf: &[u8], seq: u32, portid: u32,
+                     cb_data: Option<Cb<'a, T>>, data: &mut T)
+                     -> io::Result<(CbRet)> {
+    let nil = [None::<Cb<'a, T>>];
+    let mut arg = CbData{ cb: cb_data, ctl_cbs: &nil, data: data };
     let argp = &mut arg as *mut _ as *mut c_void;
     cvt_cbret!(mnl_cb_run(buf.as_ptr() as *const c_void, buf.len() as size_t,
                           seq, portid, nlmsg_parse_cb::<T>, argp))
 }
 
-pub fn cb_run3<'a, 'b>(buf: &[u8], seq: u32, portid: u32,
-                       cb_data: Option<Box<FnMut(Nlmsg<'a>) -> CbRet + 'b>>)
-                       -> io::Result<(CbRet)> {
+pub fn cb_run3(buf: &[u8], seq: u32, portid: u32,
+               cb_data: Option<Box<FnMut(Nlmsg) -> CbRet>>)
+               -> io::Result<(CbRet)> {
     cvt_cbret!(mnl_cb_run(buf.as_ptr() as *const c_void, buf.len() as size_t,
                           seq, portid, nlmsg_parse_cb2,
-                          Box::into_raw(Box::new((cb_data, None::<Box<FnMut(Nlmsg) -> CbRet>>))) as *mut c_void))
+                          Box::into_raw(Box::new((cb_data, &[None::<Box<FnMut(Nlmsg) -> CbRet>>]))) as *mut c_void))
 }
 
 /// callback runqueue for netlink messages
@@ -1454,37 +1458,27 @@ pub fn cb_run3<'a, 'b>(buf: &[u8], seq: u32, portid: u32,
 /// is set to ESRCH. If the sequence number is not the expected, errno is set
 /// to EPROTO. If the dump was interrupted, errno is set to EINTR and you should
 /// request a new fresh dump again.
-pub fn cb_run2<'a, 'b, T: 'a + 'b + ?Sized>(buf: &[u8], seq: u32, portid: u32,
-                                            cb_data: Option<Cb<'a, T>>, data: &'b mut T,
-                                            cb_ctl: Cb<'a, T>, ctltypes: &[u16])
-                                            -> io::Result<(CbRet)> {
-
-    // XXX: can not assign NULL?
-    // let mut cb_ctl_array: [CbT; netlink::NLMSG_MIN_TYPE as usize]
-    //     = [std::ptr::null() as CbT; netlink::NLMSG_MIN_TYPE as usize];
-    let mut cb_ctl_array: [CbT; netlink::NLMSG_MIN_TYPE as usize - 1] = unsafe { zeroed() };
-
-    for i in ctltypes.into_iter() {
-        cb_ctl_array[*i as usize] = nlmsg_ctl_cb::<T>;
-    }
-    let mut arg = CbData{ cb: cb_data, ctl_cb: Some(cb_ctl), data: data };
+pub fn cb_run2<'a, T: 'a>(buf: &[u8], seq: u32, portid: u32,
+                          cb_data: Option<Cb<'a, T>>, data: &mut T,
+                          ctl_cbs: &'a [Option<Cb<'a, T>>])
+                          -> io::Result<(CbRet)> {
+    let ctlen = ctl_cbs.len();
+    let raw_ctl_cbs = vec![nlmsg_ctl_cb::<T> as CbT; ctlen];
+    let mut arg = CbData{ cb: cb_data, ctl_cbs: ctl_cbs, data: data };
     let argp = &mut arg as *mut _ as *mut c_void;
     cvt_cbret!(mnl_cb_run2(buf.as_ptr() as *const c_void, buf.len() as size_t,
                            seq, portid, nlmsg_parse_cb::<T>, argp,
-                           cb_ctl_array.as_ptr() as *const CbT, netlink::NLMSG_MIN_TYPE as c_uint))
+                           raw_ctl_cbs.as_ptr() as *const CbT, ctlen as c_uint))
 }
 
-pub fn cb_run4<'a, 'b>(buf: &[u8], seq: u32, portid: u32,
-                       cb_data: Option<Box<FnMut(Nlmsg<'a>) -> CbRet + 'b>>,
-                       cb_ctl: Box<FnMut(Nlmsg<'a>) -> CbRet + 'b>, ctltypes: &[u16])
-                       -> io::Result<(CbRet)> {
-    let mut cb_ctl_array: [CbT; netlink::NLMSG_MIN_TYPE as usize - 1] = unsafe { zeroed() };
-    for i in ctltypes.into_iter() {
-        cb_ctl_array[*i as usize] = nlmsg_ctl_cb2;
-    }
-
-    let data = Box::into_raw(Box::new((cb_data, Some(cb_ctl)))) as *mut c_void;
+pub fn cb_run4(buf: &[u8], seq: u32, portid: u32,
+               cb_data: Option<Box<FnMut(Nlmsg) -> CbRet>>,
+               cb_ctl_array: &mut [Option<Box<FnMut(Nlmsg) -> CbRet>>])
+               -> io::Result<(CbRet)> {
+    let ctlen = cb_ctl_array.len();
+    let raw_ctl_cbs = vec![nlmsg_ctl_cb2 as CbT; ctlen];
+    let data = Box::into_raw(Box::new((cb_data, cb_ctl_array))) as *mut c_void;
     cvt_cbret!(mnl_cb_run2(buf.as_ptr() as *const c_void, buf.len() as size_t,
                            seq, portid, nlmsg_parse_cb2, data,
-                           cb_ctl_array.as_ptr() as *const CbT, netlink::NLMSG_MIN_TYPE as c_uint))
+                           raw_ctl_cbs.as_ptr() as *const CbT, ctlen as c_uint))
 }

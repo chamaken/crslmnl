@@ -1033,3 +1033,75 @@ fn nlmsg_batch_is_empty() {
     b.reset();
     assert!(b.is_empty() == true);
 }
+
+// fn nlmsg_cb_ok<'a>() -> Box<FnMut(mnl::Nlmsg<'a>) -> mnl::CbRet> {
+fn nlmsg_cb_ok() -> Box<FnMut(mnl::Nlmsg) -> mnl::CbRet> {
+    Box::new(|_| mnl::CbRet::OK)
+}
+
+// fn nlmsg_cb_stop<'a>() -> Box<FnMut(mnl::Nlmsg<'a>) -> mnl::CbRet> {
+fn nlmsg_cb_stop() -> Box<FnMut(mnl::Nlmsg) -> mnl::CbRet> {
+    Box::new(|_| mnl::CbRet::STOP)
+}
+
+// fn nlmsg_cb_error<'a>() -> Box<FnMut(mnl::Nlmsg<'a>) -> mnl::CbRet> {
+fn nlmsg_cb_error() -> Box<FnMut(mnl::Nlmsg) -> mnl::CbRet> {
+    Box::new(|_| mnl::CbRet::ERROR)
+}
+
+#[test]
+fn nlmsg_cb_run4() {
+    let mut buf = vec![0u8; 512];
+    let b = mnl::NlmsgBatch::start(&mut *buf, 512 / 2).unwrap();
+    {
+        let mut nlh = b.current_nlmsg();
+        nlh.put_header();
+        *nlh.nlmsg_type = linux::netlink::NLMSG_NOOP;	// 0x1
+    }
+
+    let _ = b.next();
+    {
+        let mut nlh = b.current_nlmsg();
+        nlh.put_header();
+        *nlh.nlmsg_type = linux::netlink::NLMSG_ERROR;	// 0x2
+    }
+
+    let _ = b.next();
+    {
+        let mut nlh = b.current_nlmsg();
+        nlh.put_header();
+        *nlh.nlmsg_type = linux::netlink::NLMSG_DONE;	// 0x3
+    }
+
+    let _ = b.next();
+    {
+        let mut nlh = b.current_nlmsg();
+        nlh.put_header();
+        *nlh.nlmsg_type = linux::netlink::NLMSG_OVERRUN;// 0x4
+    }
+
+    let mut ctlcbs
+        = [None,
+           Some(nlmsg_cb_ok()),		// NLMSG_NOOP
+           Some(nlmsg_cb_ok()), 	// NLMSG_ERROR
+           Some(nlmsg_cb_ok()), 	// NLMSG_DONE
+           Some(nlmsg_cb_ok()), ];	// NLMSG_OVERRUN
+    // bufsize = 16 * 4
+    assert!(mnl::cb_run4(b.head::<[u8; 48]>(), 0, 0, None, &mut ctlcbs[..]).unwrap() == mnl::CbRet::OK);
+
+    ctlcbs
+        = [None,
+           Some(nlmsg_cb_ok()),		// NLMSG_NOOP
+           Some(nlmsg_cb_error()), 	// NLMSG_ERROR
+           Some(nlmsg_cb_ok()), 	// NLMSG_DONE
+           Some(nlmsg_cb_ok()), ];	// NLMSG_OVERRUN
+    assert!(mnl::cb_run4(b.head::<[u8; 48]>(), 0, 0, None, &mut ctlcbs[..]).is_err());
+
+    ctlcbs
+        = [None,
+           Some(nlmsg_cb_ok()),		// NLMSG_NOOP
+           Some(nlmsg_cb_ok()), 	// NLMSG_ERROR
+           Some(nlmsg_cb_stop()), 	// NLMSG_DONE
+           Some(nlmsg_cb_ok()), ];	// NLMSG_OVERRUN
+    assert!(mnl::cb_run4(b.head::<[u8; 48]>(), 0, 0, None, &mut ctlcbs[..]).unwrap() == mnl::CbRet::STOP);
+}

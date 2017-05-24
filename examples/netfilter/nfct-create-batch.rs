@@ -66,16 +66,11 @@ fn put_msg(nlh: &mut mnl::Nlmsg, i: u16, seq: u32) {
     nlh.put_u32(nfct::CTA_TIMEOUT, u32::to_be(1000));
 }
 
-fn ctl_cb(nlh: mnl::Nlmsg, _: &mut u8) -> mnl::CbRet {
-    match *nlh.nlmsg_type {
-        netlink::NLMSG_ERROR => {
-            let err = nlh.payload::<netlink::Nlmsgerr>();
-            if err.error != 0 {
-                println!("message with seq {} has failed: {}",
-                         nlh.nlmsg_seq, io::Error::from_raw_os_error(-err.error));
-            }
-        },
-        _ => {},
+fn error_cb(nlh: mnl::Nlmsg, _: &mut u8) -> mnl::CbRet {
+    let err = nlh.payload::<netlink::Nlmsgerr>();
+    if err.error != 0 {
+        println!("message with seq {} has failed: {}",
+                 nlh.nlmsg_seq, io::Error::from_raw_os_error(-err.error));
     }
     mnl::CbRet::OK
 }
@@ -96,7 +91,9 @@ fn send_batch(nl: &mut mnl::Socket, b: &mut mnl::NlmsgBatch, portid: u32) {
 
     let mut events = mio::Events::with_capacity(256);
     let mut rcv_buf = vec![0u8; mnl::SOCKET_BUFFER_SIZE()];
-
+    let ctl_cbs = [None,
+                   None,		// NLMSG_NOOP
+                   Some(error_cb as mnl::Cb<u8>),];	// NLMSG_ERROR
     loop {
         timer.settime(
             0,
@@ -119,8 +116,7 @@ fn send_batch(nl: &mut mnl::Socket, b: &mut mnl::NlmsgBatch, portid: u32) {
         let nrecv = nl.recvfrom(&mut rcv_buf)
             .unwrap_or_else(|errno| panic!("mnl_socket_recvfrom: {}", errno));
         let rc = mnl::cb_run2(&rcv_buf[0..nrecv], 0, portid,
-                              None, &mut 0,
-                              ctl_cb, &[netlink::NLMSG_ERROR])
+                              None, &mut 0, &ctl_cbs[..])
             .unwrap_or_else(|errno| panic!("mnl_cb_run2: {}", errno));
         if rc == mnl::CbRet::STOP {
             return;
