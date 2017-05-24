@@ -1063,7 +1063,7 @@ impl NlmsgBatch {
     ///
     /// You have to put at least one message in the batch before calling this
     /// function, otherwise your application is likely to crash.
-    pub fn next(&self) -> bool {
+    pub fn proceed_next(&self) -> bool {
         unsafe { mnl_nlmsg_batch_next(self) }
     }
 

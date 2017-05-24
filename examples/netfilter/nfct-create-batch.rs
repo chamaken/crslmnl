@@ -144,7 +144,7 @@ fn main() {
         put_msg(&mut b.current_nlmsg(), i, seq + i as u32 - 1024);
 	// is there room for more messages in this batch?
 	// if so, continue.
-        if b.next() {
+        if b.proceed_next() {
             continue;
         }
         send_batch(nl, b, portid);

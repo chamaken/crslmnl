@@ -916,47 +916,47 @@ fn nlmsg_batch_start() {
 fn nlmsg_batch_next() {
     let mut buf = vec![0u8; 512];
     let b = mnl::NlmsgBatch::start(&mut buf, 512 / 2).unwrap();
-    assert!(b.next() == true);
+    assert!(b.proceed_next() == true);
 
     {
         let mut nlh = b.current_nlmsg();
         *nlh.nlmsg_len = 256;
     }
-    assert!(b.next() == true);
+    assert!(b.proceed_next() == true);
 
     {
         let mut nlh = b.current_nlmsg();
         *nlh.nlmsg_len = 1;
     }
-    assert!(b.next() == false);
+    assert!(b.proceed_next() == false);
 }
 
 #[test]
 fn nlmsg_batch_size() {
     let mut buf = vec![0u8; 512];
     let b = mnl::NlmsgBatch::start(&mut buf, 512 / 2).unwrap();
-    assert!(b.next() == true);
+    assert!(b.proceed_next() == true);
     assert!(b.size() == 0);
 
     {
         let mut nlh = b.current_nlmsg();
         *nlh.nlmsg_len = 128;
     }
-    assert!(b.next() == true);
+    assert!(b.proceed_next() == true);
     assert!(b.size() == 128);
 
     {
         let mut nlh = b.current_nlmsg();
         *nlh.nlmsg_len = 128;
     }
-    assert!(b.next() == true);
+    assert!(b.proceed_next() == true);
     assert!(b.size() == 256);
 
     {
         let mut nlh = b.current_nlmsg();
         *nlh.nlmsg_len = 1;
     }
-    assert!(b.next() == false);
+    assert!(b.proceed_next() == false);
     assert!(b.size() == 256);
 }
 
@@ -968,7 +968,7 @@ fn nlmsg_batch_reset() {
         let mut nlh = b.current_nlmsg();
         *nlh.nlmsg_len = 256;
     }
-    assert!(b.next() == true);
+    assert!(b.proceed_next() == true);
     assert!(b.size() == 256);
     b.reset();
     assert!(b.size() == 0);
@@ -977,12 +977,12 @@ fn nlmsg_batch_reset() {
         let mut nlh = b.current_nlmsg();
         *nlh.nlmsg_len = 256;
     }
-    assert!(b.next() == true);
+    assert!(b.proceed_next() == true);
     {
         let mut nlh = b.current_nlmsg();
         *nlh.nlmsg_len = 256;
     }
-    assert!(b.next() == false);
+    assert!(b.proceed_next() == false);
     b.reset();
     assert!(b.size() == 256);
 }
@@ -998,7 +998,7 @@ fn nlmsg_batch_head() {
         let mut nlh = b.current_nlmsg();
         *nlh.nlmsg_len = 256;
     }
-    assert!(b.next() == true);
+    assert!(b.proceed_next() == true);
     assert!(b.head::<u8>() as *const u8 == bufptr);
 }
 
@@ -1013,7 +1013,7 @@ fn nlmsg_batch_current() {
         let mut nlh = b.current_nlmsg();
         *nlh.nlmsg_len = 256;
     }
-    assert!(b.next() == true);
+    assert!(b.proceed_next() == true);
     assert!(b.current::<u8>() as *const u8
             == unsafe { bufptr.offset(256) });
 }
@@ -1028,7 +1028,7 @@ fn nlmsg_batch_is_empty() {
         let mut nlh = b.current_nlmsg();
         *nlh.nlmsg_len = 256;
     }
-    assert!(b.next() == true);
+    assert!(b.proceed_next() == true);
     assert!(b.is_empty() == false);
     b.reset();
     assert!(b.is_empty() == true);
@@ -1059,21 +1059,21 @@ fn nlmsg_cb_run4() {
         *nlh.nlmsg_type = linux::netlink::NLMSG_NOOP;	// 0x1
     }
 
-    let _ = b.next();
+    let _ = b.proceed_next();
     {
         let mut nlh = b.current_nlmsg();
         nlh.put_header();
         *nlh.nlmsg_type = linux::netlink::NLMSG_ERROR;	// 0x2
     }
 
-    let _ = b.next();
+    let _ = b.proceed_next();
     {
         let mut nlh = b.current_nlmsg();
         nlh.put_header();
         *nlh.nlmsg_type = linux::netlink::NLMSG_DONE;	// 0x3
     }
 
-    let _ = b.next();
+    let _ = b.proceed_next();
     {
         let mut nlh = b.current_nlmsg();
         nlh.put_header();
