@@ -862,7 +862,7 @@ fn nlmsg_parse_2() {
         nlh.put_u8(3, 0x13);
         nlh.put_u8(4, 0x14);
         let mut data = 1;
-        assert!(nlh.parse2(0, Box::new(|attr| {
+        assert!(nlh.cl_parse(0, Box::new(|attr| {
             if attr.nla_type as u8 != data {
                 return mnl::CbRet::ERROR;
             }
@@ -877,7 +877,7 @@ fn nlmsg_parse_2() {
         let mut nlh = mnl::Nlmsg::new(&mut buf);
         nlh.put_u8(0, 0x0);
         let mut data = 1;
-        assert!(nlh.parse2(0, Box::new(|attr| {
+        assert!(nlh.cl_parse(0, Box::new(|attr| {
             if attr.nla_type as u8 != data {
                 return mnl::CbRet::ERROR;
             }
@@ -1087,7 +1087,7 @@ fn nlmsg_cb_run4() {
            Some(nlmsg_cb_ok()), 	// NLMSG_DONE
            Some(nlmsg_cb_ok()), ];	// NLMSG_OVERRUN
     // bufsize = 16 * 4
-    assert!(mnl::cb_run4(b.head::<[u8; 48]>(), 0, 0, None, &mut ctlcbs[..]).unwrap() == mnl::CbRet::OK);
+    assert!(mnl::cl_run2(b.head::<[u8; 48]>(), 0, 0, None, &mut ctlcbs[..]).unwrap() == mnl::CbRet::OK);
 
     ctlcbs
         = [None,
@@ -1095,7 +1095,7 @@ fn nlmsg_cb_run4() {
            Some(nlmsg_cb_error()), 	// NLMSG_ERROR
            Some(nlmsg_cb_ok()), 	// NLMSG_DONE
            Some(nlmsg_cb_ok()), ];	// NLMSG_OVERRUN
-    assert!(mnl::cb_run4(b.head::<[u8; 48]>(), 0, 0, None, &mut ctlcbs[..]).is_err());
+    assert!(mnl::cl_run2(b.head::<[u8; 48]>(), 0, 0, None, &mut ctlcbs[..]).is_err());
 
     ctlcbs
         = [None,
@@ -1103,5 +1103,5 @@ fn nlmsg_cb_run4() {
            Some(nlmsg_cb_ok()), 	// NLMSG_ERROR
            Some(nlmsg_cb_stop()), 	// NLMSG_DONE
            Some(nlmsg_cb_ok()), ];	// NLMSG_OVERRUN
-    assert!(mnl::cb_run4(b.head::<[u8; 48]>(), 0, 0, None, &mut ctlcbs[..]).unwrap() == mnl::CbRet::STOP);
+    assert!(mnl::cl_run2(b.head::<[u8; 48]>(), 0, 0, None, &mut ctlcbs[..]).unwrap() == mnl::CbRet::STOP);
 }

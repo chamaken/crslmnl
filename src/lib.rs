@@ -987,7 +987,7 @@ impl <'a> Nlmsg <'a> {
         cvt_cbret!(mnl_attr_parse(self.as_raw_ref(), offset as c_uint, attr_parse_cb::<T>, pdata))
     }
 
-    pub fn parse2<'b, 'c>(&self, offset: usize, cb: Box<FnMut(&'b Attr) -> CbRet + 'c>) -> io::Result<(CbRet)> {
+    pub fn cl_parse<'b, 'c>(&self, offset: usize, cb: Box<FnMut(&'b Attr) -> CbRet + 'c>) -> io::Result<(CbRet)> {
         cvt_cbret!(mnl_attr_parse(self.as_raw_ref(), offset as c_uint, attr_parse_cb2,
                                   Box::into_raw(Box::new(cb)) as *mut c_void))
     }
@@ -1318,7 +1318,7 @@ impl <'a> Attr {
         cvt_cbret!(mnl_attr_parse_nested(self, attr_parse_cb::<T>, pdata))
     }
 
-    pub fn parse_nested2<'b>(&self, cb: Box<FnMut(&'a Attr) -> CbRet + 'b>) -> io::Result<(CbRet)> {
+    pub fn cl_parse_nested<'b>(&self, cb: Box<FnMut(&'a Attr) -> CbRet + 'b>) -> io::Result<(CbRet)> {
         cvt_cbret!(mnl_attr_parse_nested(self, attr_parse_cb2, Box::into_raw(Box::new(cb)) as *mut c_void))
     }
 
@@ -1429,9 +1429,9 @@ pub fn cb_run<'a, T>(buf: &[u8], seq: u32, portid: u32,
                           seq, portid, nlmsg_parse_cb::<T>, argp))
 }
 
-pub fn cb_run3(buf: &[u8], seq: u32, portid: u32,
-               cb_data: Option<Box<FnMut(Nlmsg) -> CbRet>>)
-               -> io::Result<(CbRet)> {
+pub fn cl_run(buf: &[u8], seq: u32, portid: u32,
+              cb_data: Option<Box<FnMut(Nlmsg) -> CbRet>>)
+              -> io::Result<(CbRet)> {
     cvt_cbret!(mnl_cb_run(buf.as_ptr() as *const c_void, buf.len() as size_t,
                           seq, portid, nlmsg_parse_cb2,
                           Box::into_raw(Box::new((cb_data, &[None::<Box<FnMut(Nlmsg) -> CbRet>>]))) as *mut c_void))
@@ -1471,7 +1471,7 @@ pub fn cb_run2<'a, T: 'a>(buf: &[u8], seq: u32, portid: u32,
                            raw_ctl_cbs.as_ptr() as *const CbT, ctlen as c_uint))
 }
 
-pub fn cb_run4(buf: &[u8], seq: u32, portid: u32,
+pub fn cl_run2(buf: &[u8], seq: u32, portid: u32,
                cb_data: Option<Box<FnMut(Nlmsg) -> CbRet>>,
                cb_ctl_array: &mut [Option<Box<FnMut(Nlmsg) -> CbRet>>])
                -> io::Result<(CbRet)> {

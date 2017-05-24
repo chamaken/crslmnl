@@ -66,7 +66,7 @@ fn attributes_show_ip<T: AddrFamily>(tb: &[Option<&mnl::Attr>]) {
         .map(|attr| {
             let mut tbx: [Option<&mnl::Attr>; rtnetlink::RTAX_MAX as usize + 1]
                 = [None; rtnetlink::RTAX_MAX as usize + 1];
-            let _ = attr.parse_nested2(Box::new(move |attr| {
+            let _ = attr.cl_parse_nested(Box::new(move |attr| {
                 if let Err(_) = attr.type_valid(rtnetlink::RTAX_MAX as u16) {
                     return mnl::CbRet::OK;
                 }
@@ -242,11 +242,11 @@ fn data_cb() -> Box<FnMut(mnl::Nlmsg) -> mnl::CbRet> {
         = [None; rtnetlink::RTA_MAX as usize + 1];
     match rm.rtm_family as c_int {
         libc::AF_INET => {
-            let _ = nlh.parse2(size_of::<rtnetlink::Rtmsg>(), data_ipv4_attr_cb(&mut tb));
+            let _ = nlh.cl_parse(size_of::<rtnetlink::Rtmsg>(), data_ipv4_attr_cb(&mut tb));
             attributes_show_ip::<libc::in_addr>(&tb);
         },
         libc::AF_INET6 => {
-            let _ = nlh.parse2(size_of::<rtnetlink::Rtmsg>(), data_ipv6_attr_cb(&mut tb));
+            let _ = nlh.cl_parse(size_of::<rtnetlink::Rtmsg>(), data_ipv6_attr_cb(&mut tb));
             attributes_show_ip::<libc::in6_addr>(&tb);
         },
         _ => unreachable!()
@@ -291,7 +291,7 @@ fn main() {
             .unwrap_or_else(|errno| panic!("mnl_socket_recvfrom: {}", errno));
 
         // if mnl::cb_run(&buf[0..nrecv], seq, portid, Some(data_cb), &mut None)
-        if mnl::cb_run3(&buf[0..nrecv], seq, portid, Some(data_cb()))
+        if mnl::cl_run(&buf[0..nrecv], seq, portid, Some(data_cb()))
             .unwrap_or_else(|errno| panic!("mnl_cb_run: {}", errno))
             == mnl::CbRet::STOP {
             break;

@@ -50,7 +50,7 @@ fn parse_genl_mc_grps(nested: &mnl::Attr) {
         let mut tb: [Option<&mnl::Attr>; genl::CTRL_ATTR_MCAST_GRP_MAX as usize + 1]
             = [None; genl::CTRL_ATTR_MCAST_GRP_MAX as usize + 1];
 
-        let _ = pos.parse_nested2(parse_mc_grps_cb(&mut tb));
+        let _ = pos.cl_parse_nested(parse_mc_grps_cb(&mut tb));
 
         tb[genl::CtrlAttrMcastGrp::ID as usize]
             .map(|attr| print!("id-0x{:x} ", attr.u32()));
@@ -65,7 +65,7 @@ fn parse_genl_family_ops<'a>(nested: &mnl::Attr) {
         let mut tb: [Option<&'a mnl::Attr>; genl::CTRL_ATTR_OP_MAX as usize + 1]
             = [None; genl::CTRL_ATTR_OP_MAX as usize + 1];
 
-        let _ = pos.parse_nested2(Box::new(|attr: &'a mnl::Attr| {
+        let _ = pos.cl_parse_nested(Box::new(|attr: &'a mnl::Attr| {
             if let Err(_) = attr.type_valid(genl::CTRL_ATTR_OP_MAX) {
                 return mnl::CbRet::OK;
             }
@@ -147,7 +147,7 @@ fn data_cb() -> Box<FnMut(mnl::Nlmsg) -> mnl::CbRet> {
         let mut tb: [Option<&mnl::Attr>; genl::CTRL_ATTR_MAX as usize + 1]
             = [None; genl::CTRL_ATTR_MAX as usize + 1];
 
-        let _ = nlh.parse2(size_of::<genl::Genlmsghdr>(), data_attr_cb(&mut tb));
+        let _ = nlh.cl_parse(size_of::<genl::Genlmsghdr>(), data_attr_cb(&mut tb));
 
         tb[genl::CtrlAttr::FAMILY_NAME as usize]
             .map(|attr| print!("name={}\t", attr.str()));
@@ -216,7 +216,7 @@ fn main() {
         let nrecv = nl.recvfrom(&mut buf)
             .unwrap_or_else(|errno| panic!("mnl_socket_recvfrom: {}", errno));
 
-        if mnl::cb_run3(&buf[0..nrecv], seq, portid, Some(data_cb()))
+        if mnl::cl_run(&buf[0..nrecv], seq, portid, Some(data_cb()))
             .unwrap_or_else(|errno| panic!("mnl_cb_run: {}", errno))
             == mnl::CbRet::STOP {
             break;
