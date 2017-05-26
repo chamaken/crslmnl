@@ -2,6 +2,7 @@ use std::os::unix::io::AsRawFd;
 use std::mem::size_of;
 use std::iter::repeat;
 // use std::io::Cursor;
+use std::iter::Iterator;
 
 extern crate crslmnl as mnl;
 use mnl::linux as linux;
@@ -150,9 +151,8 @@ fn nlmsg_next_header() {
     let mut buf: Vec<u8> = repeat(0u8).take(512).collect();
     {
         let mut nlh = mnl::Nlmsg::new(&mut buf);
-        // let (next_nlh, rest) = nlh.next(512);
-        let next_nlh = nlh.next().unwrap();
-        // assert!(rest == 512 - hdrlen as isize);
+        let (next_nlh, rest) = nlh.next(512);
+        assert!(rest == 512 - hdrlen as isize);
         assert!(*next_nlh.nlmsg_len == 0);
         *next_nlh.nlmsg_len = 0x11111111;
     }
@@ -1104,4 +1104,42 @@ fn nlmsg_cb_run4() {
            Some(nlmsg_cb_stop()), 	// NLMSG_DONE
            Some(nlmsg_cb_ok()), ];	// NLMSG_OVERRUN
     assert!(mnl::cl_run2(b.head::<[u8; 48]>(), 0, 0, None, &mut ctlcbs[..]).unwrap() == mnl::CbRet::STOP);
+}
+
+#[test]
+fn nlmsg_batch_iterator() {
+    let mut buf = [0u8; 64];
+    {
+        let b = mnl::NlmsgBatch::new(&mut buf[..]).unwrap();
+        for (i, mut nlh) in b.enumerate() {
+            nlh.put_header(); // *nlh.nlmsg_len = 16;
+            *nlh.nlmsg_type = i as u16;
+        }
+        b.cap();
+        assert!(b.size() == 64);
+    }
+    {
+        for (i, nlh) in mnl::Nlmsg::from_bytes(&mut buf[..]).into_iter().enumerate() {
+            assert!(*nlh.nlmsg_type == i as u16);
+            for (j, my) in nlh.into_iter().enumerate() {
+                assert!(*my.nlmsg_type == (i + j) as u16);
+            }
+        }
+    }
+
+    {
+        let b = mnl::NlmsgBatch::new(&mut buf[..]).unwrap();
+        for (i, mut nlh) in b.enumerate() {
+            nlh.put_header(); // *nlh.nlmsg_len = 16;
+            *nlh.nlmsg_type = i as u16;
+        }
+        b.put_back();
+        b.cap();
+        assert!(b.size() == 48);
+    }
+    {
+        for (i, nlh) in mnl::Nlmsg::from_bytes(&mut buf[..]).into_iter().enumerate() {
+            assert!(*nlh.nlmsg_type == i as u16);
+        }
+    }
 }

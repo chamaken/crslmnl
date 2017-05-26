@@ -116,7 +116,7 @@ extern {
     fn mnl_nlmsg_batch_stop(b: *mut NlmsgBatch);
     // fn mnl_nlmsg_batch_size(b: *mut NlmsgBatch) -> size_t;
     fn mnl_nlmsg_batch_size(b: *const NlmsgBatch) -> size_t;
-    fn mnl_nlmsg_batch_reset(b: *mut NlmsgBatch);
+    // fn mnl_nlmsg_batch_reset(b: *mut NlmsgBatch);
     fn mnl_nlmsg_batch_head(b: *mut NlmsgBatch) -> *mut c_void;
     fn mnl_nlmsg_batch_current(b: *mut NlmsgBatch) -> *mut c_void;
     // fn mnl_nlmsg_batch_is_empty(b: *mut NlmsgBatch) -> bool;
@@ -124,7 +124,14 @@ extern {
 }
 
 extern { // arbitrary function
+    fn mnl_nlmsg_put_header_check(buf: *mut c_void, buflen: size_t) -> *mut netlink::Nlmsghdr;
+    fn mnl_nlmsg_put_extra_header_check(nlh: *mut netlink::Nlmsghdr, buflen: size_t, size: size_t) -> *mut c_void;
     fn mnl_nlmsg_batch_rest(b: *const NlmsgBatch) -> size_t;
+    fn rsmnl_nlmsg_batch_start(buf: *mut c_void, bufsiz: size_t) -> *mut NlmsgBatch;
+    fn rsmnl_nlmsg_batch_reset(b: *mut NlmsgBatch);
+    fn rsmnl_nlmsg_batch_next(b: *mut NlmsgBatch) -> *mut netlink::Nlmsghdr;
+    fn rsmnl_nlmsg_batch_cap(b: *mut NlmsgBatch);
+    fn rsmnl_nlmsg_batch_put_back(b: *mut NlmsgBatch);
 }
 
 
@@ -445,7 +452,6 @@ impl AsRawFd for Socket {
 
 pub struct Nlmsg <'a> {
     buf: &'a mut [u8],
-    remaining: isize,
     pub nlmsg_len: &'a mut u32,
     pub nlmsg_type: &'a mut u16,
     pub nlmsg_flags: &'a mut u16,
@@ -458,7 +464,7 @@ impl <'a> Nlmsg <'a> {
         self.buf.len()
     }
 
-    fn as_raw_ref(&self) -> &netlink::Nlmsghdr {
+    pub fn as_raw_ref(&self) -> &netlink::Nlmsghdr {
         unsafe { (self.buf.as_ptr() as *const netlink::Nlmsghdr).as_ref().unwrap() }
     }
 
@@ -490,11 +496,9 @@ impl <'a> Nlmsg <'a> {
 
     pub fn from_bytes(buf: &'a mut [u8]) -> Self {
         // XXX: check buf len > sizeof(Nlmsg)
-        let buflen = buf.len() as isize;
         let p = buf.as_mut_ptr();
         let nlh = Nlmsg {
             buf:	 buf,
-            remaining:	 buflen,
             nlmsg_len:   unsafe { (p as *mut u32).offset(0).as_mut().unwrap() },
             nlmsg_type:  unsafe { (p as *mut u16).offset(2).as_mut().unwrap() },
             nlmsg_flags: unsafe { (p as *mut u16).offset(3).as_mut().unwrap() },
@@ -566,7 +570,7 @@ impl <'a> Nlmsg <'a> {
         unsafe { mnl_nlmsg_ok(self.as_raw_ref(), len as c_int) }
     }
 
-    pub fn raw_next<'b: 'a>(&'b mut self, len: isize) -> (Self, isize) {
+    pub fn next<'b: 'a>(&'b mut self, len: isize) -> (Self, isize) {
         let mut rest = len as c_int;
         let _ = unsafe { &mut(*mnl_nlmsg_next(self.as_raw_mut(), &mut rest)) };
         let u = self.buf.len() - rest as usize;
@@ -998,15 +1002,42 @@ impl <'a> Nlmsg <'a> {
     }
 }
 
-impl <'a> Iterator for Nlmsg<'a> {
-    type Item = Self;
+pub struct NlmsgIterator<'a> {
+    nlh: &'a mut netlink::Nlmsghdr,
+    remaining: usize,
+}
 
-    fn next(&mut self) -> Option<Self> {
-        if ! unsafe { mnl_nlmsg_ok(self.as_raw_ref(), self.remaining as c_int) } {
-            return None;
+impl <'a> Iterator for NlmsgIterator<'a> {
+    type Item = Nlmsg<'a>;
+
+    fn next(&mut self) -> Option<Nlmsg<'a>> {
+        let ret = self.nlh as *const netlink::Nlmsghdr;
+        unsafe {
+            if ! mnl_nlmsg_ok(self.nlh, self.remaining as c_int) {
+                return None;
+            }
+            let nlh = &mut *(mnl_nlmsg_next(self.nlh, &mut (self.remaining as c_int)));
+            if nlh.nlmsg_len == 0 {
+                return None;
+            }
+            self.nlh = nlh;
         }
-        let nlh = unsafe { &mut(*mnl_nlmsg_next(self.as_raw_mut(), &mut (self.remaining as c_int))) };
-        Some(Self::from_raw(nlh))
+        Some(Nlmsg::from_raw(ret))
+    }
+}
+
+impl <'a> IntoIterator for Nlmsg<'a> {
+    type Item = Nlmsg<'a>;
+    type IntoIter = NlmsgIterator<'a>;
+
+    fn into_iter(self) -> NlmsgIterator<'a> {
+        let buflen = self.buf.len();
+        NlmsgIterator {
+            nlh: unsafe {
+                &mut *(self.buf.as_mut_ptr() as *mut netlink::Nlmsghdr)
+            },
+            remaining: buflen
+        }
     }
 }
 
@@ -1083,7 +1114,7 @@ impl NlmsgBatch {
     /// new one. This function moves the last message which does not fit the
     /// batch to the head of the buffer, if any.
     pub fn reset(&mut self) {
-        unsafe { mnl_nlmsg_batch_reset(self) }
+        unsafe { rsmnl_nlmsg_batch_reset(self) }
     }
 
     /// get head of this batch
@@ -1117,8 +1148,33 @@ impl NlmsgBatch {
         unsafe { mnl_nlmsg_batch_is_empty(self) }
     }
 
+    /// Not in original libmnl
+    pub fn new<'a>(buf: &'a mut [u8]) -> io::Result<&'a mut NlmsgBatch> {
+        cvt_null!(rsmnl_nlmsg_batch_start(buf.as_ptr() as *mut c_void, buf.len() as size_t))
+    }
+
     pub fn rest(&self) -> usize {
         unsafe { mnl_nlmsg_batch_rest(self) as usize }
+    }
+
+    pub fn cap(&mut self) {
+        unsafe { rsmnl_nlmsg_batch_cap(self) };
+    }
+
+    pub fn put_back(&mut self) {
+        unsafe { rsmnl_nlmsg_batch_put_back(self) };
+    }
+}
+
+impl <'a> Iterator for &'a mut NlmsgBatch {
+    type Item = Nlmsg<'a>;
+
+    fn next(&mut self) -> Option<Nlmsg<'a>> {
+        let nlh = unsafe { rsmnl_nlmsg_batch_next(*self) };
+        if nlh.is_null() {
+            return None;
+        }
+        Some(Nlmsg::from_raw_parts(nlh as *mut u8, self.rest()))
     }
 }
 
