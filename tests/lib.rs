@@ -1148,3 +1148,27 @@ fn nlmsg_batch_iterator() {
         }
     }
 }
+
+#[test]
+fn nlmsg_put_extra_header_check() {
+    let mut buf = [0u8; 32];
+    let mut nlh = mnl::Nlmsg::new(&mut buf[..]).unwrap();
+    {
+        assert!(nlh.put_extra_header_check::<linux::netlink::Nlmsghdr>(16).is_ok());
+    }
+    {
+        assert!(nlh.put_extra_header_check::<linux::netlink::Nlmsghdr>(16).is_err());
+    }
+}
+
+#[test]
+fn nlmsg_put_sized_header_check() {
+    let mut buf = [0u8; 32];
+    let mut nlh = mnl::Nlmsg::new(&mut buf[..]).unwrap();
+    {
+        assert!(nlh.put_sized_header_check::<linux::netlink::Nlmsghdr>().is_ok());
+    }
+    {
+        assert!(nlh.put_sized_header_check::<linux::netlink::Nlmsghdr>().is_err());
+    }
+}

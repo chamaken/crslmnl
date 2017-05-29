@@ -22,7 +22,7 @@
 EXPORT_SYMBOL(mnl_nlmsg_put_header_check);
 struct nlmsghdr *mnl_nlmsg_put_header_check(void *buf, size_t buflen)
 {
-        if (MNL_NLMSG_HDRLEN < buflen) {
+        if (buflen < MNL_NLMSG_HDRLEN) {
                 errno = EINVAL;
                 return NULL;
         }
@@ -31,7 +31,7 @@ struct nlmsghdr *mnl_nlmsg_put_header_check(void *buf, size_t buflen)
 }
 
 /**
- * mnl_nlmsg_put_extra_header - reserve and prepare room for an extra header
+ * mnl_nlmsg_put_extra_header_check - reserve and prepare room for an extra header
  * \param nlh pointer to Netlink header
  * \param buflen size of buffer which stores the message
  * \param size size of the extra header that we want to put

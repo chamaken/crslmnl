@@ -550,6 +550,14 @@ impl <'a> Nlmsg <'a> {
         unsafe { &mut(*mnl_nlmsg_put_header(self.as_raw_mut() as *mut _ as *mut c_void)); }
     }
 
+    pub fn put_header_check(&mut self) -> io::Result<()> {
+        match cvt_null!(mnl_nlmsg_put_header_check(self.as_raw_mut() as *mut _ as *mut c_void,
+                                                   self.buf.len() as size_t)) {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e),
+        }
+    }
+
     /// reserve and prepare room for an extra header
     ///
     /// # Arguments
@@ -563,9 +571,19 @@ impl <'a> Nlmsg <'a> {
     pub fn put_extra_header<T>(&mut self, size: usize) -> &'a mut T {
         unsafe { &mut(*(mnl_nlmsg_put_extra_header(self.as_raw_mut(), size as usize) as *mut T)) }
     }
+    pub fn put_extra_header_check<T>(&mut self, size: usize) -> io::Result<&'a mut T> {
+        cvt_null!(mnl_nlmsg_put_extra_header_check(self.as_raw_mut(),
+                                                   self.buf.len(),
+                                                   size as usize) as *mut T)
+    }
 
     pub fn put_sized_header<T: Sized>(&mut self) -> &'a mut T {
         unsafe { &mut(*(mnl_nlmsg_put_extra_header(self.as_raw_mut(), size_of::<T>()) as *mut T)) }
+    }
+    pub fn put_sized_header_check<T: Sized>(&mut self) -> io::Result<&'a mut T> {
+        cvt_null!(mnl_nlmsg_put_extra_header_check(self.as_raw_mut(),
+                                                   self.buf.len() as size_t,
+                                                   size_of::<T>()) as *mut T)
     }
 
     pub fn ok(&self, len: isize) -> bool {
