@@ -104,7 +104,7 @@ fn queue_cb(nlh: mnl::Nlmsg, packet_id: &mut u32) -> mnl::CbRet {
 }
 
 fn nfq_build_cfg_pf_request<'a>(buf: &'a mut[u8], command: u8) -> mnl::Nlmsg {
-    let mut nlh = mnl::Nlmsg::new(buf);
+    let mut nlh = mnl::Nlmsg::new(buf).unwrap();
     *nlh.nlmsg_type = (nfnl::NFNL_SUBSYS_QUEUE << 8) | nfq::MsgTypes::CONFIG as u16;
     *nlh.nlmsg_flags = netlink::NLM_F_REQUEST;
 
@@ -123,7 +123,7 @@ fn nfq_build_cfg_pf_request<'a>(buf: &'a mut[u8], command: u8) -> mnl::Nlmsg {
 }
 
 fn nfq_build_cfg_request<'a>(buf: &'a mut[u8], command: u8, queue_num: u16) -> mnl::Nlmsg {
-    let mut nlh = mnl::Nlmsg::new(buf);
+    let mut nlh = mnl::Nlmsg::new(buf).unwrap();
     *nlh.nlmsg_type = (nfnl::NFNL_SUBSYS_QUEUE << 8) | nfq::MsgTypes::CONFIG as u16;
     *nlh.nlmsg_flags = netlink::NLM_F_REQUEST;
 
@@ -143,7 +143,7 @@ fn nfq_build_cfg_request<'a>(buf: &'a mut[u8], command: u8, queue_num: u16) -> m
 }
 
 fn nfq_build_cfg_params<'a>(buf: &'a mut [u8], mode: u8, range: u32, queue_num: u16) -> mnl::Nlmsg {
-    let mut nlh = mnl::Nlmsg::new(buf);
+    let mut nlh = mnl::Nlmsg::new(buf).unwrap();
     *nlh.nlmsg_type = (nfnl::NFNL_SUBSYS_QUEUE << 8) | nfq::MsgTypes::CONFIG as u16;
     *nlh.nlmsg_flags = netlink::NLM_F_REQUEST;
 
@@ -159,7 +159,7 @@ fn nfq_build_cfg_params<'a>(buf: &'a mut [u8], mode: u8, range: u32, queue_num: 
 }
 
 fn nfq_build_verdict<'a>(buf: &'a mut [u8], id: u32, queue_num: u16, verd: u32) -> mnl::Nlmsg {
-    let mut nlh = mnl::Nlmsg::new(buf);
+    let mut nlh = mnl::Nlmsg::new(buf).unwrap();
     *nlh.nlmsg_type = (nfnl::NFNL_SUBSYS_QUEUE << 8) | nfq::MsgTypes::VERDICT as u16;
     *nlh.nlmsg_flags = netlink::NLM_F_REQUEST;
     let nfg = nlh.put_sized_header::<nfnl::Nfgenmsg>();

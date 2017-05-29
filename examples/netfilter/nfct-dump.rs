@@ -252,7 +252,7 @@ fn main() {
 
     let seq = time::now().to_timespec().sec as u32;
     {
-        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        let mut nlh = mnl::Nlmsg::new(&mut buf).unwrap();
         *nlh.nlmsg_type = (nfnl::NFNL_SUBSYS_CTNETLINK << 8) | nfct::CtnlMsgTypes::GET as u16;
         *nlh.nlmsg_flags = netlink::NLM_F_REQUEST | netlink::NLM_F_DUMP;
         *nlh.nlmsg_seq = seq;

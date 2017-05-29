@@ -246,7 +246,7 @@ fn main() {
     let _ = nl.setsockopt::<i32>(netlink::NETLINK_NO_ENOBUFS, 1);
 
     let mut buf = vec![0u8; mnl::SOCKET_BUFFER_SIZE()];
-    let mut nlh = mnl::Nlmsg::new(&mut buf);
+    let mut nlh = mnl::Nlmsg::new(&mut buf).unwrap();
     // Counters are atomically zeroed in each dump
     *nlh.nlmsg_type = (nfnl::NFNL_SUBSYS_CTNETLINK << 8) | nfct::IPCTNL_MSG_CT_GET_CTRZERO;
     *nlh.nlmsg_flags = netlink::NLM_F_REQUEST | netlink::NLM_F_DUMP;

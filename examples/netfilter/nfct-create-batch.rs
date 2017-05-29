@@ -141,7 +141,7 @@ fn main() {
 
     let seq = time::now().to_timespec().sec as u32;
     for i in 1024u16..65535 {
-        put_msg(&mut b.current_nlmsg(), i, seq + i as u32 - 1024);
+        put_msg(&mut b.current_nlmsg().unwrap(), i, seq + i as u32 - 1024);
 	// is there room for more messages in this batch?
 	// if so, continue.
         if b.proceed_next() {

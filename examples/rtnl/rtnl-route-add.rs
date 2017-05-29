@@ -98,7 +98,7 @@ Example: {} eth0 10.0.1.12 32 10.0.1.11
     let mut buf = vec![0u8; mnl::SOCKET_BUFFER_SIZE()];
     let seq = time::now().to_timespec().sec as u32;
     {
-        let mut nlh = mnl::Nlmsg::new(&mut buf);
+        let mut nlh = mnl::Nlmsg::new(&mut buf).unwrap();
         *nlh.nlmsg_type = rtnetlink::RTM_NEWROUTE;
         *nlh.nlmsg_flags = netlink::NLM_F_REQUEST | netlink::NLM_F_CREATE | netlink::NLM_F_ACK;
         *nlh.nlmsg_seq = seq;
