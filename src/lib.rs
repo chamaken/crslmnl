@@ -494,8 +494,10 @@ impl <'a> Nlmsg <'a> {
         unsafe { mnl_nlmsg_get_payload_len(self.as_raw_ref()) }
     }
 
-    pub fn from_bytes(buf: &'a mut [u8]) -> Self {
-        // XXX: check buf len > sizeof(Nlmsg)
+    pub fn from_bytes(buf: &'a mut [u8]) -> io::Result<Self> {
+        if buf.len() < NLMSG_HDRLEN() as usize {
+            return Err(io::Error::from_raw_os_error(libc::EINVAL));
+        }
         let p = buf.as_mut_ptr();
         let nlh = Nlmsg {
             buf:	 buf,
@@ -505,7 +507,7 @@ impl <'a> Nlmsg <'a> {
             nlmsg_seq:   unsafe { (p as *mut u32).offset(2).as_mut().unwrap() },
             nlmsg_pid:   unsafe { (p as *mut u32).offset(3).as_mut().unwrap() },
         };
-        nlh
+        Ok(nlh)
     }
 
     /// create, reserve and prepare room for Netlink header
@@ -518,13 +520,13 @@ impl <'a> Nlmsg <'a> {
     /// header in the memory buffer passed as parameter. This function also
     /// initializes the nlmsg_len field to the size of the Netlink header. This
     /// function returns a Netlink header structure.
-    pub fn new(buf: &'a mut [u8]) -> Self {
-        let mut nlh = Self::from_bytes(buf);
+    pub fn new(buf: &'a mut [u8]) -> io::Result<Self> {
+        let mut nlh = try!(Self::from_bytes(buf));
         nlh.put_header();
-        nlh
+        Ok(nlh)
     }
 
-    fn from_raw(nlh: *const netlink::Nlmsghdr) -> Self {
+    fn from_raw(nlh: *const netlink::Nlmsghdr) -> io::Result<Self> {
         let buf: &'a mut[u8] = unsafe {
             std::slice::from_raw_parts_mut((nlh as *mut u8),
                                            (*nlh).nlmsg_len as usize)
@@ -532,7 +534,7 @@ impl <'a> Nlmsg <'a> {
         Self::from_bytes(buf)
     }
 
-    fn from_raw_parts(p: *mut u8, size: usize) -> Self {
+    fn from_raw_parts(p: *mut u8, size: usize) -> io::Result<Self> {
         let buf: &'a mut[u8] = unsafe {
             std::slice::from_raw_parts_mut(p, size)
         };
@@ -570,7 +572,7 @@ impl <'a> Nlmsg <'a> {
         unsafe { mnl_nlmsg_ok(self.as_raw_ref(), len as c_int) }
     }
 
-    pub fn next<'b: 'a>(&'b mut self, len: isize) -> (Self, isize) {
+    pub fn next<'b: 'a>(&'b mut self, len: isize) -> (io::Result<Self>, isize) {
         let mut rest = len as c_int;
         let _ = unsafe { &mut(*mnl_nlmsg_next(self.as_raw_mut(), &mut rest)) };
         let u = self.buf.len() - rest as usize;
@@ -1022,7 +1024,7 @@ impl <'a> Iterator for NlmsgIterator<'a> {
             }
             self.nlh = nlh;
         }
-        Some(Nlmsg::from_raw(ret))
+        Some(Nlmsg::from_raw(ret).unwrap())
     }
 }
 
@@ -1135,7 +1137,7 @@ impl NlmsgBatch {
         unsafe { &mut(*(mnl_nlmsg_batch_current(self) as *mut T)) }
     }
 
-    pub fn current_nlmsg(&mut self) -> Nlmsg {
+    pub fn current_nlmsg(&mut self) -> io::Result<Nlmsg> {
         let p = unsafe { mnl_nlmsg_batch_current(self) as *mut u8 };
         Nlmsg::from_raw_parts(p, self.rest())
     }
@@ -1174,7 +1176,7 @@ impl <'a> Iterator for &'a mut NlmsgBatch {
         if nlh.is_null() {
             return None;
         }
-        Some(Nlmsg::from_raw_parts(nlh as *mut u8, self.rest()))
+        Some(Nlmsg::from_raw_parts(nlh as *mut u8, self.rest()).unwrap())
     }
 }
 
@@ -1433,7 +1435,7 @@ extern fn nlmsg_parse_cb<T: ?Sized>(nlh: *const netlink::Nlmsghdr, data: *mut c_
     unsafe {
         let arg = &mut *(data as *mut CbData<T>);
         if let Some(cb) = arg.cb {
-            return cb(Nlmsg::from_raw(nlh), arg.data) as c_int;
+            return cb(Nlmsg::from_raw(nlh).unwrap(), arg.data) as c_int;
         }
         CbRet::OK as c_int // MNL_CB_OK
     }
@@ -1445,7 +1447,7 @@ extern fn nlmsg_parse_cb2(nlh: *const netlink::Nlmsghdr, data: *mut c_void) -> c
                                                  &[Option<Box<FnMut(Nlmsg) -> CbRet>>]));
         let mut rc = CbRet::OK as c_int;
         if let Some(ref mut cb) = op.0.as_mut() {
-            rc = cb(Nlmsg::from_raw(nlh)) as c_int;
+            rc = cb(Nlmsg::from_raw(nlh).unwrap()) as c_int;
         }
         forget(op);
         rc
@@ -1456,7 +1458,7 @@ extern fn nlmsg_ctl_cb<T: ?Sized>(nlh: *const netlink::Nlmsghdr, data: *mut c_vo
     unsafe {
         let arg = &mut *(data as *mut CbData<T>);
         if let Some(ctl_cb) = arg.ctl_cbs[(*nlh).nlmsg_type as usize] {
-            return ctl_cb(Nlmsg::from_raw(nlh), arg.data) as c_int;
+            return ctl_cb(Nlmsg::from_raw(nlh).unwrap(), arg.data) as c_int;
         }
         CbRet::OK as c_int // MNL_CB_OK
     }
@@ -1467,7 +1469,7 @@ extern fn nlmsg_ctl_cb2(nlh: *const netlink::Nlmsghdr, data: *mut c_void) -> c_i
         let mut cbs = Box::from_raw(data as *mut (Option<Box<FnMut(Nlmsg) -> CbRet>>,
                                                   &mut [Option<Box<FnMut(Nlmsg) -> CbRet>>]));
         let rc = match cbs.1[(*nlh).nlmsg_type as usize] {
-            Some(ref mut cb) => cb(Nlmsg::from_raw(nlh)) as c_int,
+            Some(ref mut cb) => cb(Nlmsg::from_raw(nlh).unwrap()) as c_int,
             None => CbRet::OK as c_int,
         };
         forget(cbs);
