@@ -46,6 +46,15 @@ macro_rules! cvt_cbret {
     } )
 }
 
+macro_rules! cvt_put_check {
+    ($f:expr) => ( {
+        match unsafe { $f } {
+            true => Ok(()),
+            false => Err(io::Error::from_raw_os_error(libc::EINVAL)),
+        }
+    } )
+}
+
 pub const ALIGNTO: u32	= 4;
 #[allow(non_snake_case)]
 pub fn ALIGN(len: u32) -> u32 {
@@ -830,9 +839,9 @@ impl <'a> Nlmsg <'a> {
     /// message (nlmsg_len) by adding the size (header + payload) of the new
     /// attribute. The function returns true if the attribute could be added
     /// to the message, otherwise false is returned.
-    pub fn put_check<T: Sized>(&mut self, atype: u16, data: &T) -> bool {
-        unsafe { mnl_attr_put_check(self.as_raw_mut(), self.buf.len() as size_t, atype,
-                                    size_of_val(data), data as *const T as *const c_void) }
+    pub fn put_check<T: Sized>(&mut self, atype: u16, data: &T) -> io::Result<()> {
+        cvt_put_check!(mnl_attr_put_check(self.as_raw_mut(), self.buf.len() as size_t, atype,
+                                          size_of_val(data), data as *const T as *const c_void))
     }
 
     /// mnl_attr_put_u8_check - add 8-bit unsigned int attribute to netlink message
@@ -846,8 +855,8 @@ impl <'a> Nlmsg <'a> {
     /// message (nlmsg_len) by adding the size (header + payload) of the new
     /// attribute. The function returns true if the attribute could be added
     /// to the message, otherwise false is returned.
-    pub fn put_u8_check(&mut self, atype: u16, data: u8) -> bool {
-        unsafe { mnl_attr_put_u8_check(self.as_raw_mut(), self.buf.len() as size_t, atype, data) }
+    pub fn put_u8_check(&mut self, atype: u16, data: u8) -> io::Result<()> {
+        cvt_put_check!(mnl_attr_put_u8_check(self.as_raw_mut(), self.buf.len() as size_t, atype, data))
     }
 
     /// add 16-bit unsigned int attribute to netlink message
@@ -863,8 +872,8 @@ impl <'a> Nlmsg <'a> {
     /// to the message, otherwise false is returned.
     /// This function updates the length field of the Netlink message (nlmsg_len)
     /// by adding the size (header + payload) of the new attribute.
-    pub fn put_u16_check(&mut self, atype: u16, data: u16) -> bool {
-        unsafe { mnl_attr_put_u16_check(self.as_raw_mut(), self.buf.len() as size_t, atype, data) }
+    pub fn put_u16_check(&mut self, atype: u16, data: u16) -> io::Result<()> {
+        cvt_put_check!(mnl_attr_put_u16_check(self.as_raw_mut(), self.buf.len() as size_t, atype, data))
     }
 
     /// add 32-bit unsigned int attribute to netlink message
@@ -880,8 +889,8 @@ impl <'a> Nlmsg <'a> {
     /// to the message, otherwise false is returned.
     /// This function updates the length field of the Netlink message (nlmsg_len)
     /// by adding the size (header + payload) of the new attribute.
-    pub fn put_u32_check(&mut self, atype: u16, data: u32) -> bool {
-        unsafe { mnl_attr_put_u32_check(self.as_raw_mut(), self.buf.len() as size_t, atype, data) }
+    pub fn put_u32_check(&mut self, atype: u16, data: u32) -> io::Result<()> {
+        cvt_put_check!(mnl_attr_put_u32_check(self.as_raw_mut(), self.buf.len() as size_t, atype, data))
     }
 
     /// add 64-bit unsigned int attribute to netlink message
@@ -897,8 +906,8 @@ impl <'a> Nlmsg <'a> {
     /// to the message, otherwise false is returned.
     /// This function updates the length field of the Netlink message (nlmsg_len)
     /// by adding the size (header + payload) of the new attribute.
-    pub fn put_u64_check(&mut self, atype: u16, data: u64) -> bool {
-        unsafe { mnl_attr_put_u64_check(self.as_raw_mut(), self.buf.len() as size_t, atype, data) }
+    pub fn put_u64_check(&mut self, atype: u16, data: u64) -> io::Result<()> {
+        cvt_put_check!(mnl_attr_put_u64_check(self.as_raw_mut(), self.buf.len() as size_t, atype, data))
     }
 
     /// add string attribute to netlink message
@@ -914,11 +923,11 @@ impl <'a> Nlmsg <'a> {
     /// to the message, otherwise false is returned.
     /// This function updates the length field of the Netlink message (nlmsg_len)
     /// by adding the size (header + payload) of the new attribute.
-    pub fn put_str_check(&mut self, atype: u16, data: &str) -> bool {
+    pub fn put_str_check(&mut self, atype: u16, data: &str) -> io::Result<()> {
         let cs = CString::new(data).unwrap();
-        unsafe {
+        cvt_put_check!(
             mnl_attr_put_str_check(self.as_raw_mut(), self.buf.len() as size_t, atype, cs.as_ptr())
-        }
+        )
     }
 
     /// add string attribute to netlink message
@@ -935,11 +944,11 @@ impl <'a> Nlmsg <'a> {
     /// message (nlmsg_len) by adding the size (header + payload) of the new
     /// attribute. The function returns true if the attribute could be added
     /// to the message, otherwise false is returned.
-    pub fn put_strz_check(&mut self, atype: u16, data: &str) -> bool {
+    pub fn put_strz_check(&mut self, atype: u16, data: &str) -> io::Result<()> {
         let cs = CString::new(data).unwrap();
-        unsafe {
+        cvt_put_check!(
             mnl_attr_put_strz_check(self.as_raw_mut(), self.buf.len() as size_t, atype, cs.as_ptr())
-        }
+        )
     }
 
     /// start an attribute nest
