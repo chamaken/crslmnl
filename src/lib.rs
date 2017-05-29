@@ -595,14 +595,14 @@ impl <'a> Nlmsg <'a> {
                                                    size_of::<T>()) as *mut T)
     }
 
-    pub fn ok(&self, len: isize) -> bool {
-        unsafe { mnl_nlmsg_ok(self.as_raw_ref(), len as c_int) }
+    pub fn ok(&self) -> bool {
+        unsafe { mnl_nlmsg_ok(self.as_raw_ref(), self.buf.len() as c_int) }
     }
 
     pub fn next<'b: 'a>(&'b mut self) -> Option<Self> {
         let mut rest = self.buf.len() as c_int;
         let buflen = self.buf.len();
-        if !self.ok(rest as isize) {
+        if !self.ok() {
             return None;
         }
         let _ = unsafe { mnl_nlmsg_next(self.as_raw_mut(), &mut rest) };

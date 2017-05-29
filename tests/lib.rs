@@ -139,10 +139,11 @@ fn nlmsg_put_extra_header() {
 #[test]
 fn nlmsg_ok() {
     let mut buf = vec![0; mnl::NLMSG_HDRLEN() as usize];
-    let nlh = mnl::Nlmsg::new(&mut buf).unwrap();
-    assert!(!nlh.ok(15));
-    assert!(nlh.ok(16));
-    assert!(nlh.ok(17));
+    let nlh = mnl::Nlmsg::from_bytes(&mut buf).unwrap();
+    *nlh.nlmsg_len = 16;
+    assert!(nlh.ok());
+    *nlh.nlmsg_len = 17;
+    assert!(!nlh.ok());
 }
 
 #[test]
