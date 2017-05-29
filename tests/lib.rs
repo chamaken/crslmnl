@@ -151,11 +151,11 @@ fn nlmsg_next_header() {
     let mut buf: Vec<u8> = repeat(0u8).take(512).collect();
     {
         let mut nlh = mnl::Nlmsg::new(&mut buf).unwrap();
-        let (next_nlh, rest) = nlh.next(512);
-        let nnlh = next_nlh.unwrap();
-        assert!(rest == 512 - hdrlen as isize);
+        let mut nnlh = nlh.next().unwrap();
+        assert!(nnlh.buflen() == 512 - hdrlen);
         assert!(*nnlh.nlmsg_len == 0);
         *nnlh.nlmsg_len = 0x11111111;
+        assert!(nnlh.next().is_none());
     }
     assert_eq!(buf[hdrlen..(hdrlen + 4)], [0x11, 0x11, 0x11, 0x11]);
 }

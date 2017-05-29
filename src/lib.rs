@@ -599,11 +599,15 @@ impl <'a> Nlmsg <'a> {
         unsafe { mnl_nlmsg_ok(self.as_raw_ref(), len as c_int) }
     }
 
-    pub fn next<'b: 'a>(&'b mut self, len: isize) -> (io::Result<Self>, isize) {
-        let mut rest = len as c_int;
-        let _ = unsafe { &mut(*mnl_nlmsg_next(self.as_raw_mut(), &mut rest)) };
-        let u = self.buf.len() - rest as usize;
-        (Self::from_bytes(&mut self.buf[u..]), rest as isize)
+    pub fn next<'b: 'a>(&'b mut self) -> Option<Self> {
+        let mut rest = self.buf.len() as c_int;
+        let buflen = self.buf.len();
+        if !self.ok(rest as isize) {
+            return None;
+        }
+        let _ = unsafe { mnl_nlmsg_next(self.as_raw_mut(), &mut rest) };
+        // buflen has already checked by ok()
+        Some(Self::from_bytes(&mut self.buf[buflen - (rest as usize)..]).unwrap())
     }
 
     /// perform sequence tracking
