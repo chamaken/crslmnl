@@ -965,10 +965,10 @@ impl <'a> Nlmsg <'a> {
     /// This function adds the attribute header that identifies the beginning of
     /// an attribute nest. If the nested attribute cannot be added then NULL,
     /// otherwise valid pointer to the beginning of the nest is returned.
-    pub fn nest_start_check(&mut self, atype: u16) -> Option<&'a mut Attr> {
+    pub fn nest_start_check(&mut self, atype: u16) -> io::Result<&'a mut Attr> {
         let p = unsafe { mnl_attr_nest_start_check(self.as_raw_mut(), self.buf.len() as size_t, atype) };
-        if p.is_null() { return None; }
-        unsafe { Some(&mut *p) }
+        if p.is_null() { return Err(io::Error::from_raw_os_error(libc::EINVAL)); }
+        unsafe { Ok(&mut *p) }
     }
 
     /// end an attribute nest

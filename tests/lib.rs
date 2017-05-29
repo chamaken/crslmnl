@@ -764,12 +764,12 @@ fn nlmsg_nest_start_check() {
     {
         buf = vec![0u8; 19];
         let mut nlh = mnl::Nlmsg::new(&mut buf).unwrap();
-        assert!(nlh.nest_start_check(0x123).is_none());
+        assert!(nlh.nest_start_check(0x123).is_err());
     }
     {
         buf = vec![0u8; 20];
         let mut nlh = mnl::Nlmsg::new(&mut buf).unwrap();
-        if let Some(attr) = nlh.nest_start_check(0x123) {
+        if let Ok(attr) = nlh.nest_start_check(0x123) {
             assert!(*nlh.nlmsg_len == linux::netlink::NLMSG_LENGTH(linux::netlink::NLA_HDRLEN() as u32));
             assert!(attr.nla_len == 0); // will update after _end
             assert!(attr.nla_type & linux::netlink::NLA_F_NESTED != 0);
