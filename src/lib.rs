@@ -1203,6 +1203,8 @@ impl <'a> Iterator for &'a mut NlmsgBatch {
     type Item = Nlmsg<'a>;
 
     fn next(&mut self) -> Option<Nlmsg<'a>> {
+        // Here is why I rewrite rsmnl_nlmsg_batch_start() and
+        // rsmnl_nlmsg_batch_reset() using memset()
         let nlh = unsafe { rsmnl_nlmsg_batch_next(*self) };
         if nlh.is_null() {
             return None;
