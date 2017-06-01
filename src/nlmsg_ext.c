@@ -118,10 +118,10 @@ struct nlmsghdr *rsmnl_nlmsg_batch_reset(struct mnl_nlmsg_batch *b)
 	if (b->overflow) {
 		struct nlmsghdr *nlh = b->cur;
 		memcpy(b->buf, b->cur, nlh->nlmsg_len);
-		memset(b->buf + nlh->nlmsg_len, 0, b->limit - nlh->nlmsg_len);
 		b->buflen = nlh->nlmsg_len;
 		b->cur = b->buf + b->buflen;
 		b->overflow = false;
+		memset(b->buf + b->buflen, 0, b->limit - b->buflen);
 	} else {
 		b->buflen = 0;
 		b->cur = b->buf;
