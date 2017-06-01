@@ -1044,18 +1044,18 @@ impl <'a> Iterator for NlmsgIterator<'a> {
     type Item = Nlmsg<'a>;
 
     fn next(&mut self) -> Option<Nlmsg<'a>> {
-        let ret = self.nlh as *const netlink::Nlmsghdr;
+        let ret_nlh = self.nlh as *mut _ as *mut u8;
+        let (ret_remaining, mut remaining) = (self.remaining, self.remaining as c_int);
         unsafe {
             if ! mnl_nlmsg_ok(self.nlh, self.remaining as c_int) {
                 return None;
             }
-            let nlh = &mut *(mnl_nlmsg_next(self.nlh, &mut (self.remaining as c_int)));
-            if nlh.nlmsg_len == 0 {
-                return None;
-            }
+
+            let nlh = &mut *(mnl_nlmsg_next(self.nlh, &mut remaining));
+            self.remaining = remaining as usize;
             self.nlh = nlh;
         }
-        Some(Nlmsg::from_raw(ret).unwrap())
+        Some(Nlmsg::from_raw_parts(ret_nlh, ret_remaining).unwrap())
     }
 }
 
