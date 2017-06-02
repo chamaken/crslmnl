@@ -531,7 +531,7 @@ impl <'a> Nlmsg <'a> {
     /// function returns a Netlink header structure.
     pub fn new(buf: &'a mut [u8]) -> io::Result<Self> {
         let mut nlh = try!(Self::from_bytes(buf));
-        nlh.put_header();
+        try!(nlh.put_header());
         Ok(nlh)
     }
 
@@ -555,11 +555,11 @@ impl <'a> Nlmsg <'a> {
     /// This function sets to zero the room that is required to put the Netlink
     /// header in the memory buffer passed as parameter. This function also
     /// initializes the nlmsg_len field to the size of the Netlink header.
-    pub fn put_header(&mut self) {
+    pub fn put_header_raw(&mut self) {
         unsafe { &mut(*mnl_nlmsg_put_header(self.as_raw_mut() as *mut _ as *mut c_void)); }
     }
 
-    pub fn put_header_check(&mut self) -> io::Result<()> {
+    pub fn put_header(&mut self) -> io::Result<()> {
         match cvt_null!(mnl_nlmsg_put_header_check(self.as_raw_mut() as *mut _ as *mut c_void,
                                                    self.buf.len() as size_t)) {
             Ok(_) => Ok(()),
@@ -577,19 +577,19 @@ impl <'a> Nlmsg <'a> {
     /// the nlmsg_len field. You have to invoke mnl_nlmsg_put_header() before
     /// you call this function. This function returns a pointer to the extra
     /// header.
-    pub fn put_extra_header<T>(&mut self, size: usize) -> &'a mut T {
+    pub fn put_extra_header_raw<T>(&mut self, size: usize) -> &'a mut T {
         unsafe { &mut(*(mnl_nlmsg_put_extra_header(self.as_raw_mut(), size as usize) as *mut T)) }
     }
-    pub fn put_extra_header_check<T>(&mut self, size: usize) -> io::Result<&'a mut T> {
+    pub fn put_extra_header<T>(&mut self, size: usize) -> io::Result<&'a mut T> {
         cvt_null!(mnl_nlmsg_put_extra_header_check(self.as_raw_mut(),
                                                    self.buf.len(),
                                                    size as usize) as *mut T)
     }
 
-    pub fn put_sized_header<T: Sized>(&mut self) -> &'a mut T {
+    pub fn put_sized_header_raw<T: Sized>(&mut self) -> &'a mut T {
         unsafe { &mut(*(mnl_nlmsg_put_extra_header(self.as_raw_mut(), size_of::<T>()) as *mut T)) }
     }
-    pub fn put_sized_header_check<T: Sized>(&mut self) -> io::Result<&'a mut T> {
+    pub fn put_sized_header<T: Sized>(&mut self) -> io::Result<&'a mut T> {
         cvt_null!(mnl_nlmsg_put_extra_header_check(self.as_raw_mut(),
                                                    self.buf.len() as size_t,
                                                    size_of::<T>()) as *mut T)
@@ -746,7 +746,7 @@ impl <'a> Nlmsg <'a> {
     ///
     /// This function updates the length field of the Netlink message (nlmsg_len)
     /// by adding the size (header + payload) of the new attribute.
-    pub fn put<T: ?Sized>(&mut self, atype: u16, data: &T) {
+    pub fn put_raw<T: ?Sized>(&mut self, atype: u16, data: &T) {
         // ???: data must be a #[repr(C)]
         unsafe { mnl_attr_put(self.as_raw_mut(), atype, size_of_val(data), data as *const T as *const c_void) }
     }
@@ -759,7 +759,7 @@ impl <'a> Nlmsg <'a> {
     ///
     /// This function updates the length field of the Netlink message (nlmsg_len)
     /// by adding the size (header + payload) of the new attribute.
-    pub fn put_u8(&mut self, atype: u16, data: u8) {
+    pub fn put_u8_raw(&mut self, atype: u16, data: u8) {
         unsafe { mnl_attr_put_u8(self.as_raw_mut(), atype, data) }
     }
 
@@ -771,7 +771,7 @@ impl <'a> Nlmsg <'a> {
     ///
     /// This function updates the length field of the Netlink message (nlmsg_len)
     /// by adding the size (header + payload) of the new attribute.
-    pub fn put_u16(&mut self, atype: u16, data: u16) {
+    pub fn put_u16_raw(&mut self, atype: u16, data: u16) {
         unsafe { mnl_attr_put_u16(self.as_raw_mut(), atype, data) }
     }
 
@@ -783,7 +783,7 @@ impl <'a> Nlmsg <'a> {
     ///
     /// This function updates the length field of the Netlink message (nlmsg_len)
     /// by adding the size (header + payload) of the new attribute.
-    pub fn put_u32(&mut self, atype: u16, data: u32) {
+    pub fn put_u32_raw(&mut self, atype: u16, data: u32) {
         unsafe { mnl_attr_put_u32(self.as_raw_mut(), atype, data) }
     }
 
@@ -794,7 +794,7 @@ impl <'a> Nlmsg <'a> {
     ///
     /// This function updates the length field of the Netlink message (nlmsg_len)
     /// by adding the size (header + payload) of the new attribute.
-    pub fn put_u64(&mut self, atype: u16, data: u64) {
+    pub fn put_u64_raw(&mut self, atype: u16, data: u64) {
         unsafe { mnl_attr_put_u64(self.as_raw_mut(), atype, data) }
     }
 
@@ -806,7 +806,7 @@ impl <'a> Nlmsg <'a> {
     ///
     /// This function updates the length field of the Netlink message (nlmsg_len)
     /// by adding the size (header + payload) of the new attribute.
-    pub fn put_str(&mut self, atype: u16, data: &str) {
+    pub fn put_str_raw(&mut self, atype: u16, data: &str) {
         let cs = CString::new(data).unwrap();
         unsafe {
             mnl_attr_put_str(self.as_raw_mut(), atype, cs.as_ptr())
@@ -824,7 +824,7 @@ impl <'a> Nlmsg <'a> {
     ///
     /// This function updates the length field of the Netlink message (nlmsg_len)
     /// by adding the size (header + payload) of the new attribute.
-    pub fn put_strz(&mut self, atype: u16, data: &str) {
+    pub fn put_strz_raw(&mut self, atype: u16, data: &str) {
         let cs = CString::new(data).unwrap();
         unsafe {
             mnl_attr_put_strz(self.as_raw_mut(), atype, cs.as_ptr())
@@ -843,7 +843,7 @@ impl <'a> Nlmsg <'a> {
     /// message (nlmsg_len) by adding the size (header + payload) of the new
     /// attribute. The function returns true if the attribute could be added
     /// to the message, otherwise false is returned.
-    pub fn put_check<T: Sized>(&mut self, atype: u16, data: &T) -> io::Result<()> {
+    pub fn put<T: Sized>(&mut self, atype: u16, data: &T) -> io::Result<()> {
         cvt_put_check!(mnl_attr_put_check(self.as_raw_mut(), self.buf.len() as size_t, atype,
                                           size_of_val(data), data as *const T as *const c_void))
     }
@@ -859,7 +859,7 @@ impl <'a> Nlmsg <'a> {
     /// message (nlmsg_len) by adding the size (header + payload) of the new
     /// attribute. The function returns true if the attribute could be added
     /// to the message, otherwise false is returned.
-    pub fn put_u8_check(&mut self, atype: u16, data: u8) -> io::Result<()> {
+    pub fn put_u8(&mut self, atype: u16, data: u8) -> io::Result<()> {
         cvt_put_check!(mnl_attr_put_u8_check(self.as_raw_mut(), self.buf.len() as size_t, atype, data))
     }
 
@@ -876,7 +876,7 @@ impl <'a> Nlmsg <'a> {
     /// to the message, otherwise false is returned.
     /// This function updates the length field of the Netlink message (nlmsg_len)
     /// by adding the size (header + payload) of the new attribute.
-    pub fn put_u16_check(&mut self, atype: u16, data: u16) -> io::Result<()> {
+    pub fn put_u16(&mut self, atype: u16, data: u16) -> io::Result<()> {
         cvt_put_check!(mnl_attr_put_u16_check(self.as_raw_mut(), self.buf.len() as size_t, atype, data))
     }
 
@@ -893,7 +893,7 @@ impl <'a> Nlmsg <'a> {
     /// to the message, otherwise false is returned.
     /// This function updates the length field of the Netlink message (nlmsg_len)
     /// by adding the size (header + payload) of the new attribute.
-    pub fn put_u32_check(&mut self, atype: u16, data: u32) -> io::Result<()> {
+    pub fn put_u32(&mut self, atype: u16, data: u32) -> io::Result<()> {
         cvt_put_check!(mnl_attr_put_u32_check(self.as_raw_mut(), self.buf.len() as size_t, atype, data))
     }
 
@@ -910,7 +910,7 @@ impl <'a> Nlmsg <'a> {
     /// to the message, otherwise false is returned.
     /// This function updates the length field of the Netlink message (nlmsg_len)
     /// by adding the size (header + payload) of the new attribute.
-    pub fn put_u64_check(&mut self, atype: u16, data: u64) -> io::Result<()> {
+    pub fn put_u64(&mut self, atype: u16, data: u64) -> io::Result<()> {
         cvt_put_check!(mnl_attr_put_u64_check(self.as_raw_mut(), self.buf.len() as size_t, atype, data))
     }
 
@@ -927,7 +927,7 @@ impl <'a> Nlmsg <'a> {
     /// to the message, otherwise false is returned.
     /// This function updates the length field of the Netlink message (nlmsg_len)
     /// by adding the size (header + payload) of the new attribute.
-    pub fn put_str_check(&mut self, atype: u16, data: &str) -> io::Result<()> {
+    pub fn put_str(&mut self, atype: u16, data: &str) -> io::Result<()> {
         let cs = CString::new(data).unwrap();
         cvt_put_check!(
             mnl_attr_put_str_check(self.as_raw_mut(), self.buf.len() as size_t, atype, cs.as_ptr())
@@ -948,7 +948,7 @@ impl <'a> Nlmsg <'a> {
     /// message (nlmsg_len) by adding the size (header + payload) of the new
     /// attribute. The function returns true if the attribute could be added
     /// to the message, otherwise false is returned.
-    pub fn put_strz_check(&mut self, atype: u16, data: &str) -> io::Result<()> {
+    pub fn put_strz(&mut self, atype: u16, data: &str) -> io::Result<()> {
         let cs = CString::new(data).unwrap();
         cvt_put_check!(
             mnl_attr_put_strz_check(self.as_raw_mut(), self.buf.len() as size_t, atype, cs.as_ptr())
@@ -966,7 +966,7 @@ impl <'a> Nlmsg <'a> {
     /// #Return value
     /// This function always returns a valid pointer to the
     /// beginning of the nest.
-    pub fn nest_start(&mut self, atype: u16) -> &'a mut Attr {
+    pub fn nest_start_raw(&mut self, atype: u16) -> &'a mut Attr {
         unsafe { &mut *mnl_attr_nest_start(self.as_raw_mut(), atype) }
     }
 
@@ -978,7 +978,7 @@ impl <'a> Nlmsg <'a> {
     /// This function adds the attribute header that identifies the beginning of
     /// an attribute nest. If the nested attribute cannot be added then NULL,
     /// otherwise valid pointer to the beginning of the nest is returned.
-    pub fn nest_start_check(&mut self, atype: u16) -> io::Result<&'a mut Attr> {
+    pub fn nest_start(&mut self, atype: u16) -> io::Result<&'a mut Attr> {
         let p = unsafe { mnl_attr_nest_start_check(self.as_raw_mut(), self.buf.len() as size_t, atype) };
         if p.is_null() { return Err(io::Error::from_raw_os_error(libc::EINVAL)); }
         unsafe { Ok(&mut *p) }
