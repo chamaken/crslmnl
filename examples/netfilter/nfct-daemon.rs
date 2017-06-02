@@ -251,14 +251,14 @@ fn main() {
     *nlh.nlmsg_type = (nfnl::NFNL_SUBSYS_CTNETLINK << 8) | nfct::IPCTNL_MSG_CT_GET_CTRZERO;
     *nlh.nlmsg_flags = netlink::NLM_F_REQUEST | netlink::NLM_F_DUMP;
 
-    let nfh = nlh.put_sized_header::<nfnl::Nfgenmsg>();
+    let nfh = nlh.put_sized_header::<nfnl::Nfgenmsg>().unwrap();
     nfh.nfgen_family = libc::AF_INET as u8;
     nfh.version = nfnl::NFNETLINK_V0;
     nfh.res_id = 0;
 
     // Filter by mark: We only want to dump entries whose mark is zero
-    nlh.put_u32(nfct::CTA_MARK, 0u32.to_be());
-    nlh.put_u32(nfct::CTA_MARK_MASK, 0xffffffffu32.to_be());
+    nlh.put_u32(nfct::CTA_MARK, 0u32.to_be()).unwrap();
+    nlh.put_u32(nfct::CTA_MARK_MASK, 0xffffffffu32.to_be()).unwrap();
 
     let mut hmap = HashMap::<IpAddr, Box<Nstats>>::new();
 

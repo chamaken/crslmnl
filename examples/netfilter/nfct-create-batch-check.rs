@@ -16,51 +16,51 @@ use mnl::linux::netfilter::nf_conntrack_tcp as nfct_tcp;
 mod epoll;
 
 fn put_msg(nlh: &mut mnl::Nlmsg, i: u16, seq: u32) -> io::Result<()>{
-    nlh.put_header();
+    nlh.put_header().unwrap();
     *nlh.nlmsg_type = (nfnl::NFNL_SUBSYS_CTNETLINK << 8) | nfct::IPCTNL_MSG_CT_NEW;
     *nlh.nlmsg_flags = netlink::NLM_F_REQUEST | netlink::NLM_F_CREATE
         | netlink::NLM_F_EXCL | netlink::NLM_F_ACK;
     *nlh.nlmsg_seq = seq;
 
-    let nfh = try!(nlh.put_sized_header_check::<nfnl::Nfgenmsg>());
+    let nfh = try!(nlh.put_sized_header::<nfnl::Nfgenmsg>());
     nfh.nfgen_family = libc::AF_INET as u8;
     nfh.version = nfnl::NFNETLINK_V0;
     nfh.res_id = 0;
 
-    let mut nest1 = try!(nlh.nest_start_check(nfct::CTA_TUPLE_ORIG));
-    let mut nest2 = try!(nlh.nest_start_check(nfct::CTA_TUPLE_IP));
-    try!(nlh.put_u32_check(nfct::CTA_IP_V4_SRC, u32::from(net::Ipv4Addr::new(1, 1, 1, 1))));
-    try!(nlh.put_u32_check(nfct::CTA_IP_V4_DST, u32::from(net::Ipv4Addr::new(2, 2, 2, 2))));
+    let mut nest1 = try!(nlh.nest_start(nfct::CTA_TUPLE_ORIG));
+    let mut nest2 = try!(nlh.nest_start(nfct::CTA_TUPLE_IP));
+    try!(nlh.put_u32(nfct::CTA_IP_V4_SRC, u32::from(net::Ipv4Addr::new(1, 1, 1, 1))));
+    try!(nlh.put_u32(nfct::CTA_IP_V4_DST, u32::from(net::Ipv4Addr::new(2, 2, 2, 2))));
     nlh.nest_end(nest2);
 
-    nest2 = try!(nlh.nest_start_check(nfct::CTA_TUPLE_PROTO));
-    try!(nlh.put_u8_check(nfct::CTA_PROTO_NUM, libc::IPPROTO_TCP as u8));
-    try!(nlh.put_u16_check(nfct::CTA_PROTO_SRC_PORT, u16::to_be(i)));
-    try!(nlh.put_u16_check(nfct::CTA_PROTO_DST_PORT, u16::to_be(1025)));
-    nlh.nest_end(nest2);
-    nlh.nest_end(nest1);
-
-    nest1 = try!(nlh.nest_start_check(nfct::CTA_TUPLE_REPLY));
-    nest2 = try!(nlh.nest_start_check(nfct::CTA_TUPLE_IP));
-    try!(nlh.put_u32_check(nfct::CTA_IP_V4_SRC, u32::from(net::Ipv4Addr::new(2, 2, 2, 2))));
-    try!(nlh.put_u32_check(nfct::CTA_IP_V4_DST, u32::from(net::Ipv4Addr::new(1, 1, 1, 1))));
-    nlh.nest_end(nest2);
-
-    nest2 = try!(nlh.nest_start_check(nfct::CTA_TUPLE_PROTO));
-    try!(nlh.put_u8_check(nfct::CTA_PROTO_NUM, libc::IPPROTO_TCP as u8));
-    try!(nlh.put_u16_check(nfct::CTA_PROTO_SRC_PORT, u16::to_be(1025)));
-    try!(nlh.put_u16_check(nfct::CTA_PROTO_DST_PORT, u16::to_be(i)));
+    nest2 = try!(nlh.nest_start(nfct::CTA_TUPLE_PROTO));
+    try!(nlh.put_u8(nfct::CTA_PROTO_NUM, libc::IPPROTO_TCP as u8));
+    try!(nlh.put_u16(nfct::CTA_PROTO_SRC_PORT, u16::to_be(i)));
+    try!(nlh.put_u16(nfct::CTA_PROTO_DST_PORT, u16::to_be(1025)));
     nlh.nest_end(nest2);
     nlh.nest_end(nest1);
 
-    nest1 = try!(nlh.nest_start_check(nfct::CTA_PROTOINFO));
-    nest2 = try!(nlh.nest_start_check(nfct::CTA_PROTOINFO_TCP));
-    try!(nlh.put_u8_check(nfct::CTA_PROTOINFO_TCP_STATE, nfct_tcp::TCP_CONNTRACK_SYN_SENT));
+    nest1 = try!(nlh.nest_start(nfct::CTA_TUPLE_REPLY));
+    nest2 = try!(nlh.nest_start(nfct::CTA_TUPLE_IP));
+    try!(nlh.put_u32(nfct::CTA_IP_V4_SRC, u32::from(net::Ipv4Addr::new(2, 2, 2, 2))));
+    try!(nlh.put_u32(nfct::CTA_IP_V4_DST, u32::from(net::Ipv4Addr::new(1, 1, 1, 1))));
+    nlh.nest_end(nest2);
+
+    nest2 = try!(nlh.nest_start(nfct::CTA_TUPLE_PROTO));
+    try!(nlh.put_u8(nfct::CTA_PROTO_NUM, libc::IPPROTO_TCP as u8));
+    try!(nlh.put_u16(nfct::CTA_PROTO_SRC_PORT, u16::to_be(1025)));
+    try!(nlh.put_u16(nfct::CTA_PROTO_DST_PORT, u16::to_be(i)));
     nlh.nest_end(nest2);
     nlh.nest_end(nest1);
 
-    try!(nlh.put_u32_check(nfct::CTA_STATUS, u32::to_be(nfct_common::IPS_CONFIRMED)));
-    try!(nlh.put_u32_check(nfct::CTA_TIMEOUT, u32::to_be(1000)));
+    nest1 = try!(nlh.nest_start(nfct::CTA_PROTOINFO));
+    nest2 = try!(nlh.nest_start(nfct::CTA_PROTOINFO_TCP));
+    try!(nlh.put_u8(nfct::CTA_PROTOINFO_TCP_STATE, nfct_tcp::TCP_CONNTRACK_SYN_SENT));
+    nlh.nest_end(nest2);
+    nlh.nest_end(nest1);
+
+    try!(nlh.put_u32(nfct::CTA_STATUS, u32::to_be(nfct_common::IPS_CONFIRMED)));
+    try!(nlh.put_u32(nfct::CTA_TIMEOUT, u32::to_be(1000)));
 
     Ok(())
 }

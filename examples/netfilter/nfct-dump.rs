@@ -257,7 +257,7 @@ fn main() {
         *nlh.nlmsg_flags = netlink::NLM_F_REQUEST | netlink::NLM_F_DUMP;
         *nlh.nlmsg_seq = seq;
 
-        let nfh = nlh.put_sized_header::<nfnl::Nfgenmsg>();
+        let nfh = nlh.put_sized_header::<nfnl::Nfgenmsg>().unwrap();
         nfh.nfgen_family = libc::AF_INET as u8;
         nfh.version = nfnl::NFNETLINK_V0;
         nfh.res_id = 0;

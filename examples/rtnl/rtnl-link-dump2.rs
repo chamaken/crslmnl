@@ -72,7 +72,7 @@ fn main() {
         *nlh.nlmsg_type = rtnetlink::RTM_GETLINK;
         *nlh.nlmsg_flags = netlink::NLM_F_REQUEST | netlink::NLM_F_DUMP;
         *nlh.nlmsg_seq = seq;
-        let rt = nlh.put_sized_header::<rtnetlink::Rtgenmsg>();
+        let rt = nlh.put_sized_header::<rtnetlink::Rtgenmsg>().unwrap();
         rt.rtgen_family = AF_PACKET as u8;
 
         nl.send_nlmsg(&nlh)

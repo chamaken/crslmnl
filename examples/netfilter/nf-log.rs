@@ -91,12 +91,12 @@ fn nflog_build_cfg_pf_request<'a>(buf: &'a mut [u8], command: u8) -> mnl::Nlmsg 
     *nlh.nlmsg_type = (nfnl::NFNL_SUBSYS_ULOG << 8) | nful::MsgTypes::CONFIG as u16;
     *nlh.nlmsg_flags = netlink::NLM_F_REQUEST;
 
-    let nfg = nlh.put_sized_header::<nfnl::Nfgenmsg>();
+    let nfg = nlh.put_sized_header::<nfnl::Nfgenmsg>().unwrap();
     nfg.nfgen_family = libc::AF_INET as u8;
     nfg.version = nfnl::NFNETLINK_V0;
 
     let cmd = nful::MsgConfigCmd{command: command};
-    nlh.put(nful::AttrConfig::CMD as u16, &cmd);
+    nlh.put(nful::AttrConfig::CMD as u16, &cmd).unwrap();
     nlh
 }
 
@@ -105,13 +105,13 @@ fn nflog_build_cfg_request<'a>(buf: &'a mut [u8], command: u8, qnum: u16) -> mnl
     *nlh.nlmsg_type = (nfnl::NFNL_SUBSYS_ULOG << 8) | nful::MsgTypes::CONFIG as u16;
     *nlh.nlmsg_flags = netlink::NLM_F_REQUEST;
 
-    let nfg = nlh.put_sized_header::<nfnl::Nfgenmsg>();
+    let nfg = nlh.put_sized_header::<nfnl::Nfgenmsg>().unwrap();
     nfg.nfgen_family = libc::AF_INET as u8;
     nfg.version = nfnl::NFNETLINK_V0;
     nfg.res_id = qnum.to_be();
 
     let cmd = nful::MsgConfigCmd{command: command};
-    nlh.put(nful::AttrConfig::CMD as u16, &cmd);
+    nlh.put(nful::AttrConfig::CMD as u16, &cmd).unwrap();
     nlh
 }
 
@@ -120,7 +120,7 @@ fn nflog_build_cfg_params<'a>(buf: &'a mut [u8], mode: u8, range: u32, qnum: u16
     *nlh.nlmsg_type = (nfnl::NFNL_SUBSYS_ULOG << 8) | nful::MsgTypes::CONFIG as u16;
     *nlh.nlmsg_flags = netlink::NLM_F_REQUEST;
 
-    let nfg = nlh.put_sized_header::<nfnl::Nfgenmsg>();
+    let nfg = nlh.put_sized_header::<nfnl::Nfgenmsg>().unwrap();
     nfg.nfgen_family = 0; // libc::AF_UNSPEC as u8;
     nfg.version = nfnl::NFNETLINK_V0;
     nfg.res_id = qnum.to_be();
@@ -130,7 +130,7 @@ fn nflog_build_cfg_params<'a>(buf: &'a mut [u8], mode: u8, range: u32, qnum: u16
         copy_mode: mode,
         _pad: 0,
     };
-    nlh.put(nful::AttrConfig::MODE as u16, &params);
+    nlh.put(nful::AttrConfig::MODE as u16, &params).unwrap();
     nlh
 }
 

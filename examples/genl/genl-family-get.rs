@@ -190,13 +190,13 @@ fn main() {
         *nlh.nlmsg_flags = netlink::NLM_F_REQUEST | netlink::NLM_F_ACK;
         *nlh.nlmsg_seq = seq;
 
-        let genl = nlh.put_sized_header::<genl::Genlmsghdr>();
+        let genl = nlh.put_sized_header::<genl::Genlmsghdr>().unwrap();
         genl.cmd = genl::CtrlCmd::GETFAMILY as u8;
         genl.version = 1;
 
-        nlh.put_u16(genl::CtrlAttr::FAMILY_ID as u16, genl::GENL_ID_CTRL);
+        nlh.put_u16(genl::CtrlAttr::FAMILY_ID as u16, genl::GENL_ID_CTRL).unwrap();
         if args.len() >= 2 {
-            nlh.put_strz(genl::CtrlAttr::FAMILY_NAME as u16, &args[1]);
+            nlh.put_strz(genl::CtrlAttr::FAMILY_NAME as u16, &args[1]).unwrap();
         } else {
             *nlh.nlmsg_flags |= netlink::NLM_F_DUMP;
         }

@@ -92,7 +92,7 @@ fn main() {
         *nlh.nlmsg_type = rtnetlink::RTM_GETADDR;
         *nlh.nlmsg_flags = netlink::NLM_F_REQUEST | netlink::NLM_F_DUMP;
         *nlh.nlmsg_seq = seq;
-        let rt = nlh.put_sized_header::<rtnetlink::Rtgenmsg>();
+        let rt = nlh.put_sized_header::<rtnetlink::Rtgenmsg>().unwrap();
         if args[1] == "inet" {
         rt.rtgen_family = AF_INET as u8;
         } else if args[1] == "inet6" {

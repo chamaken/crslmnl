@@ -272,7 +272,7 @@ fn main() {
         *nlh.nlmsg_type = rtnetlink::RTM_GETROUTE;
         *nlh.nlmsg_flags = netlink::NLM_F_REQUEST | netlink::NLM_F_DUMP;
         *nlh.nlmsg_seq = seq;
-        let rtm = nlh.put_sized_header::<rtnetlink::Rtmsg>();
+        let rtm = nlh.put_sized_header::<rtnetlink::Rtmsg>().unwrap();
         if args[1] == "inet" {
             rtm.rtm_family = libc::AF_INET as u8;
         } else if args[1] == "inet6" {

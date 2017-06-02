@@ -103,7 +103,7 @@ Example: {} eth0 10.0.1.12 32 10.0.1.11
         *nlh.nlmsg_flags = netlink::NLM_F_REQUEST | netlink::NLM_F_CREATE | netlink::NLM_F_ACK;
         *nlh.nlmsg_seq = seq;
 
-        let rtm = nlh.put_sized_header::<rtnetlink::Rtmsg>();
+        let rtm = nlh.put_sized_header::<rtnetlink::Rtmsg>().unwrap();
         rtm.rtm_family = family as u8;
         rtm.rtm_dst_len = prefix as u8;
         rtm.rtm_src_len = 0;
@@ -122,20 +122,20 @@ Example: {} eth0 10.0.1.12 32 10.0.1.11
         match dst {
             IpAddr::V4(addr) =>
                 nlh.put_u32(rtnetlink::RTA_DST,
-                            unsafe { transmute::<[u8; 4], u32>(addr.octets()) }),
+                            unsafe { transmute::<[u8; 4], u32>(addr.octets()) }).unwrap(),
             IpAddr::V6(addr) =>
                 nlh.put(rtnetlink::RTA_DST,
-                        &unsafe { transmute::<[u16; 8], in6_addr>(addr.segments()) }),
+                        &unsafe { transmute::<[u16; 8], in6_addr>(addr.segments()) }).unwrap(),
         }
-        nlh.put_u32(rtnetlink::RTA_OIF, iface);
+        nlh.put_u32(rtnetlink::RTA_OIF, iface).unwrap();
         if let Some(nh) = gw {
             match nh {
                 IpAddr::V4(addr) =>
                     nlh.put_u32(rtnetlink::RTA_GATEWAY,
-                                unsafe { transmute::<[u8; 4], u32>(addr.octets()) }),
+                                unsafe { transmute::<[u8; 4], u32>(addr.octets()) }).unwrap(),
                 IpAddr::V6(addr) =>
                     nlh.put(rtnetlink::RTA_GATEWAY,
-                            &unsafe { transmute::<[u16; 8], in6_addr>(addr.segments()) }),
+                            &unsafe { transmute::<[u16; 8], in6_addr>(addr.segments()) }).unwrap(),
             }
         }
         nl.send_nlmsg(&nlh)
