@@ -657,6 +657,15 @@ impl <'a> Nlmsg <'a> {
         unsafe { &mut(*(mnl_nlmsg_get_payload(self.as_raw_mut()) as *mut T)) }
     }
 
+    pub fn payload_bytes(&mut self) -> &'a [u8] {
+        unsafe {
+            std::slice::from_raw_parts_mut(
+                mnl_nlmsg_get_payload(self.as_raw_mut()) as *mut u8,
+                self.payload_len(),
+            )
+        }
+    }
+
     /// get a pointer to the payload of the message
     ///
     /// # Arguments
