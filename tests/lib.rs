@@ -1188,3 +1188,49 @@ fn nlmsg_put_sized_header_check() {
         assert!(nlh.put_sized_header::<linux::netlink::Nlmsghdr>().is_err());
     }
 }
+
+fn attr_cb1(attr: &mnl::Attr, data: &mut u16) -> mnl::CbRet {
+    if attr.nla_type < *data {
+        return mnl::CbRet::OK;
+    }
+    mnl::CbRet::ERROR
+}
+
+#[test]
+fn attr_parse_attrs() {
+    let mut buf = [0u8; 512];
+    let mut nlh = mnl::Nlmsg::new(&mut buf).unwrap();
+    for i in 0..4 {
+        nlh.put_u8(i as u16, i).unwrap();
+    }
+
+    assert!(mnl::parse_attrs(nlh.payload_bytes(), attr_cb1, &mut 4u16).unwrap() == mnl::CbRet::OK);
+    assert!(mnl::parse_attrs(nlh.payload_bytes(), attr_cb1, &mut 3u16).is_err());
+}
+
+#[test]
+fn attr_cl_parse_payload() {
+    let mut buf = [0u8; 512];
+    let mut nlh = mnl::Nlmsg::new(&mut buf).unwrap();
+    for i in 0..4 {
+        nlh.put_u8(i as u16, i).unwrap();
+    }
+
+    let mut data = 4;
+    assert!(mnl::cl_parse_attrs(nlh.payload_bytes(),
+                                Box::new(move |attr| {
+                                    if attr.nla_type < data {
+                                        return mnl::CbRet::OK;
+                                    }
+                                    mnl::CbRet::ERROR
+                                })).unwrap() == mnl::CbRet::OK);
+
+    data = 3;
+    assert!(mnl::cl_parse_attrs(nlh.payload_bytes(),
+                                Box::new(move |attr| {
+                                    if attr.nla_type < data {
+                                        return mnl::CbRet::OK;
+                                    }
+                                    mnl::CbRet::ERROR
+                                })).is_err());
+}

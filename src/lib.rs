@@ -1466,11 +1466,16 @@ extern fn attr_parse_cb2(attr: *const netlink::Nlattr, data: *mut c_void) -> c_i
 /// # Return values
 /// This function propagates the return value of the callback, which can be
 /// MNL_CB_ERROR, MNL_CB_OK or MNL_CB_STOP.
-pub fn parse_payload<'a, T: 'a + ?Sized>(payload: &[u8], payload_len: usize, cb: AttrCb<'a, T>, data: &mut T) -> io::Result<(CbRet)> {
+pub fn parse_attrs<'a, T: 'a + ?Sized>(payload: &[u8], cb: AttrCb<'a, T>, data: &mut T) -> io::Result<(CbRet)> {
     let mut cbdata = AttrCbData{ cb: cb, data: data };
     let pdata = &mut cbdata as *mut _ as *mut c_void;
     cvt_cbret!(mnl_attr_parse_payload(payload.as_ptr() as *const c_void,
-                                      payload_len as size_t, attr_parse_cb::<T>, pdata))
+                                      payload.len() as size_t, attr_parse_cb::<T>, pdata))
+}
+
+pub fn cl_parse_attrs<'a>(payload: &[u8], cb: Box<FnMut(&'a Attr) -> CbRet>) -> io::Result<(CbRet)> {
+    cvt_cbret!(mnl_attr_parse_payload(payload.as_ptr() as *const c_void, payload.len() as size_t,
+                                      attr_parse_cb2, Box::into_raw(Box::new(cb)) as *mut c_void))
 }
 
 extern fn nlmsg_parse_cb<T: ?Sized>(nlh: *const netlink::Nlmsghdr, data: *mut c_void) -> c_int {
