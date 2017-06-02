@@ -1,7 +1,7 @@
 crslmnl
 =======
 
-Rust wrapper of libmnl, less safe.
+A Rust wrapper for libmnl.
 
 
 sample
@@ -13,7 +13,12 @@ see examples
 requires
 --------
 
-  * libmnl
+* libmnl - C libmnl library
+* Rust gcc
+* for examples:
+  - Rust time
+  - Rust mio
+  - Rust pnet
 
 
 links
@@ -34,7 +39,7 @@ thanks to [Shepmaster](http://stackoverflow.com/users/155423/shepmaster)
 comparison
 ----------
 
-| original				| cgolmnl			| remarks			|
+| original				| crslmnl			| remarks			|
 | ------------------------------------- | ----------------------------- | ----------------------------- |
 | mnl_attr_get_type			| Attr.atype			|				|
 | mnl_attr_get_len			| Attr.len			|				|
@@ -47,38 +52,44 @@ comparison
 | mnl_attr_validate			| Attr.validate			| 				|
 | mnl_attr_validate2			| Attr.validate2		| 				|
 | mnl_attr_parse			| Attr.parse			| 				|
+| (add)					| Attr.cl_parse			| 				|
 | mnl_attr_parse_nested			| Attr.parse_nested		| 				|
-| mnl_attr_parse_payload		| parse_payload			| 				|
+| (add)					| Attr.cl_parse_nested		| 				|
+| mnl_attr_parse_payload		| parse_attrs			| 				|
+| (add)					| cl_parse_attrs		| 				|
 | mnl_attr_get_u8			| Attr.u8			|				|
 | mnl_attr_get_u16			| Attr.u16			|				|
 | mnl_attr_get_u32			| Attr.u32			|				|
 | mnl_attr_get_u64			| Attr.u64			|				|
 | mnl_attr_get_str			| Attr.str			|				|
 | (add)					| Attr.string			|				|
-| mnl_attr_put				| Nlmsg.put			|				|
-| mnl_attr_put_u8			| Nlmsg.put_u8			|				|
-| mnl_attr_put_u16			| Nlmsg.put_u16			|				|
-| mnl_attr_put_u32			| Nlmsg.put_u32			|				|
-| mnl_attr_put_u64			| Nlmsg.put_u64			|				|
-| mnl_attr_put_str			| Nlmsg.put_str			|				|
-| mnl_attr_put_strz			| Nlmsg.put_strz		|				|
-| mnl_attr_put_check			| Nlmsg.put_check		|				|
-| mnl_attr_put_u8_check			| Nlmsg.put_u8_check		|				|
-| mnl_attr_put_u16_check		| Nlmsg.put_u16_check		|				|
-| mnl_attr_put_u32_check		| Nlmsg.put_u32_check		|				|
-| mnl_attr_put_u64_check		| Nlmsg.put_u64_check		|				|
-| mnl_attr_put_str_check		| Nlmsg.put_str_check		|				|
-| mnl_attr_put_strz_check		| Nlmsg.put_strz_check		|				|
-| mnl_attr_nest_start			| Nlmsg.nest_start		|				|
-| mnl_attr_nest_start_check		| Nlmsg.nest_start_check	|				|
+| mnl_attr_put				| Nlmsg.put_raw			|				|
+| mnl_attr_put_u8			| Nlmsg.put_u8_raw		|				|
+| mnl_attr_put_u16			| Nlmsg.put_u16_raw		|				|
+| mnl_attr_put_u32			| Nlmsg.put_u32_raw		|				|
+| mnl_attr_put_u64			| Nlmsg.put_u64_raw		|				|
+| mnl_attr_put_str			| Nlmsg.put_str_raw		|				|
+| mnl_attr_put_strz			| Nlmsg.put_strz_raw		|				|
+| mnl_attr_put_check			| Nlmsg.put			|				|
+| mnl_attr_put_u8_check			| Nlmsg.put_u8			|				|
+| mnl_attr_put_u16_check		| Nlmsg.put_u16			|				|
+| mnl_attr_put_u32_check		| Nlmsg.put_u32			|				|
+| mnl_attr_put_u64_check		| Nlmsg.put_u64			|				|
+| mnl_attr_put_str_check		| Nlmsg.put_str			|				|
+| mnl_attr_put_strz_check		| Nlmsg.put_strz		|				|
+| mnl_attr_nest_start			| Nlmsg.nest_start_raw		|				|
+| mnl_attr_nest_start_check		| Nlmsg.nest_start		|				|
 | mnl_attr_nest_end			| Nlmsg.nest_end		|				|
 | mnl_attr_nest_cancel			| Nlmsg.nest_cancel		|				|
 | ------------------------------------- | ----------------------------- | ----------------------------- |
 | mnl_nlmsg_size			| Nlmsg::size			|				|
 | mnl_nlmsg_get_payload_len		| Nlmsg.payload_len		|				|
 | mnl_nlmsg_put_header			| Nlmsg::new			|				|
-| mnl_nlmsg_put_header			| Nlmsg.put_header		|				|
-| mnl_nlmsg_put_extra_header		| Nlmsg.put_extra_header	|  				|
+| mnl_nlmsg_put_header			| Nlmsg.put_header_raw		|				|
+| (add)					| Nlmsg.put_header_check	|				|
+| mnl_nlmsg_put_extra_header		| Nlmsg.put_extra_header_raw	|  				|
+| (add)					| Nlmsg.put_sized_header	|  				|
+| (add)					| Nlmsg.put_sized_header_raw	|  				|
 | (add)					| Nlmsg.put_sized_header	|  				|
 | mnl_nlmsg_get_paylod			| Nlmsg.payload			| 				|
 | mnl_nlmsg_get_paylod			| Nlmsg.payload_mut		| 				|
@@ -102,7 +113,9 @@ comparison
 | mnl_nlmsg_batch_is_empty		| NlmsgBatch.is_empty		|				|
 | ------------------------------------- | ----------------------------- | ----------------------------- |
 | mnl_cb_run				| cb_run			| 				|
-| mnl_cb_run2				| cb_run2			| changed signature		|
+| mnl_cb_run2				| cb_run2			| 				|
+| (add)					| cl_run			| closure instead of callback	|
+| (add)					| cl_run2			| closure instead of callback	|
 | ------------------------------------- | ----------------------------- | ----------------------------- |
 | mnl_socket_get_fd			| Socket.as_raw_fd		|				|
 | mnl_socket_get_portid			| Socket.portid			|				|
@@ -120,3 +133,6 @@ comparison
 | ------------------------------------- | ----------------------------- | ----------------------------- |
 | mnl_attr_for_each			| Nlmsg.attrs			|				|
 | mnl_attr_for_each_nested		| Attr.nesteds			|				|
+| ------------------------------------- | ----------------------------- | ----------------------------- |
+| (add)					| NlmsgIterator			|				|
+| (add)					| Iterator for NlmsgBatch	|				|
