@@ -104,11 +104,11 @@ fn queue_cb(nlh: mnl::Nlmsg, packet_id: &mut u32) -> mnl::CbRet {
 }
 
 fn nfq_build_cfg_pf_request<'a>(buf: &'a mut[u8], command: u8) -> mnl::Nlmsg {
-    let mut nlh = mnl::Nlmsg::new(buf);
+    let mut nlh = mnl::Nlmsg::new(buf).unwrap();
     *nlh.nlmsg_type = (nfnl::NFNL_SUBSYS_QUEUE << 8) | nfq::MsgTypes::CONFIG as u16;
     *nlh.nlmsg_flags = netlink::NLM_F_REQUEST;
 
-    let nfg = nlh.put_sized_header::<nfnl::Nfgenmsg>();
+    let nfg = nlh.put_sized_header::<nfnl::Nfgenmsg>().unwrap();
     nfg.nfgen_family = 0; // libc::AF_UNSPEC as u8;
     nfg.version = nfnl::NFNETLINK_V0;
 
@@ -117,17 +117,17 @@ fn nfq_build_cfg_pf_request<'a>(buf: &'a mut[u8], command: u8) -> mnl::Nlmsg {
         pf: libc::AF_INET.to_be() as u16,
         ..Default::default()
     };
-    nlh.put(nfq::AttrConfig::CMD as u16, &cmd);
+    nlh.put(nfq::AttrConfig::CMD as u16, &cmd).unwrap();
 
     nlh
 }
 
 fn nfq_build_cfg_request<'a>(buf: &'a mut[u8], command: u8, queue_num: u16) -> mnl::Nlmsg {
-    let mut nlh = mnl::Nlmsg::new(buf);
+    let mut nlh = mnl::Nlmsg::new(buf).unwrap();
     *nlh.nlmsg_type = (nfnl::NFNL_SUBSYS_QUEUE << 8) | nfq::MsgTypes::CONFIG as u16;
     *nlh.nlmsg_flags = netlink::NLM_F_REQUEST;
 
-    let nfg = nlh.put_sized_header::<nfnl::Nfgenmsg>();
+    let nfg = nlh.put_sized_header::<nfnl::Nfgenmsg>().unwrap();
     nfg.nfgen_family = 0; // libc::AF_UNSPEC as u8;
     nfg.version = nfnl::NFNETLINK_V0;
     nfg.res_id = queue_num.to_be();
@@ -137,32 +137,32 @@ fn nfq_build_cfg_request<'a>(buf: &'a mut[u8], command: u8, queue_num: u16) -> m
         pf: libc::AF_INET.to_be() as u16,
         ..Default::default()
     };
-    nlh.put(nfq::AttrConfig::CMD as u16, &cmd);
+    nlh.put(nfq::AttrConfig::CMD as u16, &cmd).unwrap();
 
     nlh
 }
 
 fn nfq_build_cfg_params<'a>(buf: &'a mut [u8], mode: u8, range: u32, queue_num: u16) -> mnl::Nlmsg {
-    let mut nlh = mnl::Nlmsg::new(buf);
+    let mut nlh = mnl::Nlmsg::new(buf).unwrap();
     *nlh.nlmsg_type = (nfnl::NFNL_SUBSYS_QUEUE << 8) | nfq::MsgTypes::CONFIG as u16;
     *nlh.nlmsg_flags = netlink::NLM_F_REQUEST;
 
-    let nfg = nlh.put_sized_header::<nfnl::Nfgenmsg>();
+    let nfg = nlh.put_sized_header::<nfnl::Nfgenmsg>().unwrap();
     nfg.nfgen_family = 0; // libc::AF_UNSPEC as u8;
     nfg.version = nfnl::NFNETLINK_V0;
     nfg.res_id = queue_num.to_be();
 
     let params = nfq::MsgConfigParams { copy_range: range.to_be(), copy_mode: mode };
-    nlh.put(nfq::AttrConfig::PARAMS as u16, &params);
+    nlh.put(nfq::AttrConfig::PARAMS as u16, &params).unwrap();
 
     nlh
 }
 
 fn nfq_build_verdict<'a>(buf: &'a mut [u8], id: u32, queue_num: u16, verd: u32) -> mnl::Nlmsg {
-    let mut nlh = mnl::Nlmsg::new(buf);
+    let mut nlh = mnl::Nlmsg::new(buf).unwrap();
     *nlh.nlmsg_type = (nfnl::NFNL_SUBSYS_QUEUE << 8) | nfq::MsgTypes::VERDICT as u16;
     *nlh.nlmsg_flags = netlink::NLM_F_REQUEST;
-    let nfg = nlh.put_sized_header::<nfnl::Nfgenmsg>();
+    let nfg = nlh.put_sized_header::<nfnl::Nfgenmsg>().unwrap();
     nfg.nfgen_family = 0; // libc::AF_UNSPEC as u8;
     nfg.version = nfnl::NFNETLINK_V0;
     nfg.res_id = queue_num.to_be();

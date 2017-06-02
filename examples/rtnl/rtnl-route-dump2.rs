@@ -45,21 +45,6 @@ macro_rules! println_stderr(
     } }
 );
 
-fn data_attr_cb2<'a>(attr: &'a mnl::Attr, tb: &mut [Option<&'a mnl::Attr>]) -> mnl::CbRet {
-    // skip unsupported attribute in user-space
-    if let Err(_) = attr.type_valid(rtnetlink::RTAX_MAX as u16) {
-        return mnl::CbRet::OK;
-    }
-
-    if let Err(errno) = attr.validate(mnl::AttrDataType::U32) {
-        println_stderr!("mnl_attr_validate: {}", errno);
-        return mnl::CbRet::ERROR;
-    }
-
-    tb[attr.atype() as usize] = Some(attr);
-    mnl::CbRet::OK
-}
-
 fn attributes_show_ip<T: AddrFamily>(tb: &[Option<&mnl::Attr>]) {
     tb[rtnetlink::RTA_TABLE as usize]
         .map(|attr| print!("table={} ", attr.u32()));
@@ -81,87 +66,105 @@ fn attributes_show_ip<T: AddrFamily>(tb: &[Option<&mnl::Attr>]) {
         .map(|attr| {
             let mut tbx: [Option<&mnl::Attr>; rtnetlink::RTAX_MAX as usize + 1]
                 = [None; rtnetlink::RTAX_MAX as usize + 1];
-            let _ = attr.parse_nested(data_attr_cb2, &mut tbx);
+            let _ = attr.cl_parse_nested(Box::new(move |attr| {
+                if let Err(_) = attr.type_valid(rtnetlink::RTAX_MAX as u16) {
+                    return mnl::CbRet::OK;
+                }
+
+                if let Err(errno) = attr.validate(mnl::AttrDataType::U32) {
+                    println_stderr!("mnl_attr_validate: {}", errno);
+                    return mnl::CbRet::ERROR;
+                }
+                tbx[attr.atype() as usize] = Some(attr);
+                mnl::CbRet::OK
+            }));
             for i in 0..rtnetlink::RTAX_MAX as usize {
                 tbx[i].map(|attr| print!("metrics[{}]={} ", i, attr.u32()));
             }
         });
 }
 
-fn data_ipv4_attr_cb<'a>(attr: &'a mnl::Attr, tb: &mut [Option<&'a mnl::Attr>]) -> mnl::CbRet {
-    // skip unsupported attribute in user-space
-    if let Err(_) = attr.type_valid(rtnetlink::RTA_MAX) {
-        return mnl::CbRet::OK;
-    }
+fn data_ipv4_attr_cb<'a, 'b>(tb: &'b mut [Option<&'a mnl::Attr>]) -> Box<FnMut(&'a mnl::Attr) -> mnl::CbRet + 'b>{
+    Box::new(move |attr: &'a mnl::Attr| {
+        // skip unsupported attribute in user-space
+        if let Err(_) = attr.type_valid(rtnetlink::RTA_MAX) {
+            return mnl::CbRet::OK;
+        }
 
-    let atype = attr.atype();
-    match atype {
-        n if (n == rtnetlink::RTA_TABLE ||
-              n == rtnetlink::RTA_DST ||
-              n == rtnetlink::RTA_SRC ||
-	      n == rtnetlink::RTA_DST ||
-	      n == rtnetlink::RTA_SRC ||
-	      n == rtnetlink::RTA_OIF ||
-	      n == rtnetlink::RTA_FLOW ||
-	      n == rtnetlink::RTA_PREFSRC ||
-	      n == rtnetlink::RTA_GATEWAY ||
-	      n == rtnetlink::RTA_PRIORITY) => {
-            if let Err(errno) = attr.validate(mnl::AttrDataType::U32) {
-                println_stderr!("mnl_attr_validate - {}: {}", atype, errno);
-                return mnl::CbRet::ERROR;
-            }
-        },
-        n if n == rtnetlink::RTA_METRICS => {
-            if let Err(errno) = attr.validate(mnl::AttrDataType::NESTED) {
-                println_stderr!("mnl_attr_validate - {}: {}", atype, errno);
-                return mnl::CbRet::ERROR;
-            }
-        },
-        _ => {},
-    }
-    tb[atype as usize] = Some(attr);
-    mnl::CbRet::OK
+        let atype = attr.atype();
+        match atype {
+            n if (n == rtnetlink::RTA_TABLE ||
+                  n == rtnetlink::RTA_DST ||
+                  n == rtnetlink::RTA_SRC ||
+	          n == rtnetlink::RTA_DST ||
+	          n == rtnetlink::RTA_SRC ||
+	          n == rtnetlink::RTA_OIF ||
+	          n == rtnetlink::RTA_FLOW ||
+	          n == rtnetlink::RTA_PREFSRC ||
+	          n == rtnetlink::RTA_GATEWAY ||
+	          n == rtnetlink::RTA_PRIORITY) => {
+                if let Err(errno) = attr.validate(mnl::AttrDataType::U32) {
+                    println_stderr!("mnl_attr_validate - {}: {}", atype, errno);
+                    return mnl::CbRet::ERROR;
+                }
+            },
+            n if n == rtnetlink::RTA_METRICS => {
+                if let Err(errno) = attr.validate(mnl::AttrDataType::NESTED) {
+                    println_stderr!("mnl_attr_validate - {}: {}", atype, errno);
+                    return mnl::CbRet::ERROR;
+                }
+            },
+            _ => {},
+        }
+        tb[atype as usize] = Some(attr);
+        mnl::CbRet::OK
+    })
 }
 
-fn data_ipv6_attr_cb<'a>(attr: &'a mnl::Attr, tb: &mut [Option<&'a mnl::Attr>]) -> mnl::CbRet {
-    // skip unsupported attribute in user-space
-    if let Err(_) = attr.type_valid(rtnetlink::RTA_MAX) {
-        return mnl::CbRet::OK;
-    }
+fn data_ipv6_attr_cb<'a, 'b>(tb: &'b mut [Option<&'a mnl::Attr>]) -> Box<FnMut(&'a mnl::Attr) -> mnl::CbRet + 'b>{
+    Box::new(move |attr: &'a mnl::Attr| {
+        // skip unsupported attribute in user-space
+        if let Err(_) = attr.type_valid(rtnetlink::RTA_MAX) {
+            return mnl::CbRet::OK;
+        }
 
-    let atype = attr.atype();
-    match atype {
-	n if (n == rtnetlink::RTA_TABLE ||
-	      n == rtnetlink::RTA_OIF ||
-	      n == rtnetlink::RTA_FLOW ||
-	      n == rtnetlink::RTA_PRIORITY) => {
-            if let Err(errno) = attr.validate(mnl::AttrDataType::U32) {
-                println_stderr!("mnl_attr_validate - {}: {}", atype, errno);
-                return mnl::CbRet::ERROR;
-            }
-        },
-	n if (n == rtnetlink::RTA_DST ||
-	      n == rtnetlink::RTA_SRC ||
-	      n == rtnetlink::RTA_PREFSRC ||
-	      n == rtnetlink::RTA_GATEWAY) => {
+        let atype = attr.atype();
+        match atype {
+	    n if (n == rtnetlink::RTA_TABLE ||
+	          n == rtnetlink::RTA_OIF ||
+	          n == rtnetlink::RTA_FLOW ||
+	          n == rtnetlink::RTA_PRIORITY) => {
+                if let Err(errno) = attr.validate(mnl::AttrDataType::U32) {
+                    println_stderr!("mnl_attr_validate - {}: {}", atype, errno);
+                    return mnl::CbRet::ERROR;
+                }
+            },
+	    n if (n == rtnetlink::RTA_DST ||
+	          n == rtnetlink::RTA_SRC ||
+	          n == rtnetlink::RTA_PREFSRC ||
+	          n == rtnetlink::RTA_GATEWAY) => {
                 if let Err(errno) = attr.validate2(mnl::AttrDataType::BINARY, size_of::<libc::in6_addr>()) {
                     println_stderr!("mnl_attr_validate - {}: {}", atype, errno);
                     return mnl::CbRet::ERROR;
                 }
             },
-        n if n == rtnetlink::RTA_METRICS => {
-            if let Err(errno) = attr.validate(mnl::AttrDataType::NESTED) {
-                println_stderr!("mnl_attr_validate - {}: {}", atype, errno);
-                return mnl::CbRet::ERROR;
-            }
-        },
-        _ => {},
-    }
-    tb[atype as usize] = Some(attr);
-    mnl::CbRet::OK
+            n if n == rtnetlink::RTA_METRICS => {
+                if let Err(errno) = attr.validate(mnl::AttrDataType::NESTED) {
+                    println_stderr!("mnl_attr_validate - {}: {}", atype, errno);
+                    return mnl::CbRet::ERROR;
+                }
+            },
+            _ => {},
+        }
+        tb[atype as usize] = Some(attr);
+        mnl::CbRet::OK
+    })
 }
 
-fn data_cb(nlh: mnl::Nlmsg, _: &mut Option<u8>) -> mnl::CbRet {
+// fn data_cb<'a>(nlh: mnl::Nlmsg, _: &mut Option<u8>) -> mnl::CbRet {
+// fn data_cb<'a>() -> Box<FnMut(mnl::Nlmsg<'a>) -> mnl::CbRet> {
+fn data_cb() -> Box<FnMut(mnl::Nlmsg) -> mnl::CbRet> {
+    Box::new(move |nlh: mnl::Nlmsg| {
     let rm = nlh.payload::<rtnetlink::Rtmsg>();
 
     // protocol family = AF_INET | AF_INET6 //
@@ -239,11 +242,11 @@ fn data_cb(nlh: mnl::Nlmsg, _: &mut Option<u8>) -> mnl::CbRet {
         = [None; rtnetlink::RTA_MAX as usize + 1];
     match rm.rtm_family as c_int {
         libc::AF_INET => {
-            let _ = nlh.parse(size_of::<rtnetlink::Rtmsg>(), data_ipv4_attr_cb, &mut tb);
+            let _ = nlh.cl_parse(size_of::<rtnetlink::Rtmsg>(), data_ipv4_attr_cb(&mut tb));
             attributes_show_ip::<libc::in_addr>(&tb);
         },
         libc::AF_INET6 => {
-            let _ = nlh.parse(size_of::<rtnetlink::Rtmsg>(), data_ipv6_attr_cb, &mut tb);
+            let _ = nlh.cl_parse(size_of::<rtnetlink::Rtmsg>(), data_ipv6_attr_cb(&mut tb));
             attributes_show_ip::<libc::in6_addr>(&tb);
         },
         _ => unreachable!()
@@ -251,6 +254,7 @@ fn data_cb(nlh: mnl::Nlmsg, _: &mut Option<u8>) -> mnl::CbRet {
 
     println!("");
     mnl::CbRet::OK
+    })
 }
 
 fn main() {
@@ -285,7 +289,9 @@ fn main() {
     loop {
         let nrecv = nl.recvfrom(&mut buf)
             .unwrap_or_else(|errno| panic!("mnl_socket_recvfrom: {}", errno));
-        if mnl::cb_run(&buf[0..nrecv], seq, portid, Some(data_cb), &mut None)
+
+        // if mnl::cb_run(&buf[0..nrecv], seq, portid, Some(data_cb), &mut None)
+        if mnl::cl_run(&buf[0..nrecv], seq, portid, Some(data_cb()))
             .unwrap_or_else(|errno| panic!("mnl_cb_run: {}", errno))
             == mnl::CbRet::STOP {
             break;

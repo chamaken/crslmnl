@@ -15,52 +15,54 @@ use mnl::linux::netfilter::nf_conntrack_tcp as nfct_tcp;
 
 mod epoll;
 
-fn put_msg(nlh: &mut mnl::Nlmsg, i: u16, seq: u32) {
-    nlh.put_header_raw();
+fn put_msg(nlh: &mut mnl::Nlmsg, i: u16, seq: u32) -> io::Result<()>{
+    nlh.put_header().unwrap();
     *nlh.nlmsg_type = (nfnl::NFNL_SUBSYS_CTNETLINK << 8) | nfct::IPCTNL_MSG_CT_NEW;
     *nlh.nlmsg_flags = netlink::NLM_F_REQUEST | netlink::NLM_F_CREATE
         | netlink::NLM_F_EXCL | netlink::NLM_F_ACK;
     *nlh.nlmsg_seq = seq;
 
-    let nfh = nlh.put_sized_header_raw::<nfnl::Nfgenmsg>();
+    let nfh = try!(nlh.put_sized_header::<nfnl::Nfgenmsg>());
     nfh.nfgen_family = libc::AF_INET as u8;
     nfh.version = nfnl::NFNETLINK_V0;
     nfh.res_id = 0;
 
-    let mut nest1 = nlh.nest_start_raw(nfct::CTA_TUPLE_ORIG);
-    let mut nest2 = nlh.nest_start_raw(nfct::CTA_TUPLE_IP);
-    nlh.put_u32_raw(nfct::CTA_IP_V4_SRC, u32::from(net::Ipv4Addr::new(1, 1, 1, 1)));
-    nlh.put_u32_raw(nfct::CTA_IP_V4_DST, u32::from(net::Ipv4Addr::new(2, 2, 2, 2)));
+    let mut nest1 = try!(nlh.nest_start(nfct::CTA_TUPLE_ORIG));
+    let mut nest2 = try!(nlh.nest_start(nfct::CTA_TUPLE_IP));
+    try!(nlh.put_u32(nfct::CTA_IP_V4_SRC, u32::from(net::Ipv4Addr::new(1, 1, 1, 1))));
+    try!(nlh.put_u32(nfct::CTA_IP_V4_DST, u32::from(net::Ipv4Addr::new(2, 2, 2, 2))));
     nlh.nest_end(nest2);
 
-    nest2 = nlh.nest_start_raw(nfct::CTA_TUPLE_PROTO);
-    nlh.put_u8_raw(nfct::CTA_PROTO_NUM, libc::IPPROTO_TCP as u8);
-    nlh.put_u16_raw(nfct::CTA_PROTO_SRC_PORT, u16::to_be(i));
-    nlh.put_u16_raw(nfct::CTA_PROTO_DST_PORT, u16::to_be(1025));
-    nlh.nest_end(nest2);
-    nlh.nest_end(nest1);
-
-    nest1 = nlh.nest_start_raw(nfct::CTA_TUPLE_REPLY);
-    nest2 = nlh.nest_start_raw(nfct::CTA_TUPLE_IP);
-    nlh.put_u32_raw(nfct::CTA_IP_V4_SRC, u32::from(net::Ipv4Addr::new(2, 2, 2, 2)));
-    nlh.put_u32_raw(nfct::CTA_IP_V4_DST, u32::from(net::Ipv4Addr::new(1, 1, 1, 1)));
-    nlh.nest_end(nest2);
-
-    nest2 = nlh.nest_start_raw(nfct::CTA_TUPLE_PROTO);
-    nlh.put_u8_raw(nfct::CTA_PROTO_NUM, libc::IPPROTO_TCP as u8);
-    nlh.put_u16_raw(nfct::CTA_PROTO_SRC_PORT, u16::to_be(1025));
-    nlh.put_u16_raw(nfct::CTA_PROTO_DST_PORT, u16::to_be(i));
+    nest2 = try!(nlh.nest_start(nfct::CTA_TUPLE_PROTO));
+    try!(nlh.put_u8(nfct::CTA_PROTO_NUM, libc::IPPROTO_TCP as u8));
+    try!(nlh.put_u16(nfct::CTA_PROTO_SRC_PORT, u16::to_be(i)));
+    try!(nlh.put_u16(nfct::CTA_PROTO_DST_PORT, u16::to_be(1025)));
     nlh.nest_end(nest2);
     nlh.nest_end(nest1);
 
-    nest1 = nlh.nest_start_raw(nfct::CTA_PROTOINFO);
-    nest2 = nlh.nest_start_raw(nfct::CTA_PROTOINFO_TCP);
-    nlh.put_u8_raw(nfct::CTA_PROTOINFO_TCP_STATE, nfct_tcp::TCP_CONNTRACK_SYN_SENT);
+    nest1 = try!(nlh.nest_start(nfct::CTA_TUPLE_REPLY));
+    nest2 = try!(nlh.nest_start(nfct::CTA_TUPLE_IP));
+    try!(nlh.put_u32(nfct::CTA_IP_V4_SRC, u32::from(net::Ipv4Addr::new(2, 2, 2, 2))));
+    try!(nlh.put_u32(nfct::CTA_IP_V4_DST, u32::from(net::Ipv4Addr::new(1, 1, 1, 1))));
+    nlh.nest_end(nest2);
+
+    nest2 = try!(nlh.nest_start(nfct::CTA_TUPLE_PROTO));
+    try!(nlh.put_u8(nfct::CTA_PROTO_NUM, libc::IPPROTO_TCP as u8));
+    try!(nlh.put_u16(nfct::CTA_PROTO_SRC_PORT, u16::to_be(1025)));
+    try!(nlh.put_u16(nfct::CTA_PROTO_DST_PORT, u16::to_be(i)));
     nlh.nest_end(nest2);
     nlh.nest_end(nest1);
 
-    nlh.put_u32_raw(nfct::CTA_STATUS, u32::to_be(nfct_common::IPS_CONFIRMED));
-    nlh.put_u32_raw(nfct::CTA_TIMEOUT, u32::to_be(1000));
+    nest1 = try!(nlh.nest_start(nfct::CTA_PROTOINFO));
+    nest2 = try!(nlh.nest_start(nfct::CTA_PROTOINFO_TCP));
+    try!(nlh.put_u8(nfct::CTA_PROTOINFO_TCP_STATE, nfct_tcp::TCP_CONNTRACK_SYN_SENT));
+    nlh.nest_end(nest2);
+    nlh.nest_end(nest1);
+
+    try!(nlh.put_u32(nfct::CTA_STATUS, u32::to_be(nfct_common::IPS_CONFIRMED)));
+    try!(nlh.put_u32(nfct::CTA_TIMEOUT, u32::to_be(1000)));
+
+    Ok(())
 }
 
 fn error_cb(nlh: mnl::Nlmsg, _: &mut u8) -> mnl::CbRet {
@@ -111,30 +113,26 @@ fn main() {
         .unwrap_or_else(|errno| panic!("mnl_socket_bind: {}", errno));
     let portid = nl.portid();
 
-    // The buffer that we use to batch messages is MNL_SOCKET_BUFFER_SIZE
-    // multiplied by 2 bytes long, but we limit the batch to half of it
-    // since the last message that does not fit the batch goes over the
-    // upper boundary, if you break this rule, expect memory corruptions.
-    let mut snd_buf = vec![0u8; mnl::SOCKET_BUFFER_SIZE() * 2];
-    let b = mnl::NlmsgBatch::start(&mut snd_buf, mnl::SOCKET_BUFFER_SIZE())
+    let mut snd_buf = vec![0u8; mnl::SOCKET_BUFFER_SIZE()];
+    let mut b = mnl::NlmsgBatch::new(&mut snd_buf)
         .unwrap_or_else(|errno| panic!("mnl_nlmsg_batch_start: {}", errno));
 
     let seq = time::now().to_timespec().sec as u32;
-    for i in 1024u16..65535 {
-        put_msg(&mut b.current_nlmsg().unwrap(), i, seq + i as u32 - 1024);
-	// is there room for more messages in this batch?
-	// if so, continue.
-        if b.proceed_next() {
-            continue;
+    let mut sport = 1024u32;
+    'sports: loop {
+        for mut nlh in &mut b {
+            if let Err(_) = put_msg(&mut nlh, sport as u16, seq + sport - 1024) {
+                break;
+            }
+            sport += 1;
+            if sport >= 65535 { break 'sports; }
         }
         send_batch(nl, b, portid);
-	// this moves the last message that did not fit into the
-	// batch to the head of it.
         b.reset();
     }
 
-    // check if there is any message in the batch not sent yet.
     if !b.is_empty() {
+        b.cap();
         send_batch(nl, b, portid);
     }
 
