@@ -2,7 +2,7 @@
 // no effect? #![link(name = "mnl")]
 
 use std::io;
-use std::mem::{ size_of, size_of_val, zeroed };
+use std::mem::{ size_of, size_of_val, zeroed, forget };
 use std::os::unix::io::{ RawFd, AsRawFd };
 use std::ffi::{ CString, CStr };
 use std::fmt;
@@ -42,6 +42,15 @@ macro_rules! cvt_cbret {
             n if n < 0 => Err(io::Error::last_os_error()),
             n if n > 0 => Ok(CbRet::OK),
             _ => Ok(CbRet::STOP),
+        }
+    } )
+}
+
+macro_rules! cvt_put_check {
+    ($f:expr) => ( {
+        match unsafe { $f } {
+            true => Ok(()),
+            false => Err(io::Error::from_raw_os_error(libc::EINVAL)),
         }
     } )
 }
@@ -116,7 +125,7 @@ extern {
     fn mnl_nlmsg_batch_stop(b: *mut NlmsgBatch);
     // fn mnl_nlmsg_batch_size(b: *mut NlmsgBatch) -> size_t;
     fn mnl_nlmsg_batch_size(b: *const NlmsgBatch) -> size_t;
-    fn mnl_nlmsg_batch_reset(b: *mut NlmsgBatch);
+    // fn mnl_nlmsg_batch_reset(b: *mut NlmsgBatch);
     fn mnl_nlmsg_batch_head(b: *mut NlmsgBatch) -> *mut c_void;
     fn mnl_nlmsg_batch_current(b: *mut NlmsgBatch) -> *mut c_void;
     // fn mnl_nlmsg_batch_is_empty(b: *mut NlmsgBatch) -> bool;
@@ -124,7 +133,14 @@ extern {
 }
 
 extern { // arbitrary function
+    fn mnl_nlmsg_put_header_check(buf: *mut c_void, buflen: size_t) -> *mut netlink::Nlmsghdr;
+    fn mnl_nlmsg_put_extra_header_check(nlh: *mut netlink::Nlmsghdr, buflen: size_t, size: size_t) -> *mut c_void;
     fn mnl_nlmsg_batch_rest(b: *const NlmsgBatch) -> size_t;
+    fn rsmnl_nlmsg_batch_start(buf: *mut c_void, bufsiz: size_t) -> *mut NlmsgBatch;
+    fn rsmnl_nlmsg_batch_reset(b: *mut NlmsgBatch);
+    fn rsmnl_nlmsg_batch_next(b: *mut NlmsgBatch) -> *mut netlink::Nlmsghdr;
+    fn rsmnl_nlmsg_batch_cap(b: *mut NlmsgBatch);
+    fn rsmnl_nlmsg_batch_put_back(b: *mut NlmsgBatch);
 }
 
 
@@ -219,10 +235,10 @@ pub enum CbRet {
 
 type CbT = extern "C" fn(nlh: *const netlink::Nlmsghdr, data: *mut c_void) -> c_int;
 pub type Cb<'a, T: ?Sized> = fn(nlh: Nlmsg, data: &'a mut T) -> CbRet;
-struct CbData <'a, 'b, T: 'a + 'b + ?Sized> {
-    cb: Option<Cb<'a, T>>,
-    ctl_cb: Option<Cb<'a, T>>,
-    data: &'b mut T,
+struct CbData <'a, 'b: 'a, T: 'b + ?Sized> {
+    cb: Option<Cb<'b, T>>,
+    ctl_cbs: &'a [Option<Cb<'b, T>>],
+    data: &'a mut T,
 }
 
 
@@ -457,7 +473,7 @@ impl <'a> Nlmsg <'a> {
         self.buf.len()
     }
 
-    fn as_raw_ref(&self) -> &netlink::Nlmsghdr {
+    pub fn as_raw_ref(&self) -> &netlink::Nlmsghdr {
         unsafe { (self.buf.as_ptr() as *const netlink::Nlmsghdr).as_ref().unwrap() }
     }
 
@@ -487,8 +503,10 @@ impl <'a> Nlmsg <'a> {
         unsafe { mnl_nlmsg_get_payload_len(self.as_raw_ref()) }
     }
 
-    pub fn from_bytes(buf: &mut [u8]) -> Nlmsg {
-        // XXX: check buf len > sizeof(Nlmsg)
+    pub fn from_bytes(buf: &'a mut [u8]) -> io::Result<Self> {
+        if buf.len() < NLMSG_HDRLEN() as usize {
+            return Err(io::Error::from_raw_os_error(libc::EINVAL));
+        }
         let p = buf.as_mut_ptr();
         let nlh = Nlmsg {
             buf:	 buf,
@@ -498,7 +516,7 @@ impl <'a> Nlmsg <'a> {
             nlmsg_seq:   unsafe { (p as *mut u32).offset(2).as_mut().unwrap() },
             nlmsg_pid:   unsafe { (p as *mut u32).offset(3).as_mut().unwrap() },
         };
-        nlh
+        Ok(nlh)
     }
 
     /// create, reserve and prepare room for Netlink header
@@ -511,13 +529,13 @@ impl <'a> Nlmsg <'a> {
     /// header in the memory buffer passed as parameter. This function also
     /// initializes the nlmsg_len field to the size of the Netlink header. This
     /// function returns a Netlink header structure.
-    pub fn new(buf: &mut [u8]) -> Nlmsg {
-        let mut nlh = Self::from_bytes(buf);
-        nlh.put_header();
-        nlh
+    pub fn new(buf: &'a mut [u8]) -> io::Result<Self> {
+        let mut nlh = try!(Self::from_bytes(buf));
+        try!(nlh.put_header());
+        Ok(nlh)
     }
 
-    fn from_raw(nlh: *const netlink::Nlmsghdr) -> Self {
+    fn from_raw(nlh: *const netlink::Nlmsghdr) -> io::Result<Self> {
         let buf: &'a mut[u8] = unsafe {
             std::slice::from_raw_parts_mut((nlh as *mut u8),
                                            (*nlh).nlmsg_len as usize)
@@ -525,7 +543,7 @@ impl <'a> Nlmsg <'a> {
         Self::from_bytes(buf)
     }
 
-    fn from_raw_parts(p: *mut u8, size: usize) -> Self {
+    fn from_raw_parts(p: *mut u8, size: usize) -> io::Result<Self> {
         let buf: &'a mut[u8] = unsafe {
             std::slice::from_raw_parts_mut(p, size)
         };
@@ -537,8 +555,16 @@ impl <'a> Nlmsg <'a> {
     /// This function sets to zero the room that is required to put the Netlink
     /// header in the memory buffer passed as parameter. This function also
     /// initializes the nlmsg_len field to the size of the Netlink header.
-    pub fn put_header(&mut self) {
+    pub fn put_header_raw(&mut self) {
         unsafe { &mut(*mnl_nlmsg_put_header(self.as_raw_mut() as *mut _ as *mut c_void)); }
+    }
+
+    pub fn put_header(&mut self) -> io::Result<()> {
+        match cvt_null!(mnl_nlmsg_put_header_check(self.as_raw_mut() as *mut _ as *mut c_void,
+                                                   self.buf.len() as size_t)) {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e),
+        }
     }
 
     /// reserve and prepare room for an extra header
@@ -551,24 +577,37 @@ impl <'a> Nlmsg <'a> {
     /// the nlmsg_len field. You have to invoke mnl_nlmsg_put_header() before
     /// you call this function. This function returns a pointer to the extra
     /// header.
-    pub fn put_extra_header<T>(&mut self, size: usize) -> &'a mut T {
+    pub fn put_extra_header_raw<T>(&mut self, size: usize) -> &'a mut T {
         unsafe { &mut(*(mnl_nlmsg_put_extra_header(self.as_raw_mut(), size as usize) as *mut T)) }
     }
+    pub fn put_extra_header<T>(&mut self, size: usize) -> io::Result<&'a mut T> {
+        cvt_null!(mnl_nlmsg_put_extra_header_check(self.as_raw_mut(),
+                                                   self.buf.len(),
+                                                   size as usize) as *mut T)
+    }
 
-    pub fn put_sized_header<T: Sized>(&mut self) -> &'a mut T {
+    pub fn put_sized_header_raw<T: Sized>(&mut self) -> &'a mut T {
         unsafe { &mut(*(mnl_nlmsg_put_extra_header(self.as_raw_mut(), size_of::<T>()) as *mut T)) }
     }
-
-    pub fn ok(&self, len: usize) -> bool {
-        unsafe { mnl_nlmsg_ok(self.as_raw_ref(), len as c_int) }
+    pub fn put_sized_header<T: Sized>(&mut self) -> io::Result<&'a mut T> {
+        cvt_null!(mnl_nlmsg_put_extra_header_check(self.as_raw_mut(),
+                                                   self.buf.len() as size_t,
+                                                   size_of::<T>()) as *mut T)
     }
 
-    pub fn next(&mut self, len: isize) -> (Nlmsg, isize) {
-        let mut rest = len as c_int;
-        // let nlh = unsafe { &mut(*mnl_nlmsg_next(self.as_raw_mut(), &mut rest)) };
-        let _ = unsafe { &mut(*mnl_nlmsg_next(self.as_raw_mut(), &mut rest)) };
-        let u = self.buf.len() - rest as usize;
-        (Self::from_bytes(&mut self.buf[u..]), rest as isize)
+    pub fn ok(&self) -> bool {
+        unsafe { mnl_nlmsg_ok(self.as_raw_ref(), self.buf.len() as c_int) }
+    }
+
+    pub fn next<'b: 'a>(&'b mut self) -> Option<Self> {
+        let mut rest = self.buf.len() as c_int;
+        let buflen = self.buf.len();
+        if !self.ok() {
+            return None;
+        }
+        let _ = unsafe { mnl_nlmsg_next(self.as_raw_mut(), &mut rest) };
+        // buflen has already checked by ok()
+        Some(Self::from_bytes(&mut self.buf[buflen - (rest as usize)..]).unwrap())
     }
 
     /// perform sequence tracking
@@ -616,6 +655,15 @@ impl <'a> Nlmsg <'a> {
 
     pub fn payload_mut<T>(&mut self) -> &'a mut T {
         unsafe { &mut(*(mnl_nlmsg_get_payload(self.as_raw_mut()) as *mut T)) }
+    }
+
+    pub fn payload_bytes(&mut self) -> &'a [u8] {
+        unsafe {
+            std::slice::from_raw_parts_mut(
+                mnl_nlmsg_get_payload(self.as_raw_mut()) as *mut u8,
+                self.payload_len(),
+            )
+        }
     }
 
     /// get a pointer to the payload of the message
@@ -693,7 +741,7 @@ impl <'a> Nlmsg <'a> {
         unsafe {
             let f = libc::fdopen(fd.as_raw_fd(), mode.as_ptr());
             mnl_nlmsg_fprintf(f, self.as_raw_ref() as *const _ as *const c_void,
-                              *self.nlmsg_len as size_t, extra_header_size as size_t)
+                              self.buf.len() as size_t, extra_header_size as size_t)
         }
     }
 
@@ -707,7 +755,7 @@ impl <'a> Nlmsg <'a> {
     ///
     /// This function updates the length field of the Netlink message (nlmsg_len)
     /// by adding the size (header + payload) of the new attribute.
-    pub fn put<T: ?Sized>(&mut self, atype: u16, data: &T) {
+    pub fn put_raw<T: ?Sized>(&mut self, atype: u16, data: &T) {
         // ???: data must be a #[repr(C)]
         unsafe { mnl_attr_put(self.as_raw_mut(), atype, size_of_val(data), data as *const T as *const c_void) }
     }
@@ -720,7 +768,7 @@ impl <'a> Nlmsg <'a> {
     ///
     /// This function updates the length field of the Netlink message (nlmsg_len)
     /// by adding the size (header + payload) of the new attribute.
-    pub fn put_u8(&mut self, atype: u16, data: u8) {
+    pub fn put_u8_raw(&mut self, atype: u16, data: u8) {
         unsafe { mnl_attr_put_u8(self.as_raw_mut(), atype, data) }
     }
 
@@ -732,7 +780,7 @@ impl <'a> Nlmsg <'a> {
     ///
     /// This function updates the length field of the Netlink message (nlmsg_len)
     /// by adding the size (header + payload) of the new attribute.
-    pub fn put_u16(&mut self, atype: u16, data: u16) {
+    pub fn put_u16_raw(&mut self, atype: u16, data: u16) {
         unsafe { mnl_attr_put_u16(self.as_raw_mut(), atype, data) }
     }
 
@@ -744,7 +792,7 @@ impl <'a> Nlmsg <'a> {
     ///
     /// This function updates the length field of the Netlink message (nlmsg_len)
     /// by adding the size (header + payload) of the new attribute.
-    pub fn put_u32(&mut self, atype: u16, data: u32) {
+    pub fn put_u32_raw(&mut self, atype: u16, data: u32) {
         unsafe { mnl_attr_put_u32(self.as_raw_mut(), atype, data) }
     }
 
@@ -755,7 +803,7 @@ impl <'a> Nlmsg <'a> {
     ///
     /// This function updates the length field of the Netlink message (nlmsg_len)
     /// by adding the size (header + payload) of the new attribute.
-    pub fn put_u64(&mut self, atype: u16, data: u64) {
+    pub fn put_u64_raw(&mut self, atype: u16, data: u64) {
         unsafe { mnl_attr_put_u64(self.as_raw_mut(), atype, data) }
     }
 
@@ -767,7 +815,7 @@ impl <'a> Nlmsg <'a> {
     ///
     /// This function updates the length field of the Netlink message (nlmsg_len)
     /// by adding the size (header + payload) of the new attribute.
-    pub fn put_str(&mut self, atype: u16, data: &str) {
+    pub fn put_str_raw(&mut self, atype: u16, data: &str) {
         let cs = CString::new(data).unwrap();
         unsafe {
             mnl_attr_put_str(self.as_raw_mut(), atype, cs.as_ptr())
@@ -785,7 +833,7 @@ impl <'a> Nlmsg <'a> {
     ///
     /// This function updates the length field of the Netlink message (nlmsg_len)
     /// by adding the size (header + payload) of the new attribute.
-    pub fn put_strz(&mut self, atype: u16, data: &str) {
+    pub fn put_strz_raw(&mut self, atype: u16, data: &str) {
         let cs = CString::new(data).unwrap();
         unsafe {
             mnl_attr_put_strz(self.as_raw_mut(), atype, cs.as_ptr())
@@ -804,9 +852,9 @@ impl <'a> Nlmsg <'a> {
     /// message (nlmsg_len) by adding the size (header + payload) of the new
     /// attribute. The function returns true if the attribute could be added
     /// to the message, otherwise false is returned.
-    pub fn put_check<T: Sized>(&mut self, atype: u16, data: &T) -> bool {
-        unsafe { mnl_attr_put_check(self.as_raw_mut(), self.buf.len() as size_t, atype,
-                                    size_of_val(data), data as *const T as *const c_void) }
+    pub fn put<T: Sized>(&mut self, atype: u16, data: &T) -> io::Result<()> {
+        cvt_put_check!(mnl_attr_put_check(self.as_raw_mut(), self.buf.len() as size_t, atype,
+                                          size_of_val(data), data as *const T as *const c_void))
     }
 
     /// mnl_attr_put_u8_check - add 8-bit unsigned int attribute to netlink message
@@ -820,8 +868,8 @@ impl <'a> Nlmsg <'a> {
     /// message (nlmsg_len) by adding the size (header + payload) of the new
     /// attribute. The function returns true if the attribute could be added
     /// to the message, otherwise false is returned.
-    pub fn put_u8_check(&mut self, atype: u16, data: u8) -> bool {
-        unsafe { mnl_attr_put_u8_check(self.as_raw_mut(), self.buf.len() as size_t, atype, data) }
+    pub fn put_u8(&mut self, atype: u16, data: u8) -> io::Result<()> {
+        cvt_put_check!(mnl_attr_put_u8_check(self.as_raw_mut(), self.buf.len() as size_t, atype, data))
     }
 
     /// add 16-bit unsigned int attribute to netlink message
@@ -837,8 +885,8 @@ impl <'a> Nlmsg <'a> {
     /// to the message, otherwise false is returned.
     /// This function updates the length field of the Netlink message (nlmsg_len)
     /// by adding the size (header + payload) of the new attribute.
-    pub fn put_u16_check(&mut self, atype: u16, data: u16) -> bool {
-        unsafe { mnl_attr_put_u16_check(self.as_raw_mut(), self.buf.len() as size_t, atype, data) }
+    pub fn put_u16(&mut self, atype: u16, data: u16) -> io::Result<()> {
+        cvt_put_check!(mnl_attr_put_u16_check(self.as_raw_mut(), self.buf.len() as size_t, atype, data))
     }
 
     /// add 32-bit unsigned int attribute to netlink message
@@ -854,8 +902,8 @@ impl <'a> Nlmsg <'a> {
     /// to the message, otherwise false is returned.
     /// This function updates the length field of the Netlink message (nlmsg_len)
     /// by adding the size (header + payload) of the new attribute.
-    pub fn put_u32_check(&mut self, atype: u16, data: u32) -> bool {
-        unsafe { mnl_attr_put_u32_check(self.as_raw_mut(), self.buf.len() as size_t, atype, data) }
+    pub fn put_u32(&mut self, atype: u16, data: u32) -> io::Result<()> {
+        cvt_put_check!(mnl_attr_put_u32_check(self.as_raw_mut(), self.buf.len() as size_t, atype, data))
     }
 
     /// add 64-bit unsigned int attribute to netlink message
@@ -871,8 +919,8 @@ impl <'a> Nlmsg <'a> {
     /// to the message, otherwise false is returned.
     /// This function updates the length field of the Netlink message (nlmsg_len)
     /// by adding the size (header + payload) of the new attribute.
-    pub fn put_u64_check(&mut self, atype: u16, data: u64) -> bool {
-        unsafe { mnl_attr_put_u64_check(self.as_raw_mut(), self.buf.len() as size_t, atype, data) }
+    pub fn put_u64(&mut self, atype: u16, data: u64) -> io::Result<()> {
+        cvt_put_check!(mnl_attr_put_u64_check(self.as_raw_mut(), self.buf.len() as size_t, atype, data))
     }
 
     /// add string attribute to netlink message
@@ -888,11 +936,11 @@ impl <'a> Nlmsg <'a> {
     /// to the message, otherwise false is returned.
     /// This function updates the length field of the Netlink message (nlmsg_len)
     /// by adding the size (header + payload) of the new attribute.
-    pub fn put_str_check(&mut self, atype: u16, data: &str) -> bool {
+    pub fn put_str(&mut self, atype: u16, data: &str) -> io::Result<()> {
         let cs = CString::new(data).unwrap();
-        unsafe {
+        cvt_put_check!(
             mnl_attr_put_str_check(self.as_raw_mut(), self.buf.len() as size_t, atype, cs.as_ptr())
-        }
+        )
     }
 
     /// add string attribute to netlink message
@@ -909,11 +957,11 @@ impl <'a> Nlmsg <'a> {
     /// message (nlmsg_len) by adding the size (header + payload) of the new
     /// attribute. The function returns true if the attribute could be added
     /// to the message, otherwise false is returned.
-    pub fn put_strz_check(&mut self, atype: u16, data: &str) -> bool {
+    pub fn put_strz(&mut self, atype: u16, data: &str) -> io::Result<()> {
         let cs = CString::new(data).unwrap();
-        unsafe {
+        cvt_put_check!(
             mnl_attr_put_strz_check(self.as_raw_mut(), self.buf.len() as size_t, atype, cs.as_ptr())
-        }
+        )
     }
 
     /// start an attribute nest
@@ -927,7 +975,7 @@ impl <'a> Nlmsg <'a> {
     /// #Return value
     /// This function always returns a valid pointer to the
     /// beginning of the nest.
-    pub fn nest_start(&mut self, atype: u16) -> &'a mut Attr {
+    pub fn nest_start_raw(&mut self, atype: u16) -> &'a mut Attr {
         unsafe { &mut *mnl_attr_nest_start(self.as_raw_mut(), atype) }
     }
 
@@ -939,10 +987,10 @@ impl <'a> Nlmsg <'a> {
     /// This function adds the attribute header that identifies the beginning of
     /// an attribute nest. If the nested attribute cannot be added then NULL,
     /// otherwise valid pointer to the beginning of the nest is returned.
-    pub fn nest_start_check(&mut self, atype: u16) -> Option<&'a mut Attr> {
+    pub fn nest_start(&mut self, atype: u16) -> io::Result<&'a mut Attr> {
         let p = unsafe { mnl_attr_nest_start_check(self.as_raw_mut(), self.buf.len() as size_t, atype) };
-        if p.is_null() { return None; }
-        unsafe { Some(&mut *p) }
+        if p.is_null() { return Err(io::Error::from_raw_os_error(libc::EINVAL)); }
+        unsafe { Ok(&mut *p) }
     }
 
     /// end an attribute nest
@@ -985,9 +1033,53 @@ impl <'a> Nlmsg <'a> {
         cvt_cbret!(mnl_attr_parse(self.as_raw_ref(), offset as c_uint, attr_parse_cb::<T>, pdata))
     }
 
+    pub fn cl_parse<'b, 'c>(&self, offset: usize, cb: Box<FnMut(&'b Attr) -> CbRet + 'c>) -> io::Result<(CbRet)> {
+        cvt_cbret!(mnl_attr_parse(self.as_raw_ref(), offset as c_uint, attr_parse_cb2,
+                                  Box::into_raw(Box::new(cb)) as *mut c_void))
+    }
+
     pub fn attrs(&'a self, offset: usize) -> Box<Iterator<Item=&Attr> + 'a> {
         Box::new(AttrIterator { attr: self.payload_offset::<Attr>(offset),
                                 tail: self.payload_tail::<Attr>() as *const _ as uintptr_t })
+    }
+}
+
+pub struct NlmsgIterator<'a> {
+    nlh: &'a mut netlink::Nlmsghdr,
+    remaining: usize,
+}
+
+impl <'a> Iterator for NlmsgIterator<'a> {
+    type Item = Nlmsg<'a>;
+
+    fn next(&mut self) -> Option<Nlmsg<'a>> {
+        let ret_nlh = self.nlh as *mut _ as *mut u8;
+        let (ret_remaining, mut remaining) = (self.remaining, self.remaining as c_int);
+        unsafe {
+            if ! mnl_nlmsg_ok(self.nlh, self.remaining as c_int) {
+                return None;
+            }
+
+            let nlh = &mut *(mnl_nlmsg_next(self.nlh, &mut remaining));
+            self.remaining = remaining as usize;
+            self.nlh = nlh;
+        }
+        Some(Nlmsg::from_raw_parts(ret_nlh, ret_remaining).unwrap())
+    }
+}
+
+impl <'a> IntoIterator for Nlmsg<'a> {
+    type Item = Nlmsg<'a>;
+    type IntoIter = NlmsgIterator<'a>;
+
+    fn into_iter(self) -> NlmsgIterator<'a> {
+        let buflen = self.buf.len();
+        NlmsgIterator {
+            nlh: unsafe {
+                &mut *(self.buf.as_mut_ptr() as *mut netlink::Nlmsghdr)
+            },
+            remaining: buflen
+        }
     }
 }
 
@@ -996,21 +1088,14 @@ struct AttrIterator<'a> {
     tail: uintptr_t,
 }
 
-impl <'a> AttrIterator <'a> {
-    fn ok(&self) -> bool {
-        self.attr.ok(
-            self.tail - self.attr as *const _ as uintptr_t
-        )
-    }
-}
-
-impl <'a> Iterator for AttrIterator <'a> {
+impl <'a> Iterator for AttrIterator<'a> {
     type Item = &'a Attr;
 
     fn next(&mut self) -> Option<&'a Attr> {
-        if !self.ok() {
+        if !self.attr.ok(self.tail - self.attr as *const _ as uintptr_t) {
             return None;
         }
+
         let curr = self.attr;
         self.attr = curr.next();
         Some(curr)
@@ -1051,7 +1136,7 @@ impl NlmsgBatch {
     ///
     /// You have to put at least one message in the batch before calling this
     /// function, otherwise your application is likely to crash.
-    pub fn next(&self) -> bool {
+    pub fn proceed_next(&self) -> bool {
         unsafe { mnl_nlmsg_batch_next(self) }
     }
 
@@ -1071,7 +1156,7 @@ impl NlmsgBatch {
     /// new one. This function moves the last message which does not fit the
     /// batch to the head of the buffer, if any.
     pub fn reset(&mut self) {
-        unsafe { mnl_nlmsg_batch_reset(self) }
+        unsafe { rsmnl_nlmsg_batch_reset(self) }
     }
 
     /// get head of this batch
@@ -1092,7 +1177,7 @@ impl NlmsgBatch {
         unsafe { &mut(*(mnl_nlmsg_batch_current(self) as *mut T)) }
     }
 
-    pub fn current_nlmsg(&mut self) -> Nlmsg {
+    pub fn current_nlmsg(&mut self) -> io::Result<Nlmsg> {
         let p = unsafe { mnl_nlmsg_batch_current(self) as *mut u8 };
         Nlmsg::from_raw_parts(p, self.rest())
     }
@@ -1105,8 +1190,35 @@ impl NlmsgBatch {
         unsafe { mnl_nlmsg_batch_is_empty(self) }
     }
 
+    /// Not in original libmnl
+    pub fn new<'a>(buf: &'a mut [u8]) -> io::Result<&'a mut NlmsgBatch> {
+        cvt_null!(rsmnl_nlmsg_batch_start(buf.as_ptr() as *mut c_void, buf.len() as size_t))
+    }
+
     pub fn rest(&self) -> usize {
         unsafe { mnl_nlmsg_batch_rest(self) as usize }
+    }
+
+    pub fn cap(&mut self) {
+        unsafe { rsmnl_nlmsg_batch_cap(self) };
+    }
+
+    pub fn put_back(&mut self) {
+        unsafe { rsmnl_nlmsg_batch_put_back(self) };
+    }
+}
+
+impl <'a> Iterator for &'a mut NlmsgBatch {
+    type Item = Nlmsg<'a>;
+
+    fn next(&mut self) -> Option<Nlmsg<'a>> {
+        // Here is why I rewrite rsmnl_nlmsg_batch_start() and
+        // rsmnl_nlmsg_batch_reset() using memset()
+        let nlh = unsafe { rsmnl_nlmsg_batch_next(*self) };
+        if nlh.is_null() {
+            return None;
+        }
+        Some(Nlmsg::from_raw_parts(nlh as *mut u8, self.rest()).unwrap())
     }
 }
 
@@ -1306,6 +1418,10 @@ impl <'a> Attr {
         cvt_cbret!(mnl_attr_parse_nested(self, attr_parse_cb::<T>, pdata))
     }
 
+    pub fn cl_parse_nested<'b>(&self, cb: Box<FnMut(&'a Attr) -> CbRet + 'b>) -> io::Result<(CbRet)> {
+        cvt_cbret!(mnl_attr_parse_nested(self, attr_parse_cb2, Box::into_raw(Box::new(cb)) as *mut c_void))
+    }
+
     pub fn nesteds(&'a self) -> Box<Iterator<Item=&Attr> + 'a> {
         Box::new(AttrIterator { attr: self.payload::<Attr>(),
                                 tail: self.payload::<Attr>() as *const _ as uintptr_t
@@ -1318,6 +1434,15 @@ extern fn attr_parse_cb<T: ?Sized>(attr: *const netlink::Nlattr, data: *mut c_vo
     unsafe {
         let cbdata = &mut *(data as *mut AttrCbData<T>);
         (cbdata.cb)(attr.as_ref().unwrap(), cbdata.data) as c_int
+    }
+}
+
+extern fn attr_parse_cb2(attr: *const netlink::Nlattr, data: *mut c_void) -> c_int {
+    unsafe {
+        let mut cb = Box::from_raw(data as *mut Box<FnMut(&Attr) -> CbRet>);
+        let rc = (cb)(attr.as_ref().unwrap()) as c_int;
+        forget(cb);
+        rc
     }
 }
 
@@ -1341,40 +1466,80 @@ extern fn attr_parse_cb<T: ?Sized>(attr: *const netlink::Nlattr, data: *mut c_vo
 /// # Return values
 /// This function propagates the return value of the callback, which can be
 /// MNL_CB_ERROR, MNL_CB_OK or MNL_CB_STOP.
-pub fn parse_payload<'a, T: 'a + ?Sized>(payload: &[u8], payload_len: usize, cb: AttrCb<'a, T>, data: &mut T) -> io::Result<(CbRet)> {
+pub fn parse_attrs<'a, T: 'a + ?Sized>(payload: &[u8], cb: AttrCb<'a, T>, data: &mut T) -> io::Result<(CbRet)> {
     let mut cbdata = AttrCbData{ cb: cb, data: data };
     let pdata = &mut cbdata as *mut _ as *mut c_void;
     cvt_cbret!(mnl_attr_parse_payload(payload.as_ptr() as *const c_void,
-                                      payload_len as size_t, attr_parse_cb::<T>, pdata))
+                                      payload.len() as size_t, attr_parse_cb::<T>, pdata))
+}
+
+pub fn cl_parse_attrs<'a>(payload: &[u8], cb: Box<FnMut(&'a Attr) -> CbRet>) -> io::Result<(CbRet)> {
+    cvt_cbret!(mnl_attr_parse_payload(payload.as_ptr() as *const c_void, payload.len() as size_t,
+                                      attr_parse_cb2, Box::into_raw(Box::new(cb)) as *mut c_void))
 }
 
 extern fn nlmsg_parse_cb<T: ?Sized>(nlh: *const netlink::Nlmsghdr, data: *mut c_void) -> c_int {
     unsafe {
         let arg = &mut *(data as *mut CbData<T>);
         if let Some(cb) = arg.cb {
-            return cb(Nlmsg::from_raw(nlh), arg.data) as c_int;
+            return cb(Nlmsg::from_raw(nlh).unwrap(), arg.data) as c_int;
         }
         CbRet::OK as c_int // MNL_CB_OK
+    }
+}
+
+extern fn nlmsg_parse_cb2(nlh: *const netlink::Nlmsghdr, data: *mut c_void) -> c_int {
+    unsafe {
+        let mut op = Box::from_raw(data as *mut (Option<Box<FnMut(Nlmsg) -> CbRet>>,
+                                                 &[Option<Box<FnMut(Nlmsg) -> CbRet>>]));
+        let mut rc = CbRet::OK as c_int;
+        if let Some(ref mut cb) = op.0.as_mut() {
+            rc = cb(Nlmsg::from_raw(nlh).unwrap()) as c_int;
+        }
+        forget(op);
+        rc
     }
 }
 
 extern fn nlmsg_ctl_cb<T: ?Sized>(nlh: *const netlink::Nlmsghdr, data: *mut c_void) -> c_int {
     unsafe {
         let arg = &mut *(data as *mut CbData<T>);
-        if let Some(ctl_cb) = arg.ctl_cb {
-            return ctl_cb(Nlmsg::from_raw(nlh), arg.data) as c_int;
+        if let Some(ctl_cb) = arg.ctl_cbs[(*nlh).nlmsg_type as usize] {
+            return ctl_cb(Nlmsg::from_raw(nlh).unwrap(), arg.data) as c_int;
         }
         CbRet::OK as c_int // MNL_CB_OK
     }
 }
 
-pub fn cb_run<'a, 'b, T: 'a + 'b + ?Sized>(buf: &[u8], seq: u32, portid: u32,
-                                           cb_data: Option<Cb<'a, T>>, data: &'b mut T)
-                                           -> io::Result<(CbRet)> {
-    let mut arg = CbData{ cb: cb_data, ctl_cb: None, data: data };
+extern fn nlmsg_ctl_cb2(nlh: *const netlink::Nlmsghdr, data: *mut c_void) -> c_int {
+    unsafe {
+        let mut cbs = Box::from_raw(data as *mut (Option<Box<FnMut(Nlmsg) -> CbRet>>,
+                                                  &mut [Option<Box<FnMut(Nlmsg) -> CbRet>>]));
+        let rc = match cbs.1[(*nlh).nlmsg_type as usize] {
+            Some(ref mut cb) => cb(Nlmsg::from_raw(nlh).unwrap()) as c_int,
+            None => CbRet::OK as c_int,
+        };
+        forget(cbs);
+        rc
+    }
+}
+
+pub fn cb_run<'a, T>(buf: &[u8], seq: u32, portid: u32,
+                     cb_data: Option<Cb<'a, T>>, data: &mut T)
+                     -> io::Result<(CbRet)> {
+    let nil = [None::<Cb<'a, T>>];
+    let mut arg = CbData{ cb: cb_data, ctl_cbs: &nil, data: data };
     let argp = &mut arg as *mut _ as *mut c_void;
     cvt_cbret!(mnl_cb_run(buf.as_ptr() as *const c_void, buf.len() as size_t,
                           seq, portid, nlmsg_parse_cb::<T>, argp))
+}
+
+pub fn cl_run(buf: &[u8], seq: u32, portid: u32,
+              cb_data: Option<Box<FnMut(Nlmsg) -> CbRet>>)
+              -> io::Result<(CbRet)> {
+    cvt_cbret!(mnl_cb_run(buf.as_ptr() as *const c_void, buf.len() as size_t,
+                          seq, portid, nlmsg_parse_cb2,
+                          Box::into_raw(Box::new((cb_data, &[None::<Box<FnMut(Nlmsg) -> CbRet>>]))) as *mut c_void))
 }
 
 /// callback runqueue for netlink messages
@@ -1398,22 +1563,27 @@ pub fn cb_run<'a, 'b, T: 'a + 'b + ?Sized>(buf: &[u8], seq: u32, portid: u32,
 /// is set to ESRCH. If the sequence number is not the expected, errno is set
 /// to EPROTO. If the dump was interrupted, errno is set to EINTR and you should
 /// request a new fresh dump again.
-pub fn cb_run2<'a, 'b, T: 'a + 'b + ?Sized>(buf: &[u8], seq: u32, portid: u32,
-                                            cb_data: Option<Cb<'a, T>>, data: &'b mut T,
-                                            cb_ctl: Cb<'a, T>, ctltypes: &[u16])
-                                            -> io::Result<(CbRet)> {
-
-    // XXX: can not assign NULL?
-    // let mut cb_ctl_array: [CbT; netlink::NLMSG_MIN_TYPE as usize]
-    //     = [std::ptr::null() as CbT; netlink::NLMSG_MIN_TYPE as usize];
-    let mut cb_ctl_array: [CbT; netlink::NLMSG_MIN_TYPE as usize - 1] = unsafe { zeroed() };
-
-    for i in ctltypes.into_iter() {
-        cb_ctl_array[*i as usize] = nlmsg_ctl_cb::<T>;
-    }
-    let mut arg = CbData{ cb: cb_data, ctl_cb: Some(cb_ctl), data: data };
+pub fn cb_run2<'a, T: 'a>(buf: &[u8], seq: u32, portid: u32,
+                          cb_data: Option<Cb<'a, T>>, data: &mut T,
+                          ctl_cbs: &'a [Option<Cb<'a, T>>])
+                          -> io::Result<(CbRet)> {
+    let ctlen = ctl_cbs.len();
+    let raw_ctl_cbs = vec![nlmsg_ctl_cb::<T> as CbT; ctlen];
+    let mut arg = CbData{ cb: cb_data, ctl_cbs: ctl_cbs, data: data };
     let argp = &mut arg as *mut _ as *mut c_void;
     cvt_cbret!(mnl_cb_run2(buf.as_ptr() as *const c_void, buf.len() as size_t,
                            seq, portid, nlmsg_parse_cb::<T>, argp,
-                           cb_ctl_array.as_ptr() as *const CbT, netlink::NLMSG_MIN_TYPE as c_uint))
+                           raw_ctl_cbs.as_ptr() as *const CbT, ctlen as c_uint))
+}
+
+pub fn cl_run2(buf: &[u8], seq: u32, portid: u32,
+               cb_data: Option<Box<FnMut(Nlmsg) -> CbRet>>,
+               cb_ctl_array: &mut [Option<Box<FnMut(Nlmsg) -> CbRet>>])
+               -> io::Result<(CbRet)> {
+    let ctlen = cb_ctl_array.len();
+    let raw_ctl_cbs = vec![nlmsg_ctl_cb2 as CbT; ctlen];
+    let data = Box::into_raw(Box::new((cb_data, cb_ctl_array))) as *mut c_void;
+    cvt_cbret!(mnl_cb_run2(buf.as_ptr() as *const c_void, buf.len() as size_t,
+                           seq, portid, nlmsg_parse_cb2, data,
+                           raw_ctl_cbs.as_ptr() as *const CbT, ctlen as c_uint))
 }

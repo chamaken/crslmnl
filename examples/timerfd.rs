@@ -112,21 +112,17 @@ impl AsRawFd for Timerfd {
  */
 extern crate mio;
 
-use mio::{ Ready, Poll, PollOpt, Token };
-use mio::unix::EventedFd;
-use mio::event::Evented;
-
-impl Evented for Timerfd {
-    fn register(&self, poll: &Poll, token: Token, interest: Ready, opts: PollOpt) -> io::Result<()> {
-        EventedFd(&self.0).register(poll, token, interest, opts)
+impl mio::event::Evented for Timerfd {
+    fn register(&self, poll: &mio::Poll, token: mio::Token, interest: mio::Ready, opts: mio::PollOpt) -> io::Result<()> {
+        mio::unix::EventedFd(&self.0).register(poll, token, interest, opts)
     }
 
-    fn reregister(&self, poll: &Poll, token: Token, interest: Ready, opts: PollOpt) -> io::Result<()> {
-        EventedFd(&self.0).reregister(poll, token, interest, opts)
+    fn reregister(&self, poll: &mio::Poll, token: mio::Token, interest: mio::Ready, opts: mio::PollOpt) -> io::Result<()> {
+        mio::unix::EventedFd(&self.0).reregister(poll, token, interest, opts)
     }
 
-    fn deregister(&self, poll: &Poll) -> io::Result<()> {
-        EventedFd(&self.0).deregister(poll)
+    fn deregister(&self, poll: &mio::Poll) -> io::Result<()> {
+        mio::unix::EventedFd(&self.0).deregister(poll)
     }
 }
 

@@ -1,6 +1,6 @@
 [package]
 name = "crslmnl"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Ken-ichirou MATSUZAWA <chamas@h4.dion.ne.jp>"]
 repository = "https://github.com/chamaken/crslmnl"
 keywords = ["netfilter", "netlink"]
