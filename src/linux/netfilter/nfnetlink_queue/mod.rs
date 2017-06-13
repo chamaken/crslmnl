@@ -44,7 +44,7 @@ pub const NFQA_VLAN_UNSPEC: u16	= VlanAttr::UNSPEC as u16;
 pub const NFQA_VLAN_PROTO: u16	= VlanAttr::PROTO as u16;
 pub const NFQA_VLAN_TCI: u16	= VlanAttr::TCI as u16;
 pub const __NFQA_VLAN_MAX: u16	= VlanAttr::_MAX as u16;
-pub const NFQA_VLAN_MAX: u16 = 3 - 1; // __NFQA_VLAN_MAX - 1
+pub const NFQA_VLAN_MAX: u16 = __NFQA_VLAN_MAX - 1;
 
 #[allow(non_camel_case_types)]
 #[repr(u16)]
@@ -94,7 +94,7 @@ pub const NFQA_SECCTX: u16		= AttrType::SECCTX as u16;
 pub const NFQA_VLAN: u16		= AttrType::VLAN as u16;
 pub const NFQA_L2HDR: u16		= AttrType::L2HDR as u16;
 pub const __NFQA_MAX: u16		= AttrType::_MAX as u16;
-pub const NFQA_MAX: u16 = 21 - 1; // __NFQA_MAX - 1
+pub const NFQA_MAX: u16			= __NFQA_MAX - 1;
 
 #[repr(C)]
 pub struct MsgVerdictHdr {
@@ -152,7 +152,7 @@ pub const NFQA_CFG_QUEUE_MAXLEN: u32	= AttrConfig::QUEUE_MAXLEN as u32;
 pub const NFQA_CFG_MASK: u32		= AttrConfig::MASK as u32;
 pub const NFQA_CFG_FLAGS: u32		= AttrConfig::FLAGS as u32;
 pub const __NFQA_CFG_MAX: u32		= AttrConfig::_MAX as u32;
-pub const NFQA_CFG_MAX: u32 		= 6 - 1; // __NFQA_CFG_MAX
+pub const NFQA_CFG_MAX: u32 		= __NFQA_CFG_MAX - 1;
 
 // Flags for NFQA_CFG_FLAGS
 pub const NFQA_CFG_F_FAIL_OPEN: u32	= (1 << 0);

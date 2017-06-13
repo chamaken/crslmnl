@@ -79,7 +79,7 @@ pub const NFULA_HWLEN: u16		= AttrType::HWLEN as u16;
 pub const NFULA_CT: u16			= AttrType::CT as u16;
 pub const NFULA_CT_INFO: u16		= AttrType::CT_INFO as u16;
 pub const __NFULA_MAX: u16		= AttrType::_MAX as u16;
-pub const NFULA_MAX: u16		= 20 - 1; // __NFULA_MAX - 1
+pub const NFULA_MAX: u16		= __NFULA_MAX - 1;
 
 #[allow(non_camel_case_types)]
 #[repr(u8)]

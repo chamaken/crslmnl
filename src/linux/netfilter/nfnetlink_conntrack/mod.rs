@@ -93,7 +93,7 @@ pub const CTA_MARK_MASK: u16		= CtattrType::MARK_MASK as u16;
 pub const CTA_LABELS: u16		= CtattrType::LABELS as u16;
 pub const CTA_LABELS_MASK: u16		= CtattrType::LABELS_MASK as u16;
 pub const __CTA_MAX: u16 		= CtattrType::_MAX as u16;
-pub const CTA_MAX: u16 			= 24 - 1; // __CTA_MAX - 1
+pub const CTA_MAX: u16 			= __CTA_MAX - 1;
 
 
 #[allow(non_camel_case_types)]
@@ -110,7 +110,7 @@ pub const CTA_TUPLE_IP: u16	= CtattrTuple::IP as u16;
 pub const CTA_TUPLE_PROTO: u16	= CtattrTuple::PROTO as u16;
 pub const CTA_TUPLE_ZONE: u16	= CtattrTuple::ZONE as u16;
 pub const __CTA_TUPLE_MAX: u16	= CtattrTuple::_MAX as u16;
-pub const CTA_TUPLE_MAX: u16	= 4 - 1; // __CTA_TUPLE_MAX - 1
+pub const CTA_TUPLE_MAX: u16	= __CTA_TUPLE_MAX - 1;
 
 #[allow(non_camel_case_types)]
 #[repr(u16)]
@@ -128,7 +128,7 @@ pub const CTA_IP_V4_DST: u16	= CtattrIp::V4_DST as u16;
 pub const CTA_IP_V6_SRC: u16	= CtattrIp::V6_SRC as u16;
 pub const CTA_IP_V6_DST: u16	= CtattrIp::V6_DST as u16;
 pub const __CTA_IP_MAX: u16	= CtattrIp::_MAX as u16;
-pub const CTA_IP_MAX: u16	= 5 - 1; // __CTA_IP_MAX - 1
+pub const CTA_IP_MAX: u16	= __CTA_IP_MAX - 1;
 
 #[allow(non_camel_case_types)]
 #[repr(u16)]
@@ -156,7 +156,7 @@ pub const CTA_PROTO_ICMPV6_ID: u16	= CtattrL4proto::ICMPV6_ID as u16;
 pub const CTA_PROTO_ICMPV6_TYPE: u16	= CtattrL4proto::ICMPV6_TYPE as u16;
 pub const CTA_PROTO_ICMPV6_CODE: u16	= CtattrL4proto::ICMPV6_CODE as u16;
 pub const __CTA_PROTO_MAX: u16		= CtattrL4proto::_MAX as u16;
-pub const CTA_PROTO_MAX: u16		= 10 - 1; // __CTA_PROTO_MAX - 1
+pub const CTA_PROTO_MAX: u16		= __CTA_PROTO_MAX - 1;
 
 #[allow(non_camel_case_types)]
 #[repr(u32)]
@@ -210,7 +210,7 @@ pub const CTA_PROTOINFO_DCCP_ROLE: u16		= CtattrProtoinfoDccp::ROLE as u16;
 pub const CTA_PROTOINFO_DCCP_HANDSHAKE_SEQ: u16	= CtattrProtoinfoDccp::HANDSHAKE_SEQ as u16;
 pub const CTA_PROTOINFO_DCCP_PAD: u16		= CtattrProtoinfoDccp::PAD as u16;
 pub const __CTA_PROTOINFO_DCCP_MAX: u16		= CtattrProtoinfoDccp::_MAX as u16;
-pub const CTA_PROTOINFO_DCCP_MAX: u16		= __CTA_PROTOINFO_DCCP_MAX as u16 - 1;
+pub const CTA_PROTOINFO_DCCP_MAX: u16		= __CTA_PROTOINFO_DCCP_MAX - 1;
 
 #[allow(non_camel_case_types)]
 #[repr(u16)]
@@ -245,8 +245,8 @@ pub const CTA_COUNTERS_BYTES: u16	= CtattrCounters::BYTES as u16;
 pub const CTA_COUNTERS32_PACKETS: u16	= CtattrCounters::PACKETS32 as u16;
 pub const CTA_COUNTERS32_BYTES: u16	= CtattrCounters::BYTES32 as u16;
 pub const CTA_COUNTERS_PAD: u16		= CtattrCounters::PAD as u16;
-pub const __CTA_COUNTERS_MAX: u16	= CtattrCounters::_MAX as u16 - 1;
-pub const CTA_COUNTERS_MAX: u16		= 6 - 1; // __CTA_COUNTERS_MAX - 1
+pub const __CTA_COUNTERS_MAX: u16	= CtattrCounters::_MAX as u16;
+pub const CTA_COUNTERS_MAX: u16		= __CTA_COUNTERS_MAX - 1;
 
 #[allow(non_camel_case_types)]
 #[repr(u16)]

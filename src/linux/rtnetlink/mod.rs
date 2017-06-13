@@ -364,7 +364,7 @@ pub const RTA_PAD: u16			= RtattrType::PAD as u16;
 pub const RTA_UID: u16			= RtattrType::UID as u16;
 pub const RTA_TTL_PROPAGATE: u16	= RtattrType::TTL_PROPAGATE as u16;
 pub const __RTA_MAX: u16		= RtattrType::_MAX as u16;
-pub const RTA_MAX: u16			= 27 - 1; // __RTA_MAX - 1;
+pub const RTA_MAX: u16			= __RTA_MAX - 1;
 
 #[allow(non_snake_case)]
 pub fn RTM_RTA(r: &mut Rtmsg) -> &mut Rtattr {
@@ -497,7 +497,7 @@ pub const RTAX_INITRWND: c_int		= RTAX::INITRWND as c_int;
 pub const RTAX_QUICKACK: c_int		= RTAX::QUICKACK as c_int;
 pub const RTAX_CC_ALGO: c_int		= RTAX::CC_ALGO as c_int;
 pub const __RTAX_MAX: c_int		= RTAX::_MAX as c_int;
-pub const RTAX_MAX: c_int		= 17 - 1; // __RTAX_MAX - 1;
+pub const RTAX_MAX: c_int		= __RTAX_MAX - 1;
 
 pub const RTAX_FEATURE_ECN: u32		= (1 << 0);
 pub const RTAX_FEATURE_SACK: u32	= (1 << 1);
@@ -637,7 +637,7 @@ pub const TCA_STATS2: u16		= TCA::STATS2 as u16;
 pub const TCA_STAB: u16			= TCA::STAB as u16;
 pub const TCA_PAD: u16			= TCA::PAD as u16;
 pub const TCA_DUMP_INVISIBLE: u16	= TCA::DUMP_INVISIBLE as u16;
-pub const __TCA_MAX: u16		= TCA::_MAX as u16 - 1;
+pub const __TCA_MAX: u16		= TCA::_MAX as u16;
 pub const TCA_MAX: u16			= __TCA_MAX - 1;
 
 #[allow(non_snake_case)]
