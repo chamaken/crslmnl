@@ -6,6 +6,7 @@ pub const GENL_NAMSIZ: u8	= 16;
 pub const GENL_MIN_ID: u16	= netlink::NLMSG_MIN_TYPE;
 pub const GENL_MAX_ID: u16	= 1023;
 
+#[repr(C)]
 pub struct Genlmsghdr {
     pub cmd: u8,
     pub version: u8,
