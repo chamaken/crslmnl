@@ -20,6 +20,7 @@ pub struct Ifaddrmsg {
 //
 // IFA_FLAGS is a u32 attribute that extends the u8 field ifa_flags.
 // If present, the value from struct ifaddrmsg will be ignored.
+#[derive(Debug, Copy, Clone)]
 #[repr(u16)]
 pub enum IFA {
     UNSPEC	= 0,
