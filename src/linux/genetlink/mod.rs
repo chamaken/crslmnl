@@ -32,6 +32,7 @@ pub const GENL_START_ALLOC: u16		= netlink::NLMSG_MIN_TYPE + 3;
 
 // Controller
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
 #[repr(u8)]
 pub enum CtrlCmd {
     UNSPEC		= 0,
@@ -60,6 +61,7 @@ pub const __CTRL_CMD_MAX: u8		= CtrlCmd::_MAX as u8;
 pub const CTRL_CMD_MAX: u8		= __CTRL_CMD_MAX - 1;
 
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
 #[repr(u16)]
 pub enum CtrlAttr {
     UNSPEC		= 0,
@@ -83,6 +85,7 @@ pub const CTRL_ATTR_MCAST_GROUPS: u16	= CtrlAttr::MCAST_GROUPS as u16;
 pub const __CTRL_ATTR_MAX: u16		= 8u16; // CtrlAttr::_MAX as u16;
 pub const CTRL_ATTR_MAX: u16		= __CTRL_ATTR_MAX - 1;
 
+#[derive(Debug, Copy, Clone)]
 #[repr(u16)]
 pub enum CtrlAttrOp {
     UNSPEC	= 0,
@@ -96,6 +99,7 @@ pub const CTRL_ATTR_OP_FLAGS: u16	= CtrlAttrOp::FLAGS as u16;
 pub const __CTRL_ATTR_OP_MAX: u16	= 3u16; // CtrlAttrOp::_MAX as u16;
 pub const CTRL_ATTR_OP_MAX: u16		= __CTRL_ATTR_OP_MAX - 1;
 
+#[derive(Debug, Copy, Clone)]
 #[repr(u16)]
 pub enum CtrlAttrMcastGrp {
     UNSPEC	= 0,

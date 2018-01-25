@@ -6,6 +6,7 @@ pub mod nf_conntrack_common;
 pub mod nf_conntrack_tcp;
 
 // Responses from hook functions.
+#[derive(Debug, Copy, Clone)]
 #[repr(u32)] // ???
 pub enum Verdict {
     DROP	= 0,
@@ -57,6 +58,7 @@ pub const NF_VERDICT_BITS: u8	=  16;
 // #endif
 
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
 #[repr(u8)]
 pub enum InetHooks {
     // bitop? or u32
@@ -82,6 +84,7 @@ pub enum DevHooks {
 pub const NF_NETDEV_INGRESS: u32	= DevHooks::INGRESS as u32;
 pub const NF_NETDEV_NUMHOOKS: u32	= DevHooks::NUMHOOKS as u32;
 
+#[derive(Debug, Copy, Clone)]
 #[repr(u8)]
 pub enum Proto {
     UNSPEC	=  0,
