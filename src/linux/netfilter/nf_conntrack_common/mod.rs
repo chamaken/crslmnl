@@ -1,5 +1,6 @@
 // XXX: not follow the original
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
 #[repr(u8)]
 pub enum IpConntrackInfo {
     // Part of an established connection (either direction).
@@ -58,6 +59,7 @@ pub const IPS_UNTRACKED_BIT: u8		= 12;
 pub const IPS_HELPER_BIT: u8		= 13;
 
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
 #[repr(u32)]
 pub enum IpConntrackStatus { // unsigned int
     // It's an expected connection: bit 0 set.  This bit never changed
@@ -118,6 +120,7 @@ pub const IPS_UNTRACKED: u32		= IpConntrackStatus::UNTRACKED as u32;
 pub const IPS_HELPER: u32		= IpConntrackStatus::HELPER as u32;
 pub const IPS_UNCHANGEABLE_MASK: u32	= IpConntrackStatus::UNCHANGEABLE_MASK as u32;
 
+#[derive(Debug, Copy, Clone)]
 #[repr(u8)]
 pub enum IpConntrackEvents { // shift bit
     NEW		= 0,	// new conntrack
@@ -147,6 +150,7 @@ pub const IPCT_NATSEQADJ: u8	= IpConntrackEvents::SEQADJ as u8;
 pub const IPCT_SECMARK: u8	= IpConntrackEvents::SECMARK as u8;
 pub const IPCT_LABEL: u8	= IpConntrackEvents::LABEL as u8;
 
+#[derive(Debug, Copy, Clone)]
 #[repr(u8)]
 pub enum IpConntrackExpectEvents {
     NEW		= 0,	// new expectation

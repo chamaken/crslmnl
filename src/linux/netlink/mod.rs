@@ -31,6 +31,7 @@ pub const NETLINK_INET_DIAG: c_int	= NETLINK_SOCK_DIAG;
 pub const MAX_LINKS: c_int		= 32;
 
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
 pub enum Family {
     ROUTE,             // Routing/device hook
     UNUSED,            // Unused number
@@ -219,6 +220,7 @@ pub struct Nlmsgerr {		// pub struct Nlmsgerr <'a> {
 // @__NLMSGERR_ATTR_MAX: number of attributes
 // @NLMSGERR_ATTR_MAX: highest attribute number
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
 #[repr(u16)]
 pub enum NlmsgerrAttrs {
     UNUSED	= 0,

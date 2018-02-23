@@ -76,6 +76,7 @@ pub const NF_INET_LOCAL_OUT: u8		= InetHooks::LOCAL_OUT as u8;
 pub const NF_INET_POST_ROUTING: u8	= InetHooks::POST_ROUTING as u8;
 pub const NF_INET_NUMHOOKS: u8		= InetHooks::NUMHOOKS as u8;
 
+#[derive(Debug, Copy, Clone)]
 #[repr(u32)]
 pub enum DevHooks {
     INGRESS	= 0,

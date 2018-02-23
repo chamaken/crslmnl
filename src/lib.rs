@@ -183,6 +183,7 @@ extern {
 }
 
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
 #[repr(u16)]
 pub enum AttrDataType {
     UNSPEC,
@@ -225,8 +226,8 @@ extern {
     fn mnl_attr_parse_payload(payload: *const c_void, payload_len: size_t, cb: AttrCbT, data: *mut c_void) -> c_int;
 }
 
+#[derive(Debug, Copy, Clone, PartialEq)]
 #[repr(i32)]
-#[derive(PartialEq)]
 pub enum CbRet {
     ERROR	= -1,
     STOP	= 0,

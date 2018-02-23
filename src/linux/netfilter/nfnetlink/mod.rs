@@ -7,6 +7,7 @@ pub struct Nfattr {
 }
 
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
 #[repr(u32)]
 pub enum Groups {
     NONE			= 0,

@@ -2,8 +2,9 @@
 // and not any kind of function definitions.  It is shared between kernel and
 // userspace.  Don't put kernel specific stuff in here
 
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum MsgTypes {
     PACKET 	= 0,	// packet from kernel to userspace
     CONFIG 	= 1,	// connect to a particular queue
@@ -34,6 +35,7 @@ pub struct MsgPacketTimestamp {
 }
 
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
 #[repr(u16)]
 pub enum AttrType {
     UNSPEC		= 0,
@@ -82,6 +84,7 @@ pub const __NFULA_MAX: u16		= AttrType::_MAX as u16;
 pub const NFULA_MAX: u16		= __NFULA_MAX - 1;
 
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
 #[repr(u8)]
 pub enum MsgConfigCmds {
     NONE	= 0,
@@ -104,6 +107,7 @@ pub struct MsgConfigMode {
 }
 
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
 #[repr(u32)]
 pub enum AttrConfig {
     UNSPEC	= 0,

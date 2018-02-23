@@ -1,4 +1,5 @@
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
 #[repr(usize)]
 pub enum MsgTypes {
     PACKET		= 0,	// packet from kernel to userspace
@@ -33,6 +34,7 @@ pub struct MsgPacketTimestamp {
     pub usec: u64,
 }
 
+#[derive(Debug, Copy, Clone)]
 #[repr(u16)]
 pub enum VlanAttr {
     UNSPEC	= 0,
@@ -47,6 +49,7 @@ pub const __NFQA_VLAN_MAX: u16	= VlanAttr::_MAX as u16;
 pub const NFQA_VLAN_MAX: u16 = __NFQA_VLAN_MAX - 1;
 
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
 #[repr(u16)]
 pub enum AttrType {
     UNSPEC		= 0,
@@ -103,6 +106,7 @@ pub struct MsgVerdictHdr {
 }
 
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
 #[repr(u8)]
 pub enum MsgConfigCmds {
     NONE	= 0,
@@ -121,6 +125,7 @@ pub struct MsgConfigCmd {
 }
 
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
 #[repr(u8)]
 pub enum ConfigMode {
     COPY_NONE	= 0,
@@ -135,6 +140,7 @@ pub struct MsgConfigParams {
 }
 
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
 #[repr(u32)]
 pub enum AttrConfig {
     UNSPEC		= 0,

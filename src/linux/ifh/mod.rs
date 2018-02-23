@@ -1,6 +1,7 @@
 // XXX: IFF_ only
 
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
 #[repr(u32)]
 pub enum NetDeviceFlags {
     UP				= 1<<0,  // sysfs

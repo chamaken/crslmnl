@@ -1,5 +1,6 @@
 // This is exposed to userspace (ctnetlink) - ip_ct_tcp.state
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
 #[repr(u8)]
 pub enum TcpConntrack {
     NONE	= 0,

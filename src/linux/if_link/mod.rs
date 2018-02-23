@@ -96,8 +96,9 @@ pub struct LinkIfmap {
 //           [IFLA_INET6_CONF] = ...,
 //       }
 //   }
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum AttrType {
     UNSPEC		= 0,
     ADDRESS		= 1,
@@ -192,8 +193,9 @@ pub const IFLA_XDP: u16			= AttrType::XDP as u16;
 pub const __IFLA_MAX: u16		= AttrType::_MAX as u16;
 pub const IFLA_MAX: u16			= __IFLA_MAX - 1;
 
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum AttrTypeInet {
     UNSPEC	= 0,
     CONF	= 1,
@@ -234,8 +236,9 @@ pub const IFLA_INET_MAX: u16	= __IFLA_INET_MAX - 1;
 //   for IPIP tunnels, when route to endpoint is allowed to change)
 
 // Subtype attributes for IFLA_PROTINFO
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum AttrTypeInet6 {
     UNSPEC		= 0,
     FLAGS		= 1,	// link flags
@@ -260,8 +263,9 @@ pub const IFLA_INET6_ADDR_GEN_MODE: u16	= AttrTypeInet6::ADDR_GEN_MODE as u16;
 pub const __IFLA_INET6_MAX: u16		= AttrTypeInet6::_MAX as u16;
 pub const IFLA_INET6_MAX: u16		= __IFLA_INET6_MAX - 1;
 
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum In6AddrGenMode {
     EUI64		= 0,
     NONE		= 1,
@@ -274,8 +278,9 @@ pub const IN6_ADDR_GEN_MODE_STABLE_PRIVACY: u16	= In6AddrGenMode::STABLE_PRIVACY
 pub const IN6_ADDR_GEN_MODE_RANDOM: u16		= In6AddrGenMode::RANDOM as u16;
 
 // Bridge section
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum AttrTypeBr {
     UNSPEC 			= 0,
     FORWARD_DELAY		= 1,
@@ -379,8 +384,9 @@ pub struct IflaBridgeId {
 }
 
 // XXX: unused?
-#[repr(u32)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u32)]
 pub enum BridgeMode {
     UNSPEC	= 0,
     HAIRPIN	= 1,
@@ -466,8 +472,9 @@ pub struct IflaCacheinfo {
     pub retrans_time: u32,
 }
 
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum AttrTypeInfo {
     UNSPEC	= 0,
     KIND	= 1,
@@ -486,8 +493,9 @@ pub const IFLA_INFO_SLAVE_DATA: u16	= AttrTypeInfo::SLAVE_DATA as u16;
 pub const __IFLA_INFO_MAX: u16		= AttrTypeInfo::_MAX as u16;
 pub const IFLA_INFO_MAX: u16		= __IFLA_INFO_MAX - 1;
 // VLAN section
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum AttrTypeVlan {
     UNSPEC	= 0,
     ID		= 1,
@@ -512,8 +520,9 @@ pub struct IflaVlanFlags {
     pub mask: u32,
 }
 
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum AttrTypeVlanQos {
     QOS_UNSPEC	= 0,
     QOS_MAPPING	= 1,
@@ -531,8 +540,9 @@ pub struct IflaVlanQosMapping {
 }
 
 // MACVLAN section
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum AttrTypeMacvlan {
     UNSPEC		= 0,
     MODE		= 1,
@@ -553,6 +563,7 @@ pub const IFLA_MACVLAN_MACADDR_COUNT: u16	= AttrTypeMacvlan::MACADDR_COUNT as u1
 pub const __IFLA_MACVLAN_MAX: u16		= AttrTypeMacvlan::_MAX as u16;
 pub const IFLA_MACVLAN_MAX: u16			= __IFLA_MACVLAN_MAX - 1;
 
+#[derive(Debug, Copy, Clone)]
 #[repr(u32)]
 pub enum MacvlanMode {
     PRIVATE	= 1,	// don't talk to other macvlans
@@ -567,8 +578,9 @@ pub const MACVLAN_MODE_BRIDGE: u32	= MacvlanMode::BRIDGE as u32;
 pub const MACVLAN_MODE_PASSTHRU: u32	= MacvlanMode::PASSTHRU as u32;
 pub const MACVLAN_MODE_SOURCE: u32	= MacvlanMode::SOURCE as u32;
 
-#[repr(u32)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u32)]
 pub enum MacvlanMacaddrMode {
     ADD		= 0,
     DEL		= 1,
@@ -582,8 +594,9 @@ pub const MACVLAN_MACADDR_SET: u32	= MacvlanMacaddrMode::SET as u32;
 
 // VRF section
 
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum Vrf {
     UNSPEC	= 0,
     TABLE	= 1,
@@ -594,8 +607,9 @@ pub const IFLA_VRF_TABLE: u16	= Vrf::TABLE as u16;
 pub const __IFLA_VRF_MAX: u16	= Vrf::_MAX as u16;
 pub const IFLA_VRF_MAX: u16	= __IFLA_VRF_MAX - 1;
 
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum VrfPort {
     UNSPEC	= 0,
     TABLE	= 1,
@@ -607,8 +621,9 @@ pub const __IFLA_VRF_PORT_MAX: u16	= VrfPort::_MAX as u16;
 pub const IFLA_VRF_PORT_MAX: u16	= __IFLA_VRF_PORT_MAX - 1;
 
 // MACSEC section
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum Macsec {
     UNSPEC		= 0,
     SCI			= 1,
@@ -645,8 +660,9 @@ pub const IFLA_MACSEC_PAD: u16			= Macsec::PAD as u16;
 pub const __IFLA_MACSEC_MAX: u16		= Macsec::_MAX as u16;
 pub const IFLA_MACSEC_MAX: u16			= __IFLA_MACSEC_MAX - 1;
 
-#[repr(u8)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u8)]
 pub enum MacsecValidationType {
     DISABLED	= 0,
     CHECK	= 1,
@@ -660,8 +676,9 @@ pub const __MACSEC_VALIDATE_END: u8	= MacsecValidationType::_END as u8;
 pub const MACSEC_VALIDATE_MAX: u8	= __MACSEC_VALIDATE_END - 1;
 
 // IPVLAN section
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum Ipvlan {
     UNSPEC	= 0,
     MODE	= 1,
@@ -672,8 +689,9 @@ pub const IFLA_IPVLAN_MODE: u16		= Ipvlan::MODE as u16;
 pub const __IFLA_IPVLAN_MAX: u16	= Ipvlan::_MAX as u16;
 pub const IFLA_IPVLAN_MAX: u16		= __IFLA_IPVLAN_MAX - 1;
 
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum IpvlanMode {
     L2		= 0,
     L3		= 1,
@@ -686,8 +704,9 @@ pub const IPVLAN_MODE_L3S: u16	= IpvlanMode::L3S as u16;
 pub const IPVLAN_MODE_MAX: u16	= IpvlanMode::MAX as u16; // XXX: differ from another?
 
 // VXLAN section
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum Vxlan {
     UNSPEC		= 0,
     ID			= 1,
@@ -757,8 +776,9 @@ pub struct IflaVxlanPortRange {
 }
 
 // GENEVE section
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum Geneve {
     UNSPEC		= 0,
     ID			= 1,
@@ -790,8 +810,9 @@ pub const __IFLA_GENEVE_MAX: u16		= Geneve::_MAX as u16;
 pub const IFLA_GENEVE_MAX: u16			= __IFLA_GENEVE_MAX - 1;
 
 // PPP section
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum Ppp {
     UNSPEC	= 0,
     DEV_FD	= 1,
@@ -803,8 +824,9 @@ pub const __IFLA_PPP_MAX: u16	= Ppp::_MAX as u16;
 pub const IFLA_PPP_MAX: u16	= __IFLA_PPP_MAX - 1;
 
 // GTP section
-#[repr(u32)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u32)]
 pub enum IflaGtpRole {
     GGSN	= 0,
     SGSN	= 1,
@@ -812,8 +834,9 @@ pub enum IflaGtpRole {
 pub const GTP_ROLE_GGSN: u32	= IflaGtpRole::GGSN as u32;
 pub const GTP_ROLE_SGSN: u32	= IflaGtpRole::SGSN as u32;
 
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum Gtp {
     UNSPEC		= 0,
     FD0			= 1,
@@ -831,8 +854,9 @@ pub const __IFLA_GTP_MAX: u16		= Gtp::_MAX as u16;
 pub const IFLA_GTP_MAX: u16		= __IFLA_GTP_MAX - 1;
 
 // Bonding section
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum Bond {
     UNSPEC		= 0,
     MODE		= 1,
@@ -895,8 +919,9 @@ pub const IFLA_BOND_TLB_DYNAMIC_LB: u16		= Bond::TLB_DYNAMIC_LB as u16;
 pub const __IFLA_BOND_MAX: u16			= Bond::_MAX as u16;
 pub const IFLA_BOND_MAX: u16			= __IFLA_BOND_MAX - 1;
 
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum BondAdInfo {
     UNSPEC	= 0,
     AGGREGATOR	= 1,
@@ -915,8 +940,9 @@ pub const IFLA_BOND_AD_INFO_PARTNER_MAC: u16	= BondAdInfo::PARTNER_MAC as u16;
 pub const __IFLA_BOND_AD_INFO_MAX: u16		= BondAdInfo::_MAX as u16;
 pub const IFLA_BOND_AD_INFO_MAX: u16		= __IFLA_BOND_AD_INFO_MAX - 1;
 
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum BondSlave {
     UNSPEC			= 0,
     STATE			= 1,
@@ -942,8 +968,9 @@ pub const __IFLA_BOND_SLAVE_MAX: u16				= BondSlave::_MAX as u16;
 pub const IFLA_BOND_SLAVE_MAX: u16				= __IFLA_BOND_SLAVE_MAX - 1;
 
 // SR-IOV virtual function management section
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum SrIov { // XXX: naming
     UNSPEC	= 0,
     INFO	= 1,
@@ -954,8 +981,9 @@ pub const IFLA_VF_INFO: u16		= SrIov::INFO as u16;
 pub const __IFLA_VF_INFO_MAX: u16	= SrIov::_MAX as u16;
 pub const IFLA_VF_INFO_MAX: u16		= __IFLA_VF_INFO_MAX - 1;
 
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum VrInfo {
     UNSPEC		= 0,
     MAC			= 1,	// Hardware queue specific attributes
@@ -1002,8 +1030,9 @@ pub struct IflaVfVlan {
     pub qos: u32,
 }
 
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum VfVlan { // XXX: naming
     UNSPEC	= 0,
     INFO	= 1,	// VLAN ID, QoS and VLAN protocol
@@ -1049,8 +1078,9 @@ pub struct IflaVfGuid {
     pub guid: u64,
 }
 
-#[repr(u32)] // ifla_vf_info.linkstate
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u32)] // ifla_vf_info.linkstate
 pub enum VfLinkState {
     AUTO	= 0,	// link state of the uplink
     ENABLE	= 1,	// link always up
@@ -1071,8 +1101,9 @@ pub struct IflaVfRssQueryEn {
     pub setting: u32,
 }
 
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum VfStats {
     RX_PACKETS	= 0,
     TX_PACKETS	= 1,
@@ -1113,8 +1144,9 @@ pub struct ifla_vf_trust {
 //		[IFLA_PORT_SELF]
 //			[IFLA_PORT_*], ...
 
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum VfPort { // XXX: naming
     UNSPEC	= 0,
     PORT	= 1,
@@ -1125,8 +1157,9 @@ pub const IFLA_VF_PORT: u16		= VfPort::PORT as u16;	// nest
 pub const __IFLA_VF_PORT_MAX: u16	= VfPort::_MAX as u16;
 pub const IFLA_VF_PORT_MAX: u16		= __IFLA_VF_PORT_MAX - 1;
 
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum VfPortInfo { // XXX: naming
     UNSPEC		= 0,
     VF			= 1,	// __u32
@@ -1153,8 +1186,9 @@ pub const PORT_PROFILE_MAX: usize	= 40;
 pub const PORT_UUID_MAX: usize		= 16;
 pub const PORT_SELF_VF: c_int		= -1;
 
-#[repr(u32)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u32)]
 pub enum Enum_Unnamed30 { // enoc only?
     PORT_REQUEST_PREASSOCIATE = 0,
     PORT_REQUEST_PREASSOCIATE_RR = 1,
@@ -1162,8 +1196,9 @@ pub enum Enum_Unnamed30 { // enoc only?
     PORT_REQUEST_DISASSOCIATE = 3,
 }
 
-#[repr(u32)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u32)]
 pub enum Enum_Unnamed31 { // not used, just defined?
     PORT_VDP_RESPONSE_SUCCESS = 0,
     PORT_VDP_RESPONSE_INVALID_FORMAT = 1,
@@ -1190,8 +1225,9 @@ pub struct ifla_port_vsi {
 }
 
 // IPoIB section
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum Ipoib {
     UNSPEC	= 0,
     PKEY	= 1,
@@ -1207,16 +1243,18 @@ pub const IFLA_IPOIB_UMCAST: u16	= Ipoib::UMCAST as u16;
 pub const __IFLA_IPOIB_MAX: u16		= Ipoib::_MAX as u16;
 pub const IFLA_IPOIB_MAX: u16		= __IFLA_IPOIB_MAX - 1;
 
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum IpoibMode {
     DATAGRAM	= 0, // using unreliable datagram QPs
     CONNECTED	= 1, // using connected QPs
 }
 
 // HSR section
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum Hsr {
     UNSPEC		= 0,
     SLAVE1		= 1,
@@ -1249,8 +1287,9 @@ pub struct IfStatsMsg {
 
 // A stats attribute can be netdev specific or a global stat.
 // For netdev stats, lets use the prefix IFLA_STATS_LINK_
-#[repr(u16)] // maybe
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)] // maybe
 pub enum Stats {
     UNSPEC		= 0,	// also used as 64bit pad attribute
     LINK_64		= 1,
@@ -1278,8 +1317,9 @@ pub fn IFLA_STATS_FILTER_BIT(ATTR: u16) -> u16 {
 // [IFLA_STATS_LINK_XSTATS]
 // -> [LINK_XSTATS_TYPE_xxx]
 //    -> [rtnl link type specific attributes]
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum LinkXstatsType {
     UNSPEC	= 0,
     BRIDGE	= 1,
@@ -1291,8 +1331,9 @@ pub const __LINK_XSTATS_TYPE_MAX: u16	 = LinkXstatsType::_MAX as u16;
 pub const LINK_XSTATS_TYPE_MAX: u16	 = __LINK_XSTATS_TYPE_MAX - 1;
 
 // These are stats embedded into IFLA_STATS_LINK_OFFLOAD_XSTATS
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum OffloadXstats {
     UNSPEC	= 0,
     CPU_HIT	= 1,	// struct rtnl_link_stats64
@@ -1308,8 +1349,9 @@ pub const XDP_FLAGS_UPDATE_IF_NOEXIST: u32	= 1 << 0;
 pub const XDP_FLAGS_SKB_MODE: u32		= 2 << 0;
 pub const XDP_FLAGS_MASK: u32			= (XDP_FLAGS_UPDATE_IF_NOEXIST | XDP_FLAGS_SKB_MODE);
 
-#[repr(u16)]
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
 pub enum Xdp {
     UNSPEC	= 0,
     FD		= 1,

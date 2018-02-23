@@ -16,6 +16,7 @@ pub const RTNL_FAMILY_MAX: u8	= 129;
 
 // Routing/neighbour discovery messages.
 // XXX: #[repr(C)]?
+#[derive(Debug, Copy, Clone)]
 #[repr(u16)]
 pub enum RTM {
     // BASE		= 16,
@@ -198,6 +199,7 @@ pub struct Rtmsg {
 }
 
 // rtm_type
+#[derive(Debug, Copy, Clone)]
 #[repr(u8)]
 pub enum RTN {
     UNSPEC	= 0,
@@ -264,6 +266,7 @@ pub const RTPROT_BABEL: u8	= 42;   // Babel daemon
 //
 // Intermediate values are also possible f.e. interior routes
 // could be assigned a value between UNIVERSE and LINK.
+#[derive(Debug, Copy, Clone)]
 #[repr(u8)]
 pub enum RtScope {
     UNIVERSE	= 0,
@@ -286,6 +289,7 @@ pub const RTM_F_EQUALIZE: u32		= 0x400;	// Multipath equalizer: NI
 pub const RTM_F_PREFIX: u32		= 0x800;	// Prefix addresses
 pub const RTM_F_LOOKUP_TABLE: u32	= 0x1000;	// set rtm_table to FIB lookup result
 
+#[derive(Debug, Copy, Clone)]
 #[repr(u32)]
 pub enum RtClass {
     UNSPEC	= 0,
@@ -305,6 +309,7 @@ pub const RT_TABLE_MAX: u32	= RtClass::MAX as u32;
 
 // Routing message attributes
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
 #[repr(u16)]
 pub enum RtattrType {
     UNSPEC		= 0,
@@ -458,6 +463,7 @@ pub const RTNETLINK_HAVE_PEERINFO: u32	= 1;	// XXX: ???
 
 // RTM_METRICS --- array of struct rtattr with types of RTAX_*
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
 #[repr(C)]
 pub enum RTAX {
     UNSPEC	= 0,
@@ -578,6 +584,7 @@ pub struct prefixmsg {
     pub prefix_pad3: u8,	// ::std::os::raw::c_uchar,
 }
 
+#[derive(Debug, Copy, Clone)]
 #[repr(u16)]
 pub enum PREFIX {
     UNSPEC	= 0,
@@ -611,6 +618,7 @@ pub struct Tcmsg {
 }
 
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
 #[repr(u16)]
 pub enum TCA {
     UNSPEC		= 0,
@@ -667,6 +675,7 @@ pub struct nduseroptmsg {
     // Followed by one or more ND options
 }
 
+#[derive(Debug, Copy, Clone)]
 #[repr(u16)]
 pub enum NDUSEROPT {
     UNSPEC	= 0,
@@ -699,6 +708,7 @@ pub const RTMGRP_IPV6_PREFIX: u32	= 0x20000;
 
 // RTnetlink multicast groups
 #[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
 #[repr(u32)]
 pub enum RtnetlinkGroups {
     NONE		= 0,
