@@ -123,6 +123,9 @@ pub const NLM_F_EXCL: u16	= 0x200;	// Do not touch, if it exists
 pub const NLM_F_CREATE: u16	= 0x400;	// Create, if it does not exist
 pub const NLM_F_APPEND: u16	= 0x800;	// Add to end of list
 
+// Modifiers to DELETE request
+pub const NLM_F_NONREC:u16	= 0x100;	// Do not delete recursively
+
 // Flags for ACK message
 pub const NLM_F_CAPPED: u16	= 0x100;	// request was capped
 pub const NLM_F_ACK_TLVS: u16	= 0x200;	// extended ACK TVLs were included
@@ -299,3 +302,20 @@ pub fn NLA_HDRLEN() -> u16 {
 // macro_rules! ATTR_HDRLEN {
 //     () => { ALIGN(size_of::<Nlattr>() as u16) }
 // }
+
+// Generic 32 bitflags attribute content sent to the kernel.
+//
+// The value is a bitmap that defines the values being set
+// The selector is a bitmask that defines which value is legit
+//
+// Examples:
+//  value = 0x0, and selector = 0x1
+//  implies we are selecting bit 1 and we want to set its value to 0.
+//
+//  value = 0x2, and selector = 0x2
+//  implies we are selecting bit 2 and we want to set its value to 1.
+#[repr(C)]
+pub struct NlaBitfield32 { // struct nla_bitfield32
+    pub value: u32,
+    pub selector: u32,
+}

@@ -144,7 +144,13 @@ pub enum AttrType {
     GSO_MAX_SIZE	= 41,
     PAD			= 42,
     XDP			= 43,
-    _MAX		= 44,
+    EVENT		= 44,
+    NEW_NETNSID		= 45,
+    IF_NETNSID		= 46,
+    CARRIER_UP_COUNT	= 47,
+    CARRIER_DOWN_COUNT	= 48,
+    NEW_IFINDEX		= 49,
+    _MAX		= 50,
 }
 pub const IFLA_UNSPEC: u16		= AttrType::UNSPEC as u16;
 pub const IFLA_ADDRESS: u16		= AttrType::ADDRESS as u16;
@@ -190,6 +196,12 @@ pub const IFLA_GSO_MAX_SEGS: u16	= AttrType::GSO_MAX_SEGS as u16;
 pub const IFLA_GSO_MAX_SIZE: u16	= AttrType::GSO_MAX_SIZE as u16;
 pub const IFLA_PAD: u16			= AttrType::PAD as u16;
 pub const IFLA_XDP: u16			= AttrType::XDP as u16;
+pub const IFLA_EVENT: u16		= AttrType::EVENT as u16;
+pub const IFLA_NEW_NETNSID: u16		= AttrType::NEW_NETNSID as u16;
+pub const IFLA_IF_NETNSID: u16		= AttrType::IF_NETNSID as u16;
+pub const IFLA_CARRIER_UP_COUNT: u16	= AttrType::CARRIER_UP_COUNT as u16;
+pub const IFLA_CARRIER_DOWN_COUNT: u16	= AttrType::CARRIER_DOWN_COUNT as u16;
+pub const IFLA_NEW_IFINDEX: u16		= AttrType::NEW_IFINDEX as u16;
 pub const __IFLA_MAX: u16		= AttrType::_MAX as u16;
 pub const IFLA_MAX: u16			= __IFLA_MAX - 1;
 
@@ -428,7 +440,9 @@ enum AttrBrport {
     MCAST_TO_UCAST	= 28,
     VLAN_TUNNEL		= 29,
     BCAST_FLOOD		= 30,
-    _MAX		= 31,
+    GROUP_FWD_MASK	= 31,
+    NEIGH_SUPPRESS	= 32,
+    _MAX		= 33,
 }
 pub const IFLA_BRPORT_UNSPEC: u16		= AttrBrport::UNSPEC as u16;
 pub const IFLA_BRPORT_STATE: u16		= AttrBrport::STATE as u16;
@@ -461,6 +475,8 @@ pub const IFLA_BRPORT_MCAST_FLOOD: u16		= AttrBrport::MCAST_FLOOD as u16;
 pub const IFLA_BRPORT_MCAST_TO_UCAST: u16	= AttrBrport::MCAST_TO_UCAST as u16;
 pub const IFLA_BRPORT_VLAN_TUNNEL: u16		= AttrBrport::VLAN_TUNNEL as u16;
 pub const IFLA_BRPORT_BCAST_FLOOD: u16		= AttrBrport::BCAST_FLOOD as u16;
+pub const IFLA_BRPORT_GROUP_FWD_MASK: u16	= AttrBrport::GROUP_FWD_MASK as u16;
+pub const IFLA_BRPORT_NEIGH_SUPPRESS: u16	= AttrBrport::NEIGH_SUPPRESS as u16;
 pub const __IFLA_BRPORT_MAX: u16		= AttrBrport::_MAX as u16;
 pub const IFLA_BRPORT_MAX: u16			= __IFLA_BRPORT_MAX - 1;
 
@@ -682,10 +698,12 @@ pub const MACSEC_VALIDATE_MAX: u8	= __MACSEC_VALIDATE_END - 1;
 pub enum Ipvlan {
     UNSPEC	= 0,
     MODE	= 1,
-    _MAX	= 2,
+    FLAGS	= 2,
+    _MAX	= 3,
 }
 pub const IFLA_IPVLAN_UNSPEC: u16	= Ipvlan::UNSPEC as u16;
 pub const IFLA_IPVLAN_MODE: u16		= Ipvlan::MODE as u16;
+pub const IFLA_IPVLAN_FLAGS: u16	= Ipvlan::FLAGS as u16;
 pub const __IFLA_IPVLAN_MAX: u16	= Ipvlan::_MAX as u16;
 pub const IFLA_IPVLAN_MAX: u16		= __IFLA_IPVLAN_MAX - 1;
 
@@ -702,6 +720,9 @@ pub const IPVLAN_MODE_L2: u16	= IpvlanMode::L2 as u16;
 pub const IPVLAN_MODE_L3: u16	= IpvlanMode::L3 as u16;
 pub const IPVLAN_MODE_L3S: u16	= IpvlanMode::L3S as u16;
 pub const IPVLAN_MODE_MAX: u16	= IpvlanMode::MAX as u16; // XXX: differ from another?
+
+pub const IPVLAN_F_PRIVATE: u16	= 0x01;
+pub const IPVLAN_F_VEPA: u16	= 0x02;
 
 // VXLAN section
 #[allow(non_camel_case_types)]
@@ -1112,7 +1133,9 @@ pub enum VfStats {
     BROADCAST	= 4,
     MULTICAST	= 5,
     PAD		= 6,
-    _MAX	= 7,
+    RX_DROPPED	= 7,
+    TX_DROPPED	= 8,
+    _MAX	= 9,
 }
 pub const IFLA_VF_STATS_RX_PACKETS: u16	= VfStats::RX_PACKETS as u16;
 pub const IFLA_VF_STATS_TX_PACKETS: u16	= VfStats::TX_PACKETS as u16;
@@ -1121,6 +1144,9 @@ pub const IFLA_VF_STATS_TX_BYTES: u16	= VfStats::TX_BYTES as u16;
 pub const IFLA_VF_STATS_BROADCAST: u16	= VfStats::BROADCAST as u16;
 pub const IFLA_VF_STATS_MULTICAST: u16	= VfStats::MULTICAST as u16;
 pub const IFLA_VF_STATS_PAD: u16	= VfStats::PAD as u16;
+pub const IFLA_VF_STATS_RX_DROPPED: u16	= VfStats::RX_DROPPED as u16;
+pub const IFLA_VF_STATS_TX_DROPPED: u16	= VfStats::TX_DROPPED as u16;
+
 pub const __IFLA_VF_STATS_MAX: u16	= VfStats::_MAX as u16;
 pub const IFLA_VF_STATS_MAX: u16	= __IFLA_VF_STATS_MAX - 1;
 
@@ -1346,8 +1372,29 @@ pub const IFLA_OFFLOAD_XSTATS_MAX: u16		= __IFLA_OFFLOAD_XSTATS_MAX - 1;
 
 // XDP section
 pub const XDP_FLAGS_UPDATE_IF_NOEXIST: u32	= 1 << 0;
-pub const XDP_FLAGS_SKB_MODE: u32		= 2 << 0;
-pub const XDP_FLAGS_MASK: u32			= (XDP_FLAGS_UPDATE_IF_NOEXIST | XDP_FLAGS_SKB_MODE);
+pub const XDP_FLAGS_SKB_MODE: u32		= 1 << 1;
+pub const XDP_FLAGS_DRV_MODE: u32		= 1 << 2;
+pub const XDP_FLAGS_HW_MODE: u32		= 1 << 3;
+pub const XDP_FLAGS_MODES: u32			= (XDP_FLAGS_SKB_MODE |
+					           XDP_FLAGS_DRV_MODE |
+					           XDP_FLAGS_HW_MODE);
+pub const XDP_FLAGS_MASK: u32			= (XDP_FLAGS_UPDATE_IF_NOEXIST |
+                                                   XDP_FLAGS_MODES);
+
+// These are stored into IFLA_XDP_ATTACHED on dump.
+#[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u8)]
+pub enum XdpAttached {
+    NONE	= 0,
+    DRV		= 1,
+    SKB		= 2,
+    HW		= 3,
+}
+pub const XDP_ATTACHED_NONE: u8	= XdpAttached::NONE as u8;
+pub const XDP_ATTACHED_DRV: u8	= XdpAttached::DRV as u8;
+pub const XDP_ATTACHED_SKB: u8	= XdpAttached::SKB as u8;
+pub const XDP_ATTACHED_HW: u8	= XdpAttached::HW as u8;
 
 #[allow(non_camel_case_types)]
 #[derive(Debug, Copy, Clone)]
@@ -1357,11 +1404,33 @@ pub enum Xdp {
     FD		= 1,
     ATTACHED	= 2,
     FLAGS	= 3,
-    _MAX	= 4,
+    PROG_ID	= 4,
+    _MAX	= 5,
 }
 pub const IFLA_XDP_UNSPEC: u16		= Xdp::UNSPEC as u16;
 pub const IFLA_XDP_FD: u16		= Xdp::FD as u16;
 pub const IFLA_XDP_ATTACHED: u16	= Xdp::ATTACHED as u16;
 pub const IFLA_XDP_FLAGS: u16		= Xdp::FLAGS as u16;
+pub const IFLA_XDP_PROG_ID: u16		= Xdp::PROG_ID as u16;
 pub const __IFLA_XDP_MAX: u16		= Xdp::_MAX as u16;
 pub const IFLA_XDP_MAX: u16		= __IFLA_XDP_MAX - 1;
+
+#[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u32)]
+pub enum Event {
+    NONE		= 0,
+    REBOOT		= 1,	// internal reset / reboot
+    FEATURES		= 2,	// change in offload features
+    BONDING_FAILOVER	= 3,	// change in active slave
+    NOTIFY_PEERS	= 4,	// re-sent grat. arp/ndisc
+    IGMP_RESEND		= 5,	// re-sent IGMP JOIN
+    BONDING_OPTIONS	= 6,	// change in bonding options
+}
+pub const IFLA_EVENT_NONE: u32			= Event::NONE as u32;
+pub const IFLA_EVENT_REBOOT: u32		= Event::REBOOT as u32;
+pub const IFLA_EVENT_FEATURES: u32		= Event::FEATURES as u32;
+pub const IFLA_EVENT_BONDING_FAILOVER: u32	= Event::BONDING_FAILOVER as u32;
+pub const IFLA_EVENT_NOTIFY_PEERS: u32		= Event::NOTIFY_PEERS as u32;
+pub const IFLA_EVENT_IGMP_RESEND: u32		= Event::IGMP_RESEND as u32;
+pub const IFLA_EVENT_BONDING_OPTIONS: u32	= Event::BONDING_OPTIONS as u32;

@@ -71,7 +71,8 @@ pub enum RTM {
     GETNSID		= 90,
     NEWSTATS		= 92,
     GETSTATS		= 94,
-    _MAX		= 95,
+    NEWCACHEREPORT	= 96,
+    _MAX		= 97,
 }
 pub const RTM_BASE: u16			= RTM::NEWLINK as u16;	// XXX
 pub const RTM_NEWLINK: u16		= RTM::NEWLINK as u16;
@@ -125,6 +126,7 @@ pub const RTM_DELNSID: u16		= RTM::DELNSID as u16;
 pub const RTM_GETNSID: u16		= RTM::GETNSID as u16;
 pub const RTM_NEWSTATS: u16		= RTM::NEWSTATS as u16;
 pub const RTM_GETSTATS: u16		= RTM::GETSTATS as u16;
+pub const RTM_NEWCACHEREPORT: u16	= RTM::NEWCACHEREPORT as u16;
 pub const __RTM_MAX: u16		= RTM::_MAX as u16;
 pub const RTM_MAX: u16			= ((__RTM_MAX as u16 + 3) & !3) - 1;
 
@@ -288,6 +290,7 @@ pub const RTM_F_CLONED: u32		= 0x200;	// This route is cloned
 pub const RTM_F_EQUALIZE: u32		= 0x400;	// Multipath equalizer: NI
 pub const RTM_F_PREFIX: u32		= 0x800;	// Prefix addresses
 pub const RTM_F_LOOKUP_TABLE: u32	= 0x1000;	// set rtm_table to FIB lookup result
+pub const RTM_F_FIB_MATCH: u32		= 0x2000;	// return full fib lookup match
 
 #[derive(Debug, Copy, Clone)]
 #[repr(u32)]
@@ -466,43 +469,45 @@ pub const RTNETLINK_HAVE_PEERINFO: u32	= 1;	// XXX: ???
 #[derive(Debug, Copy, Clone)]
 #[repr(C)]
 pub enum RTAX {
-    UNSPEC	= 0,
-    LOCK	= 1,
-    MTU		= 2,
-    WINDOW	= 3,
-    RTT		= 4,
-    RTTVAR	= 5,
-    SSTHRESH	= 6,
-    CWND	= 7,
-    ADVMSS	= 8,
-    REORDERING	= 9,
-    HOPLIMIT	= 10,
-    INITCWND	= 11,
-    FEATURES	= 12,
-    RTO_MIN	= 13,
-    INITRWND	= 14,
-    QUICKACK	= 15,
-    CC_ALGO	= 16,
-    _MAX	= 17,
+    UNSPEC		= 0,
+    LOCK		= 1,
+    MTU			= 2,
+    WINDOW		= 3,
+    RTT			= 4,
+    RTTVAR		= 5,
+    SSTHRESH		= 6,
+    CWND		= 7,
+    ADVMSS		= 8,
+    REORDERING		= 9,
+    HOPLIMIT		= 10,
+    INITCWND		= 11,
+    FEATURES		= 12,
+    RTO_MIN		= 13,
+    INITRWND		= 14,
+    QUICKACK		= 15,
+    CC_ALGO		= 16,
+    FASTOPEN_NO_COOKIE	= 17,
+    _MAX		= 18,
 }
-pub const RTAX_UNSPEC: c_int		= RTAX::UNSPEC as c_int;
-pub const RTAX_LOCK: c_int		= RTAX::LOCK as c_int;
-pub const RTAX_MTU: c_int		= RTAX::MTU as c_int;
-pub const RTAX_WINDOW: c_int		= RTAX::WINDOW as c_int;
-pub const RTAX_RTT: c_int		= RTAX::RTT as c_int;
-pub const RTAX_RTTVAR: c_int		= RTAX::RTTVAR as c_int;
-pub const RTAX_SSTHRESH: c_int		= RTAX::SSTHRESH as c_int;
-pub const RTAX_CWND: c_int		= RTAX::CWND as c_int;
-pub const RTAX_ADVMSS: c_int		= RTAX::ADVMSS as c_int;
-pub const RTAX_REORDERING: c_int	= RTAX::REORDERING as c_int;
-pub const RTAX_HOPLIMIT: c_int		= RTAX::HOPLIMIT as c_int;
-pub const RTAX_INITCWND: c_int		= RTAX::INITCWND as c_int;
-pub const RTAX_FEATURES: c_int		= RTAX::FEATURES as c_int;
-pub const RTAX_RTO_MIN: c_int		= RTAX::RTO_MIN as c_int;
-pub const RTAX_INITRWND: c_int		= RTAX::INITRWND as c_int;
-pub const RTAX_QUICKACK: c_int		= RTAX::QUICKACK as c_int;
-pub const RTAX_CC_ALGO: c_int		= RTAX::CC_ALGO as c_int;
-pub const __RTAX_MAX: c_int		= RTAX::_MAX as c_int;
+pub const RTAX_UNSPEC: c_int			= RTAX::UNSPEC as c_int;
+pub const RTAX_LOCK: c_int			= RTAX::LOCK as c_int;
+pub const RTAX_MTU: c_int			= RTAX::MTU as c_int;
+pub const RTAX_WINDOW: c_int			= RTAX::WINDOW as c_int;
+pub const RTAX_RTT: c_int			= RTAX::RTT as c_int;
+pub const RTAX_RTTVAR: c_int			= RTAX::RTTVAR as c_int;
+pub const RTAX_SSTHRESH: c_int			= RTAX::SSTHRESH as c_int;
+pub const RTAX_CWND: c_int			= RTAX::CWND as c_int;
+pub const RTAX_ADVMSS: c_int			= RTAX::ADVMSS as c_int;
+pub const RTAX_REORDERING: c_int		= RTAX::REORDERING as c_int;
+pub const RTAX_HOPLIMIT: c_int			= RTAX::HOPLIMIT as c_int;
+pub const RTAX_INITCWND: c_int			= RTAX::INITCWND as c_int;
+pub const RTAX_FEATURES: c_int			= RTAX::FEATURES as c_int;
+pub const RTAX_RTO_MIN: c_int			= RTAX::RTO_MIN as c_int;
+pub const RTAX_INITRWND: c_int			= RTAX::INITRWND as c_int;
+pub const RTAX_QUICKACK: c_int			= RTAX::QUICKACK as c_int;
+pub const RTAX_CC_ALGO: c_int			= RTAX::CC_ALGO as c_int;
+pub const RTAX_FASTOPEN_NO_COOKIE: c_int	= RTAX::FASTOPEN_NO_COOKIE as c_int;
+pub const __RTAX_MAX: c_int			= RTAX::_MAX as c_int;
 pub const RTAX_MAX: c_int		= __RTAX_MAX - 1;
 
 pub const RTAX_FEATURE_ECN: u32		= (1 << 0);
@@ -613,9 +618,20 @@ pub struct Tcmsg {
     pub tcm__pad2: u16,		// ::std::os::raw::c_ushort,
     pub tcm_ifindex: i32,	// ::std::os::raw::c_int,
     pub tcm_handle: u32,
+
+    // XXX: tcm_block_index is used instead of tcm_parent
+    // in case tcm_ifindex == TCM_IFINDEX_MAGIC_BLOCK
+    // macro_rules! tcm_block_index { tcm_parent }
     pub tcm_parent: u32,
+
     pub tcm_info: u32,
 }
+
+// For manipulation of filters in shared block, tcm_ifindex is set to
+// TCM_IFINDEX_MAGIC_BLOCK, and tcm_parent is aliased to tcm_block_index
+// which is the block index.
+// XXX: #define TCM_IFINDEX_MAGIC_BLOCK (0xFFFFFFFFU)
+pub const TCM_IFINDEX_MAGIC_BLOCK: i32	= -1;
 
 #[allow(non_camel_case_types)]
 #[derive(Debug, Copy, Clone)]
@@ -632,7 +648,11 @@ pub enum TCA {
     STAB		= 8,
     PAD			= 9,
     DUMP_INVISIBLE	= 10,
-    _MAX		= 11,
+    CHAIN		= 11,
+    HW_OFFLOAD		= 12,
+    INGRESS_BLOCK	= 13,
+    EGRESS_BLOCK	= 14,
+    _MAX		= 15,
 }
 pub const TCA_UNSPEC: u16		= TCA::UNSPEC as u16;
 pub const TCA_KIND: u16			= TCA::KIND as u16;
@@ -645,6 +665,10 @@ pub const TCA_STATS2: u16		= TCA::STATS2 as u16;
 pub const TCA_STAB: u16			= TCA::STAB as u16;
 pub const TCA_PAD: u16			= TCA::PAD as u16;
 pub const TCA_DUMP_INVISIBLE: u16	= TCA::DUMP_INVISIBLE as u16;
+pub const TCA_CHAIN: u16		= TCA::CHAIN as u16;
+pub const TCA_HW_OFFLOAD: u16		= TCA::HW_OFFLOAD as u16;
+pub const TCA_INGRESS_BLOCK: u16	= TCA::INGRESS_BLOCK as u16;
+pub const TCA_EGRESS_BLOCK: u16		= TCA::EGRESS_BLOCK as u16;
 pub const __TCA_MAX: u16		= TCA::_MAX as u16;
 pub const TCA_MAX: u16			= __TCA_MAX - 1;
 
@@ -741,7 +765,9 @@ pub enum RtnetlinkGroups {
     MPLS_ROUTE		= 27,
     NSID		= 28,
     MPLS_NETCONF	= 29,
-    _MAX		= 30,
+    IPV4_MROUTE_R	= 30,
+    IPV6_MROUTE_R	= 31,
+    _MAX		= 32,
 }
 pub const RTNLGRP_NONE: u32		= RtnetlinkGroups::NONE as u32;
 pub const RTNLGRP_LINK: u32		= RtnetlinkGroups::LINK as u32;
@@ -776,6 +802,8 @@ pub const RTNLGRP_MDB: u32		= RtnetlinkGroups::MDB as u32;
 pub const RTNLGRP_MPLS_ROUTE: u32	= RtnetlinkGroups::MPLS_ROUTE as u32;
 pub const RTNLGRP_NSID: u32		= RtnetlinkGroups::NSID as u32;
 pub const RTNLGRP_MPLS_NETCONF: u32	= RtnetlinkGroups::MPLS_NETCONF as u32;
+pub const RTNLGRP_IPV4_MROUTE_R: u32	= RtnetlinkGroups::IPV4_MROUTE_R as u32;
+pub const RTNLGRP_IPV6_MROUTE_R: u32	= RtnetlinkGroups::IPV6_MROUTE_R as u32;
 pub const __RTNLGRP_MAX: u32		= RtnetlinkGroups::_MAX as u32;
 pub const RTNLGRP_MAX: u32		= __RTNLGRP_MAX - 1;
 
@@ -787,6 +815,27 @@ pub struct Tcamsg {
     pub tca__pad1: u8,	// ::std::os::raw::c_uchar,
     pub tca__pad2: u16,	// ::std::os::raw::c_ushort,
 }
+
+#[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u16)]
+pub enum TcaRoot {
+    UNSPEC	= 0,
+    TAB		= 1,
+    FLAGS	= 2,
+    COUNT	= 3,
+    TIME_DELTA	= 4,	// in msecs
+    _MAX	= 5,
+}
+pub const TCA_ROOT_UNSPEC: u16		= TcaRoot::UNSPEC as u16;
+pub const TCA_ROOT_TAB: u16		= TcaRoot::TAB as u16;
+pub const TCA_ACT_TAB: u16		= TcaRoot::TAB as u16;
+pub const TCAA_MAX: u16			= TcaRoot::TAB as u16;
+pub const TCA_ROOT_FLAGS: u16		= TcaRoot::FLAGS as u16;
+pub const TCA_ROOT_COUNT: u16		= TcaRoot::COUNT as u16;
+pub const TCA_ROOT_TIME_DELTA: u16	= TcaRoot::TIME_DELTA as u16;
+pub const __TCA_ROOT_MAX: u16		= TcaRoot::_MAX as u16;
+pub const TCA_ROOT_MAX: u16		= __TCA_ROOT_MAX - 1;
 
 #[allow(non_snake_case)]
 pub fn TA_RTA(r: &mut Tcamsg) -> &mut Rtattr {
@@ -800,8 +849,13 @@ pub fn TA_RTA(r: &mut Tcamsg) -> &mut Rtattr {
 pub fn TA_PAYLOAD(n: &netlink::Nlmsghdr) -> u32 {
     netlink::NLMSG_PAYLOAD(n, size_of::<Tcamsg>() as u32)
 }
-pub const TCA_ACT_TAB: u16	= 1;	// attr type must be >=1
-pub const TCAA_MAX: u16		= 1;
+
+// tcamsg flags stored in attribute TCA_ROOT_FLAGS
+//
+// TCA_FLAG_LARGE_DUMP_ON user->kernel to request for larger than TCA_ACT_MAX_PRIO
+// actions in a dump. All dump responses will contain the number of actions
+// being dumped stored in for user app's consumption in TCA_ROOT_COUNT
+pub const TCA_FLAG_LARGE_DUMP_ON: u32	= 1 << 0;
 
 // New extended info filters for IFLA_EXT_MASK
 pub const RTEXT_FILTER_VF: u32			= (1 << 0);

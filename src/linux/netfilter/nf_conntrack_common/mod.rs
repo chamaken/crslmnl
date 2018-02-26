@@ -41,7 +41,7 @@ pub const NFCT_STATE_INVALID_BIT: u32	= 1 << 0;
 pub fn NF_CT_STATE_BIT(ctinfo: u8) -> u32 {
     1 << ((ctinfo) % IP_CT_IS_REPLY + 1)
 }
-pub const NF_CT_STATE_UNTRACKED_BIT: u32	= 1 << (IP_CT_UNTRACKED as u32 + 1);
+pub const NF_CT_STATE_UNTRACKED_BIT: u32	= 1 << 6;
 
 pub const IPS_EXPECTED_BIT: u8		= 0;
 pub const IPS_SEEN_REPLY_BIT: u8	= 1;
@@ -57,6 +57,7 @@ pub const IPS_FIXED_TIMEOUT_BIT: u8	= 10;
 pub const IPS_TEMPLATE_BIT: u8		= 11;
 pub const IPS_UNTRACKED_BIT: u8		= 12;
 pub const IPS_HELPER_BIT: u8		= 13;
+pub const IPS_OFFLOAD_BIT: u8		= 14;
 
 #[allow(non_camel_case_types)]
 #[derive(Debug, Copy, Clone)]
@@ -94,11 +95,14 @@ pub enum IpConntrackStatus { // unsigned int
     // Conntrack got a helper explicitly attached via CT target.
     HELPER		= 1 << IPS_HELPER_BIT,
 
+    // Conntrack has been offloaded to flow table.
+    OFFLOAD		= 1 << IPS_OFFLOAD_BIT,
+
     // Be careful here, modifying these bits can make things messy,
     // so don't let users modify them directly.
     UNCHANGEABLE_MASK	= (IPS_NAT_DONE_MASK | IPS_NAT_MASK |
 			   IPS_EXPECTED | IPS_CONFIRMED | IPS_DYING |
-			   IPS_SEQ_ADJUST | IPS_TEMPLATE),
+			   IPS_SEQ_ADJUST | IPS_TEMPLATE | IPS_OFFLOAD),
 
     MAX_BIT = 14,
 }
@@ -118,6 +122,7 @@ pub const IPS_FIXED_TIMEOUT: u32	= IpConntrackStatus::FIXED_TIMEOUT as u32;
 pub const IPS_TEMPLATE: u32		= IpConntrackStatus::TEMPLATE as u32;
 pub const IPS_UNTRACKED: u32		= IpConntrackStatus::UNTRACKED as u32;
 pub const IPS_HELPER: u32		= IpConntrackStatus::HELPER as u32;
+pub const IPS_OFFLOAD: u32		= IpConntrackStatus::OFFLOAD as u32;
 pub const IPS_UNCHANGEABLE_MASK: u32	= IpConntrackStatus::UNCHANGEABLE_MASK as u32;
 
 #[derive(Debug, Copy, Clone)]
