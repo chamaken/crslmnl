@@ -1513,8 +1513,8 @@ extern fn nlmsg_ctl_cb<T: ?Sized>(nlh: *const netlink::Nlmsghdr, data: *mut c_vo
 
 extern fn nlmsg_ctl_cb2(nlh: *const netlink::Nlmsghdr, data: *mut c_void) -> c_int {
     unsafe {
-        let mut cbs = Box::from_raw(data as *mut (Option<Box<FnMut(Nlmsg) -> CbRet>>,
-                                                  &mut [Option<Box<FnMut(Nlmsg) -> CbRet>>]));
+        let cbs = Box::from_raw(data as *mut (Option<Box<FnMut(Nlmsg) -> CbRet>>,
+                                              &mut [Option<Box<FnMut(Nlmsg) -> CbRet>>]));
         let rc = match cbs.1[(*nlh).nlmsg_type as usize] {
             Some(ref mut cb) => cb(Nlmsg::from_raw(nlh).unwrap()) as c_int,
             None => CbRet::OK as c_int,
