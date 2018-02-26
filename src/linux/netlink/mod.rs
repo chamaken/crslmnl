@@ -246,6 +246,7 @@ pub const NETLINK_LIST_MEMBERSHIPS: c_int	= 9;
 pub const NETLINK_CAP_ACK: c_int		= 10;
 pub const NETLINK_EXT_ACK: c_int		= 11;
 
+#[repr(C)]
 pub struct NlPktinfo {
     group: u32,
 }

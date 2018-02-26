@@ -936,7 +936,7 @@ fn nlmsg_batch_next() {
     assert!(b.proceed_next() == true);
 
     {
-        let mut nlh = b.current_nlmsg().unwrap();
+        let nlh = b.current_nlmsg().unwrap();
         *nlh.nlmsg_len = 256;
     }
     assert!(b.proceed_next() == true);
@@ -959,14 +959,14 @@ fn nlmsg_batch_size() {
     assert!(b.size() == 0);
 
     {
-        let mut nlh = b.current_nlmsg().unwrap();
+        let nlh = b.current_nlmsg().unwrap();
         *nlh.nlmsg_len = 128;
     }
     assert!(b.proceed_next() == true);
     assert!(b.size() == 128);
 
     {
-        let mut nlh = b.current_nlmsg().unwrap();
+        let nlh = b.current_nlmsg().unwrap();
         *nlh.nlmsg_len = 128;
     }
     assert!(b.proceed_next() == true);
@@ -985,7 +985,7 @@ fn nlmsg_batch_reset() {
     let mut buf = vec![0u8; 512];
     let b = mnl::NlmsgBatch::start(&mut buf, 512 / 2).unwrap();
     {
-        let mut nlh = b.current_nlmsg().unwrap();
+        let nlh = b.current_nlmsg().unwrap();
         *nlh.nlmsg_len = 256;
     }
     assert!(b.proceed_next() == true);
@@ -994,7 +994,7 @@ fn nlmsg_batch_reset() {
     assert!(b.size() == 0);
 
     {
-        let mut nlh = b.current_nlmsg().unwrap();
+        let nlh = b.current_nlmsg().unwrap();
         *nlh.nlmsg_len = 256;
     }
     assert!(b.proceed_next() == true);
@@ -1016,7 +1016,7 @@ fn nlmsg_batch_head() {
     assert!(b.head::<u8>() as *const u8 == bufptr);
 
     {
-        let mut nlh = b.current_nlmsg().unwrap();
+        let nlh = b.current_nlmsg().unwrap();
         *nlh.nlmsg_len = 256;
     }
     assert!(b.proceed_next() == true);
@@ -1031,7 +1031,7 @@ fn nlmsg_batch_current() {
     assert!(b.current::<u8>() as *const u8 == bufptr);
 
     {
-        let mut nlh = b.current_nlmsg().unwrap();
+        let nlh = b.current_nlmsg().unwrap();
         *nlh.nlmsg_len = 256;
     }
     assert!(b.proceed_next() == true);
@@ -1046,7 +1046,7 @@ fn nlmsg_batch_is_empty() {
     assert!(b.is_empty() == true);
 
     {
-        let mut nlh = b.current_nlmsg().unwrap();
+        let nlh = b.current_nlmsg().unwrap();
         *nlh.nlmsg_len = 256;
     }
     assert!(b.proceed_next() == true);
