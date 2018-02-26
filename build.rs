@@ -1,5 +1,8 @@
 extern crate gcc;
 
 fn main() {
-    gcc::compile_library("libmnl_ext.a", &["src/nlmsg_ext.c"]);
+    gcc::Build::new()
+        .file("src/nlmsg_ext.c")
+        .static_flag(true)
+        .compile("libmnl_ext.a");
 }
