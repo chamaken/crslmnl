@@ -103,14 +103,14 @@ fn send_batch(nl: &mut mnl::Socket, b: &mut mnl::NlmsgBatch, portid: u32) {
             }).unwrap();
         poll.poll(&mut events, None).unwrap();
 
-        // handle only the first event - for event in events.iter() {
-        match events.get(0) {
-            Some(event) => {
-                if event.token() == Token(0) {
-                    return;
-                }
-            },
-            None => continue, // this happened.
+        // handle only the first event
+        for event in events.iter() {
+            // the first event is timerfd?
+            if event.token() == Token(0) {
+                return;
+            } else {
+                break;
+            }
         }
 
         let nrecv = nl.recvfrom(&mut rcv_buf)
