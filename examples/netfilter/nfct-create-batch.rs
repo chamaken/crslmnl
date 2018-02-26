@@ -19,51 +19,51 @@ use mnl::linux::netfilter::nf_conntrack_tcp as nfct_tcp;
 mod timerfd;
 
 fn put_msg(nlh: &mut mnl::Nlmsg, i: u16, seq: u32) {
-    nlh.put_header().unwrap();
+    nlh.put_header_raw();
     *nlh.nlmsg_type = (nfnl::NFNL_SUBSYS_CTNETLINK << 8) | nfct::IPCTNL_MSG_CT_NEW;
     *nlh.nlmsg_flags = netlink::NLM_F_REQUEST | netlink::NLM_F_CREATE
         | netlink::NLM_F_EXCL | netlink::NLM_F_ACK;
     *nlh.nlmsg_seq = seq;
 
-    let nfh = nlh.put_sized_header::<nfnl::Nfgenmsg>().unwrap();
+    let nfh = nlh.put_sized_header_raw::<nfnl::Nfgenmsg>();
     nfh.nfgen_family = libc::AF_INET as u8;
     nfh.version = nfnl::NFNETLINK_V0;
     nfh.res_id = 0;
 
-    let mut nest1 = nlh.nest_start(nfct::CTA_TUPLE_ORIG).unwrap();
-    let mut nest2 = nlh.nest_start(nfct::CTA_TUPLE_IP).unwrap();
-    nlh.put_u32(nfct::CTA_IP_V4_SRC, u32::from(net::Ipv4Addr::new(1, 1, 1, 1))).unwrap();
-    nlh.put_u32(nfct::CTA_IP_V4_DST, u32::from(net::Ipv4Addr::new(2, 2, 2, 2))).unwrap();
+    let mut nest1 = nlh.nest_start_raw(nfct::CTA_TUPLE_ORIG);
+    let mut nest2 = nlh.nest_start_raw(nfct::CTA_TUPLE_IP);
+    nlh.put_u32_raw(nfct::CTA_IP_V4_SRC, u32::from(net::Ipv4Addr::new(1, 1, 1, 1)));
+    nlh.put_u32_raw(nfct::CTA_IP_V4_DST, u32::from(net::Ipv4Addr::new(2, 2, 2, 2)));
     nlh.nest_end(nest2);
 
-    nest2 = nlh.nest_start(nfct::CTA_TUPLE_PROTO).unwrap();
-    nlh.put_u8(nfct::CTA_PROTO_NUM, libc::IPPROTO_TCP as u8).unwrap();
-    nlh.put_u16(nfct::CTA_PROTO_SRC_PORT, u16::to_be(i)).unwrap();
-    nlh.put_u16(nfct::CTA_PROTO_DST_PORT, u16::to_be(1025)).unwrap();
-    nlh.nest_end(nest2);
-    nlh.nest_end(nest1);
-
-    nest1 = nlh.nest_start(nfct::CTA_TUPLE_REPLY).unwrap();
-    nest2 = nlh.nest_start(nfct::CTA_TUPLE_IP).unwrap();
-    nlh.put_u32(nfct::CTA_IP_V4_SRC, u32::from(net::Ipv4Addr::new(2, 2, 2, 2))).unwrap();
-    nlh.put_u32(nfct::CTA_IP_V4_DST, u32::from(net::Ipv4Addr::new(1, 1, 1, 1))).unwrap();
-    nlh.nest_end(nest2);
-
-    nest2 = nlh.nest_start(nfct::CTA_TUPLE_PROTO).unwrap();
-    nlh.put_u8(nfct::CTA_PROTO_NUM, libc::IPPROTO_TCP as u8).unwrap();
-    nlh.put_u16(nfct::CTA_PROTO_SRC_PORT, u16::to_be(1025)).unwrap();
-    nlh.put_u16(nfct::CTA_PROTO_DST_PORT, u16::to_be(i)).unwrap();
+    nest2 = nlh.nest_start_raw(nfct::CTA_TUPLE_PROTO);
+    nlh.put_u8_raw(nfct::CTA_PROTO_NUM, libc::IPPROTO_TCP as u8);
+    nlh.put_u16_raw(nfct::CTA_PROTO_SRC_PORT, u16::to_be(i));
+    nlh.put_u16_raw(nfct::CTA_PROTO_DST_PORT, u16::to_be(1025));
     nlh.nest_end(nest2);
     nlh.nest_end(nest1);
 
-    nest1 = nlh.nest_start(nfct::CTA_PROTOINFO).unwrap();
-    nest2 = nlh.nest_start(nfct::CTA_PROTOINFO_TCP).unwrap();
-    nlh.put_u8(nfct::CTA_PROTOINFO_TCP_STATE, nfct_tcp::TCP_CONNTRACK_SYN_SENT).unwrap();
+    nest1 = nlh.nest_start_raw(nfct::CTA_TUPLE_REPLY);
+    nest2 = nlh.nest_start_raw(nfct::CTA_TUPLE_IP);
+    nlh.put_u32_raw(nfct::CTA_IP_V4_SRC, u32::from(net::Ipv4Addr::new(2, 2, 2, 2)));
+    nlh.put_u32_raw(nfct::CTA_IP_V4_DST, u32::from(net::Ipv4Addr::new(1, 1, 1, 1)));
+    nlh.nest_end(nest2);
+
+    nest2 = nlh.nest_start_raw(nfct::CTA_TUPLE_PROTO);
+    nlh.put_u8_raw(nfct::CTA_PROTO_NUM, libc::IPPROTO_TCP as u8);
+    nlh.put_u16_raw(nfct::CTA_PROTO_SRC_PORT, u16::to_be(1025));
+    nlh.put_u16_raw(nfct::CTA_PROTO_DST_PORT, u16::to_be(i));
     nlh.nest_end(nest2);
     nlh.nest_end(nest1);
 
-    nlh.put_u32(nfct::CTA_STATUS, u32::to_be(nfct_common::IPS_CONFIRMED)).unwrap();
-    nlh.put_u32(nfct::CTA_TIMEOUT, u32::to_be(1000)).unwrap();
+    nest1 = nlh.nest_start_raw(nfct::CTA_PROTOINFO);
+    nest2 = nlh.nest_start_raw(nfct::CTA_PROTOINFO_TCP);
+    nlh.put_u8_raw(nfct::CTA_PROTOINFO_TCP_STATE, nfct_tcp::TCP_CONNTRACK_SYN_SENT);
+    nlh.nest_end(nest2);
+    nlh.nest_end(nest1);
+
+    nlh.put_u32_raw(nfct::CTA_STATUS, u32::to_be(nfct_common::IPS_CONFIRMED));
+    nlh.put_u32_raw(nfct::CTA_TIMEOUT, u32::to_be(1000));
 }
 
 fn error_cb(nlh: mnl::Nlmsg, _: &mut u8) -> mnl::CbRet {
