@@ -115,7 +115,7 @@ struct mnl_nlmsg_batch *rsmnl_nlmsg_batch_start(void *buf, size_t limit)
 }
 
 /* adding clearing buffer to the original */
-struct nlmsghdr *rsmnl_nlmsg_batch_reset(struct mnl_nlmsg_batch *b)
+void rsmnl_nlmsg_batch_reset(struct mnl_nlmsg_batch *b)
 {
 	if (b->overflow) {
 		struct nlmsghdr *nlh = b->cur;
