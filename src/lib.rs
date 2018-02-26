@@ -139,8 +139,7 @@ extern { // arbitrary function
     fn rsmnl_nlmsg_batch_start(buf: *mut c_void, bufsiz: size_t) -> *mut NlmsgBatch;
     fn rsmnl_nlmsg_batch_reset(b: *mut NlmsgBatch);
     fn rsmnl_nlmsg_batch_next(b: *mut NlmsgBatch) -> *mut netlink::Nlmsghdr;
-    fn rsmnl_nlmsg_batch_cap(b: *mut NlmsgBatch);
-    fn rsmnl_nlmsg_batch_put_back(b: *mut NlmsgBatch);
+    fn rsmnl_nlmsg_batch_laden_cap(b: *mut NlmsgBatch) -> bool;
 }
 
 
@@ -1200,12 +1199,8 @@ impl NlmsgBatch {
         unsafe { mnl_nlmsg_batch_rest(self) as usize }
     }
 
-    pub fn cap(&mut self) {
-        unsafe { rsmnl_nlmsg_batch_cap(self) };
-    }
-
-    pub fn put_back(&mut self) {
-        unsafe { rsmnl_nlmsg_batch_put_back(self) };
+    pub fn laden_cap(&mut self) -> bool {
+        unsafe { rsmnl_nlmsg_batch_laden_cap(self) }
     }
 }
 

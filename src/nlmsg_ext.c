@@ -3,6 +3,8 @@
 #include <stdbool.h>
 #include <string.h>
 #include <errno.h>
+#include <assert.h>
+
 #include <libmnl/libmnl.h>
 
 #define EXPORT_SYMBOL(x)
@@ -129,19 +131,29 @@ struct nlmsghdr *rsmnl_nlmsg_batch_reset(struct mnl_nlmsg_batch *b)
 	}
 }
 
-bool rsmnl_nlmsg_batch_cap(struct mnl_nlmsg_batch *b)
+/**
+ * rsmnl_nlmsg_batch_laden_cap - cap the struct if nonempty
+ * \param b pointer to batch
+ *
+ * This function is assumed to be used by crslmnl only, which
+ * must not overflow the buffer since nlmsghdr returned by
+ * NlmsgBatch Iterator has length acquired by mnl_nlmsg_batch_rest().
+ * Otherwise, this function abort.
+ *
+ * The function do nothing and return false if the buffer is empty,
+ * or set proper values then return true.
+ */
+bool rsmnl_nlmsg_batch_laden_cap(struct mnl_nlmsg_batch *b)
 {
 	struct nlmsghdr *nlh = b->cur;
 
-        if (b->buflen + nlh->nlmsg_len > b->limit)
-                return;
+	if (b->buflen == 0)
+                return false;
+
+        assert(b->buflen + nlh->nlmsg_len <= b->limit);
 
         b->cur = b->buf + b->buflen + nlh->nlmsg_len;
 	b->buflen += nlh->nlmsg_len;
-}
 
-void rsmnl_nlmsg_batch_put_back(struct mnl_nlmsg_batch *b)
-{
-	struct nlmsghdr *nlh = b->cur;
-        nlh->nlmsg_len = 0;
+        return true;
 }

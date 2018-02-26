@@ -131,8 +131,7 @@ fn main() {
         b.reset();
     }
 
-    if !b.is_empty() {
-        b.cap();
+    if b.laden_cap() {
         send_batch(nl, b, portid);
     }
 

@@ -1136,7 +1136,7 @@ fn nlmsg_batch_iterator() {
             nlh.put_header().unwrap(); // *nlh.nlmsg_len = 16;
             *nlh.nlmsg_type = i as u16;
         }
-        b.cap();
+        assert!(b.laden_cap());
         assert!(b.size() == 64);
     }
     {
@@ -1154,9 +1154,9 @@ fn nlmsg_batch_iterator() {
             nlh.put_header().unwrap(); // *nlh.nlmsg_len = 16;
             *nlh.nlmsg_type = i as u16;
         }
-        b.put_back();
-        b.cap();
-        assert!(b.size() == 48);
+        b.reset();
+        assert!(b.laden_cap() == false);
+        assert!(b.size() == 0);
     }
     {
         for (i, nlh) in mnl::Nlmsg::from_bytes(&mut buf[..]).unwrap().into_iter().enumerate() {
